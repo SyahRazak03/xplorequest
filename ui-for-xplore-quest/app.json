@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "XploreQuest",
+    "slug": "xplore-quest",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/XploreQuest_Icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/XploreQuest_Icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF9F6"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.syahzxyz.xplorequest",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#FAF9F6"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/XploreQuest_Icon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share images for checkpoints."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9b74acd4-461a-4684-8aa6-875b8b36ee7b"
+      }
+    },
+    "owner": "syahzxyz"
+  }
+}

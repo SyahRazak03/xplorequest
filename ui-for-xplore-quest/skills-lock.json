@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "ppt-generation": {
+      "source": "bytedance/deer-flow",
+      "sourceType": "github",
+      "skillPath": "skills/public/ppt-generation/SKILL.md",
+      "computedHash": "1f95cca84b78975d6552da8e19c31fcb610ac80acc16f29c96c57bc6bc4d2173"
+    },
+    "react-native-ui-patterns": {
+      "source": "paulpas/agent-skill-router",
+      "sourceType": "github",
+      "skillPath": "skills/coding/react-native-ui-patterns/SKILL.md",
+      "computedHash": "b30317ab1615bc2cf7bd0047ad166d39d785dcf375a1d232d889ceb19a1b6621"
+    }
+  }
+}

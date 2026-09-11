@@ -1,0 +1,546 @@
+import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  Switch,
+  Platform,
+} from 'react-native';
+
+
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
+import { useApp } from '../AppContext';
+import ParticipantDashboardScreen from './ParticipantDashboardScreen';
+import CrewDashboardScreen from './CrewDashboardScreen';
+import { Avatar, Card, Badge, SectionHeader, OfflineStatusChip } from '../components';
+
+import { mockEvent } from '../mockData';
+import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
+
+type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+
+export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardScreenNavigationProp>();
+  const { user, role, theme, logout, activeEvent, isOffline, setIsOffline, crewPinCode, events, setSelectedEventId } = useApp();
+
+  if (role === 'participant') {
+    return <ParticipantDashboardScreen />;
+  }
+
+  if (role === 'crew') {
+    return <CrewDashboardScreen />;
+  }
+
+
+  const handleLogout = () => {
+    logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'RoleSelect' }],
+    });
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return '??';
+    return name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  const handleEventPress = (eventId: string) => {
+    setSelectedEventId(eventId);
+    navigation.navigate('AdminEventDetail' as any);
+  };
+
+
+  // Roadmap details to show progress during demo
+  const getRoadmapForRole = () => {
+    switch (role as any) {
+      case 'participant':
+        return [
+          { label: 'Pendaftaran & Log Masuk Kumpulan', done: true },
+          { label: 'Klu Checkpoint & Sempadan Geofencing', done: false, stage: 'Stage 2' },
+          { label: 'Pintasan Checkpoint Congested (Skip Logic)', done: false, stage: 'Stage 2' },
+          { label: 'Imbasan QR Marshal Dinamik 30s', done: false, stage: 'Stage 3' },
+          { label: 'Pelepasan Garisan Penamat', done: false, stage: 'Stage 4' },
+        ];
+      case 'crew':
+        return [
+          { label: 'Log Masuk & Pendaftaran Pos Kawalan', done: true },
+          { label: 'Senarai Ketibaan & Beratur Pasukan', done: false, stage: 'Stage 3' },
+          { label: 'Penjanaan QR Kod Dinamik Kunci-Pasukan', done: false, stage: 'Stage 3' },
+          { label: 'Muat Naik Bukti Bergambar (Kamera Snap)', done: false, stage: 'Stage 4' },
+          { label: 'Override Manual & Denda Tambahan', done: false, stage: 'Stage 4' },
+        ];
+      case 'admin':
+        return [
+          { label: 'Log Masuk Urus Setia / Admin', done: true },
+          { label: 'Penghasilan Geofence & Parameter Acara', done: false, stage: 'Stage 0.5' },
+          { label: 'Kelulusan Mula & Keluar Pasukan Baru', done: false, stage: 'Stage 2' },
+          { label: 'Paparan Leaderboard & Masa Semasa', done: false, stage: 'Stage 5' },
+          { label: 'Pengauditan DNF Automatik & Penalti', done: false, stage: 'Stage 5' },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const getRoleLabel = () => {
+    switch (role as any) {
+      case 'participant':
+        return 'Ketua Pasukan';
+      case 'crew':
+        return 'Krew Marshal';
+      case 'admin':
+        return 'Penganjur Admin';
+      default:
+        return 'Pelawat';
+    }
+  };
+
+  const roadmap = getRoadmapForRole();
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        
+        {/* Top Header Card */}
+        <View style={styles.topHeader}>
+          <View style={styles.userProfileRow}>
+            <Avatar initials={getInitials(user?.name)} role={role || 'participant'} size="lg" />
+            <View style={styles.userMeta}>
+              <Text style={styles.welcomeText}>Selamat Kembali,</Text>
+              <Text style={styles.userName}>{user?.name || 'Pengguna Demo'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'demo@xplorequest.my'}</Text>
+            </View>
+          </View>
+          <View style={styles.badgeRow}>
+            <Badge label={getRoleLabel()} state="success" />
+            <OfflineStatusChip />
+          </View>
+
+        </View>
+
+        {/* Admin Dashboard: Event Selection List */}
+        {role === 'admin' ? (
+          <View style={styles.adminActionsContainer}>
+            <TouchableOpacity
+              style={[styles.createEventButton, { backgroundColor: theme.colors.primary, marginBottom: SPACING.md }]}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('AdminCreateEvent' as any)}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={COLORS.textLight} />
+              <Text style={styles.createEventButtonText}>Cipta Acara Baru (ADM-01)</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.sectionTitle}>Senarai Acara Anda</Text>
+
+            {events.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                activeOpacity={0.9}
+                onPress={() => handleEventPress(event.id)}
+                style={{ marginBottom: SPACING.sm }}
+              >
+                <Card role="admin" borderAccent="left">
+                  <View style={styles.eventInfoContainer}>
+                    <View style={styles.infoRow}>
+                      <Ionicons name="trophy-outline" size={18} color={theme.colors.primary} />
+                      <Text style={styles.eventTitle}>{event.name}</Text>
+                    </View>
+                    <View style={styles.infoRowSecondary}>
+                      <Ionicons name="calendar-outline" size={14} color={COLORS.textMuted} />
+                      <Text style={styles.eventDetailText}>{event.date}</Text>
+                    </View>
+                    <View style={styles.infoRowSecondary}>
+                      <Ionicons name="pin-outline" size={14} color={COLORS.textMuted} />
+                      <Text style={styles.eventDetailText} numberOfLines={1}>
+                        {event.locationName}
+                      </Text>
+                    </View>
+                    <View style={styles.cardDivider} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+                      <Text style={{ fontSize: 11, color: COLORS.admin.primary, fontWeight: 'bold' }}>
+                        Urus Acara & Modul Geofence/CP
+                      </Text>
+                      <Ionicons name="chevron-forward" size={14} color={COLORS.admin.primary} />
+                    </View>
+                  </View>
+                </Card>
+              </TouchableOpacity>
+            ))}
+
+            <Card role="admin" style={styles.demoToggleCard} borderAccent="left">
+              <View style={styles.demoToggleRow}>
+                <View style={styles.demoToggleText}>
+                  <Text style={styles.demoToggleTitle}>Simulasi Mod Offline (SQLite Sync)</Text>
+                  <Text style={styles.demoToggleSubtitle}>
+                    Simulasikan kehilangan rangkaian untuk menguji barisan giliran imbasan offline.
+                  </Text>
+                </View>
+                <Switch
+                  value={isOffline}
+                  onValueChange={setIsOffline}
+                  trackColor={{ false: COLORS.border, true: COLORS.admin.accent }}
+                  thumbColor={isOffline ? '#FFFFFF' : '#f4f3f4'}
+                />
+              </View>
+            </Card>
+          </View>
+        ) : (
+          /* Participant or default Active Event Details */
+          <Card role={role || 'participant'} borderAccent="left" title="Acara Aktif Anda">
+            <View style={styles.eventInfoContainer}>
+              <View style={styles.infoRow}>
+                <Ionicons name="trophy-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.eventTitle}>{activeEvent?.name || mockEvent.name}</Text>
+              </View>
+              <View style={styles.infoRowSecondary}>
+                <Ionicons name="calendar-outline" size={16} color={COLORS.textMuted} />
+                <Text style={styles.eventDetailText}>{activeEvent?.date || mockEvent.date}</Text>
+              </View>
+              <View style={styles.infoRowSecondary}>
+                <Ionicons name="pin-outline" size={16} color={COLORS.textMuted} />
+                <Text style={styles.eventDetailText} numberOfLines={1}>
+                  {activeEvent?.locationName || mockEvent.locationName}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        )}
+
+
+
+
+
+        {/* Roadmap Roadmap/Progress */}
+        <View style={styles.sectionContainer}>
+          <SectionHeader
+            title="Pelan Tindakan Demo (Roadmap)"
+            subtitle="Peringkat pembangunan modul untuk KL Event Crew."
+            role={role || 'participant'}
+          />
+          <View style={styles.roadmapContainer}>
+            {roadmap.map((step, index) => (
+              <View key={index} style={styles.roadmapItem}>
+                <View style={styles.stepIndicator}>
+                  {step.done ? (
+                    <View style={[styles.checkCircle, { backgroundColor: theme.colors.primary }]}>
+                      <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                    </View>
+                  ) : (
+                    <View style={styles.emptyCircle} />
+                  )}
+                  {index < roadmap.length - 1 && (
+                    <View style={[styles.stepConnector, step.done && { backgroundColor: theme.colors.primary }]} />
+                  )}
+                </View>
+                <View style={styles.stepDetails}>
+                  <Text style={[styles.stepLabel, step.done && styles.completedStepLabel]}>
+                    {step.label}
+                  </Text>
+                  {!step.done && step.stage && (
+                    <Text style={[styles.stageText, { color: theme.colors.accent }]}>
+                      Unlocks in {step.stage}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Actions Showcase */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.showcaseButton, { borderColor: theme.colors.accent, marginBottom: SPACING.sm }]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('AntiCheatExplainer' as any)}
+          >
+            <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.accent} />
+            <Text style={[styles.showcaseButtonText, { color: theme.colors.accent }]}>
+              Penjelasan Anti-Cheat QR Dinamik (ADM-07)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.showcaseButton, { borderColor: theme.colors.primary }]}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('DesignSystemShowcase' as any)}
+          >
+
+            <Ionicons name="color-palette-outline" size={22} color={theme.colors.primary} />
+            <Text style={[styles.showcaseButtonText, { color: theme.colors.primary }]}>
+              Buka Panduan Reka Bentuk (Design System)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
+            <Text style={styles.logoutButtonText}>Log Keluar Sesi Demo</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0,
+  },
+
+  scrollContainer: {
+    padding: SPACING.lg,
+    gap: SPACING.lg,
+    flexGrow: 1,
+  },
+  topHeader: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    ...SHADOWS.sm,
+  },
+  userProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  userMeta: {
+    flex: 1,
+  },
+  welcomeText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+  },
+  userName: {
+    fontSize: TYPOGRAPHY.fontSize.h2,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  userEmail: {
+    fontSize: TYPOGRAPHY.fontSize.caption,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: SPACING.md,
+  },
+  eventIdText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  eventInfoContainer: {
+    gap: SPACING.sm,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: 4,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.text,
+    flex: 1,
+  },
+  infoRowSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingLeft: 4,
+  },
+  eventDetailText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  boldText: {
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  sectionContainer: {
+    marginTop: SPACING.xs,
+  },
+  roadmapContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    paddingTop: SPACING.lg,
+    ...SHADOWS.sm,
+    marginTop: SPACING.md,
+  },
+  roadmapItem: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    minHeight: 52,
+  },
+  stepIndicator: {
+    alignItems: 'center',
+    width: 20,
+  },
+  checkCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+  stepConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 4,
+  },
+  stepDetails: {
+    flex: 1,
+    paddingBottom: SPACING.md,
+  },
+  stepLabel: {
+    fontSize: 13,
+    color: COLORS.text,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  completedStepLabel: {
+    fontWeight: TYPOGRAPHY.fontWeight.semiBold,
+  },
+  stageText: {
+    fontSize: 10,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  actionsContainer: {
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+  showcaseButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  showcaseButtonText: {
+    fontSize: 14,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(239, 68, 68, 0.06)',
+    borderColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.danger,
+  },
+  createEventButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
+    ...SHADOWS.sm,
+  },
+  createEventButtonText: {
+    fontSize: 15,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.textLight,
+  },
+  adminActionsContainer: {
+    gap: SPACING.md,
+  },
+  demoToggleCard: {
+    padding: SPACING.md,
+    marginTop: SPACING.xs,
+  },
+  demoToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  demoToggleText: {
+    flex: 1,
+  },
+  demoToggleTitle: {
+    fontSize: 14,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.text,
+  },
+  demoToggleSubtitle: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: SPACING.sm,
+  },
+});
+
+
+
+
+
+
