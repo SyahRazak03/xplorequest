@@ -1,0 +1,63 @@
+rules_version = '2';
+
+// ============================================================
+// XploreQuest — Firebase Storage Security Rules
+// Stage 11: Crew Verification Wizard & Role-Scoped Access
+// ============================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    function isAssignedCrew(eventId, checkpointId) {
+      return isAuthenticated() &&
+        request.auth.token.role == 'crew' &&
+        request.auth.token.eventId == eventId &&
+        request.auth.token.checkpointId == checkpointId;
+    }
+
+    function isTeamParticipant(eventId, teamId) {
+      return isAuthenticated() &&
+        request.auth.token.role == 'participant' &&
+        request.auth.token.eventId == eventId &&
+        request.auth.token.teamId == teamId;
+    }
+
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    // ── Photo Proof Uploads (FR-08) ───────────────────────────
+    // Path: /proofs/{eventId}/{teamId}/{checkpointId}/{filename}
+    match /proofs/{eventId}/{teamId}/{checkpointId}/{filename} {
+      // Direct client writes disabled; all uploads must pass through backend Cloud Function for magic-byte verification.
+      allow write: if false;
+      
+      // Admin, assigned crew, and the specific team's participants can view proof photos
+      allow read: if isAdmin() ||
+        isAssignedCrew(eventId, checkpointId) ||
+        isTeamParticipant(eventId, teamId);
+    }
+
+    // ── User Avatars ──────────────────────────────────────────
+    // Path: /avatars/{userId}/{filename}
+    match /avatars/{userId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if (isAdmin() || (isAuthenticated() && request.auth.uid == userId)) && isValidImage();
+    }
+
+    // ── Admin Exports ─────────────────────────────────────────
+    // Path: /exports/{eventId}/{filename}
+    match /exports/{eventId}/{filename} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

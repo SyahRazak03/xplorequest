@@ -1,0 +1,77 @@
+{
+  "name": "xplorequest-functions",
+  "version": "1.0.0",
+  "description": "XploreQuest — Firebase Cloud Functions backend (Stage 1 scaffold)",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "build:watch": "tsc --project tsconfig.json --watch",
+    "serve": "npm run build && npx firebase-tools emulators:start --config ../firebase.json --only functions,firestore,auth,storage",
+    "deploy": "firebase deploy --only functions",
+    "lint": "eslint --ext .ts src/",
+    "lint:fix": "eslint --ext .ts src/ --fix",
+    "test": "jest --forceExit",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage --forceExit",
+    "shell": "npm run build && firebase functions:shell",
+    "logs": "firebase functions:log",
+    "seed": "ts-node --project tsconfig.json -r dotenv/config scripts/seed.ts",
+    "seed:emulator": "cross-env FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm run seed"
+  },
+  "dependencies": {
+    "expo-server-sdk": "^7.2.0",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.4.0",
+    "zod": "^3.25.69"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.9",
+    "@types/supertest": "^7.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.31.0",
+    "firebase-functions-test": "^3.4.0",
+    "jest": "^30.0.5",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "private": true,
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(expo-server-sdk)/)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx|js|jsx)$": ["ts-jest", { "useESM": false }]
+    },
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/__tests__/**",
+      "!src/**/index.ts"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+# repositories/
+#
+# Data access layer — one file per Firestore collection.
+# Each repository:
+#   - Exposes typed CRUD methods (get, list, create, update, delete)
+#   - Owns the Firestore collection path
+#   - Returns domain model types (not raw Firestore DocumentSnapshot)
+#   - Handles Firestore Timestamps ↔ string conversion
+#
+# Stage 2 will add:
+#   event.repository.ts       — /events/{eventId}
+#   team.repository.ts        — /events/{eventId}/teams/{teamId}
+#   checkpoint.repository.ts  — /events/{eventId}/checkpoints/{cpId}
+#   user.repository.ts        — /users/{uid}
+#   leaderboard.repository.ts — /events/{eventId}/leaderboard/{entryId}

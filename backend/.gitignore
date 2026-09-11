@@ -1,0 +1,39 @@
+# =============================================================
+# XploreQuest Backend — .gitignore
+# =============================================================
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Firebase service account key files
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+
+# Build output
+functions/lib/
+
+# Dependencies
+functions/node_modules/
+node_modules/
+
+# Firebase debug logs
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+storage-debug.log
+database-debug.log
+
+# Emulator state
+.runtimeconfig.json
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/settings.json

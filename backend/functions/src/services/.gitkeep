@@ -1,0 +1,15 @@
+# services/
+#
+# Business logic layer — one file per domain feature.
+# Each service:
+#   - Accepts plain TypeScript arguments (no Express req/res)
+#   - Calls repositories for Firestore access
+#   - Throws AppError for domain violations
+#   - Has no knowledge of HTTP
+#
+# Stage 2 will add:
+#   auth.service.ts       — register, login, assign custom claims
+#   event.service.ts      — create, update, start race
+#   team.service.ts       — register, approve, track progress
+#   checkpoint.service.ts — unlock, complete, skip
+#   leaderboard.service.ts — compute rankings, apply penalties

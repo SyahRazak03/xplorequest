@@ -1,0 +1,143 @@
+rules_version = '2';
+
+// ============================================================
+// XploreQuest — Firestore Security Rules
+// Stage 2: Production-Ready Role-Based Access Control (RBAC)
+//
+// Custom Claims:
+//   request.auth.token.role == 'admin'
+//   request.auth.token.role == 'crew'
+//   request.auth.token.role == 'participant'
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isCrew() {
+      return hasRole('crew');
+    }
+
+    function isParticipant() {
+      return hasRole('participant');
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ── USERS COLLECTION ─────────────────────────────────────
+    match /users/{userId} {
+      // User can read their own profile; Admin can read all profiles
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // User can update basic info on their own profile; Admin can write any profile
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── EVENTS COLLECTION ────────────────────────────────────────────────
+    //
+    // isArchived events remain readable for audit/leaderboard history.
+    // The crewPinCode lives in the secrets subcollection and is ONLY
+    // accessible via the GET /events/:id/crew-pin Cloud Function endpoint
+    // which uses the Admin SDK (bypasses rules).  No client SDK path exists.
+    match /events/{eventId} {
+      // All authenticated users may read event documents (full doc for admin,
+      // service-layer projection strips sensitive fields for crew/participant).
+      allow read: if isAuthenticated();
+
+      // Belt-and-suspenders: Cloud Function middleware (requireRole('admin'))
+      // is the primary guard.  These rules provide a second enforcement layer
+      // so a misconfigured route still cannot permit client writes.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+
+      // ── EVENT SECRETS SUBCOLLECTION ────────────────────────────────────
+      // Holds crewPinCode and hmacSecret — Admin SDK (Cloud Function) ONLY.
+      // Admin SDK bypasses security rules entirely; this explicit deny
+      // ensures NO client SDK call — even from an admin-role user — can
+      // read or write secrets. Use GET /events/:id/crew-pin instead.
+      match /secrets/{secretDoc} {
+        allow read, write: if false;
+      }
+
+      // ── TEAMS SUBCOLLECTION ────────────────────────────────────────────
+      match /teams/{teamId} {
+        // Scoped read: Admin and Crew can read all teams; Participants can only read their own team doc
+        // (prevents phone number and member list exposure to other users)
+        allow read: if isAdmin() || isCrew() || (isParticipant() && resource.data.leaderUid == request.auth.uid);
+        
+        // Creation happens via Cloud Functions (Admin SDK) to ensure rate-limiting and validation
+        allow create: if false;
+
+        // Updates: Admin/Crew full access; Participant leader can update non-status fields only
+        allow update: if isAdmin() || isCrew() || (isParticipant() && resource.data.leaderUid == request.auth.uid && !('status' in request.resource.data));
+        allow delete: if isAdmin();
+      }
+
+      // ── CHECKPOINTS SUBCOLLECTION ──────────────────────────────────────
+      // Admin and Crew can read all checkpoints; Participants access via Cloud Function
+      // to receive masked/role-projected checkpoint coordinates (Security Layer 4).
+      // All writes happen via Cloud Functions (Admin SDK) to enforce geometry validation and race-start locks.
+      match /checkpoints/{checkpointId} {
+        allow read: if isAdmin() || isCrew();
+        allow create, update, delete: if false;
+      }
+
+      // ── DYNAMIC QR TOKENS SUBCOLLECTION (REPLAY TRACKING) ─────────────
+      // Cloud Functions (Admin SDK) ONLY. Clients can neither read active
+      // tokens nor write/falsify single-use state directly.
+      match /qr_tokens/{tokenId} {
+        allow read, write: if false;
+      }
+
+      // ── LEADERBOARD SUBCOLLECTION (FR-09) ──────────────────────────────
+      match /leaderboard/{teamId} {
+        allow read: if isAuthenticated() && (
+          request.auth.token.role == 'admin' ||
+          request.auth.token.eventId == eventId
+        );
+        allow write: if false;
+      }
+
+      // ── SCAN LOGS & SECURITY ALERTS SUBCOLLECTIONS ─────────────────────
+      match /scanLogs/{logId} {
+        // Admin and Crew can read scan logs for audit
+        allow read: if isAdmin() || isCrew();
+        allow write: if false; // Cloud Functions Admin SDK ONLY
+      }
+
+      match /securityAlerts/{alertId} {
+        allow read: if isAdmin() || isCrew();
+        allow write: if false; // Cloud Functions Admin SDK ONLY
+      }
+
+      // ── SYNC IDEMPOTENCY SUBCOLLECTION (FR-06) ─────────────────────────
+      // Server-side Cloud Functions (Admin SDK) ONLY.
+      match /sync_idempotency/{idempotencyKey} {
+        allow read, write: if false;
+      }
+    }
+
+    // ── SYNC QUEUE COLLECTION ────────────────────────────────
+    match /syncQueue/{queueId} {
+      // Users can manage their own sync queue items; Admin has full access
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+    }
+  }
+}

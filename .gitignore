@@ -1,0 +1,40 @@
+# Root .gitignore for XploreQuest
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment secrets & credentials
+.env
+.env.*
+!.env.example
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+
+# Build Outputs
+dist/
+web-build/
+**/lib/
+*.tsbuildinfo
+
+# Expo & Mobile
+.expo/
+/ios
+/android
+
+# Firebase & Logs
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
+pubsub-debug*.log
+storage-debug*.log
+database-debug*.log
+.runtimeconfig.json
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.agents/
