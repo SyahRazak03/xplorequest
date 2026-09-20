@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
 import { Checkpoint } from '../mockData';
-import { createCheckpoint } from '../services/checkpointService';
+import { createCheckpoint, updateCheckpoint, deleteCheckpoint } from '../services/checkpointService';
 
 import { Card, PrimaryButton, SecondaryButton, Badge, CheckpointFormModal, SkeletonLoader, EmptyState, CustomModalDialog } from '../components';
 
@@ -108,36 +108,38 @@ export default function AdminCheckpointManagerScreen() {
     const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
     const token = user?.idToken || 'token-admin-casaria';
 
-    let serverCheckpoint: Checkpoint | null = null;
-    try {
-      const res = await createCheckpoint(
-        eventId,
-        {
-          name: data.name || 'Pos Kawalan Baru',
-          latitude: data.latitude || 3.17,
-          longitude: data.longitude || 101.7,
-          clueText: data.clueText || 'Koleksi klu pos kawalan',
-          taskDescription: data.taskDescription || 'Imbas QR Code di pos kawalan',
-          scorePoints: data.scorePoints || 150,
-          isStart: !!data.isStart,
-          isFinish: !!data.isFinish,
-          isAttendanceStation: !!data.isAttendanceStation,
-        },
-        token
-      );
-      if (res && res.checkpoint) {
-        serverCheckpoint = res.checkpoint;
-      }
-    } catch (err) {
-      console.warn('Backend createCheckpoint warning (saved locally to AppContext):', err);
-    }
-
     if (selectedCheckpoint) {
       // Edit Mode
+      let serverCheckpoint: Checkpoint | null = null;
+      try {
+        const res = await updateCheckpoint(
+          eventId,
+          selectedCheckpoint.id,
+          {
+            name: data.name,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            clueText: data.clueText,
+            taskDescription: data.taskDescription,
+            scorePoints: data.scorePoints,
+            isStart: data.isStart,
+            isFinish: data.isFinish,
+            isAttendanceStation: data.isAttendanceStation,
+            isHiddenInMap: data.isHiddenInMap,
+          },
+          token
+        );
+        if (res && res.checkpoint) {
+          serverCheckpoint = res.checkpoint;
+        }
+      } catch (err) {
+        console.warn('Backend updateCheckpoint warning:', err);
+      }
+
       setCheckpoints(prev => {
         let updated = prev.map(cp => {
           if (cp.id === selectedCheckpoint.id) {
-            return { ...cp, ...data } as Checkpoint;
+            return { ...cp, ...(serverCheckpoint || data) } as Checkpoint;
           }
           // Enforce singular start/finish/attendance rules
           return {
@@ -153,12 +155,37 @@ export default function AdminCheckpointManagerScreen() {
       Alert.alert('Berjaya', 'Maklumat pos kawalan telah dikemaskini.');
     } else {
       // Add Mode
-      const newCpId = data.id || `CP-${Math.floor(Math.random() * 900 + 100)}`;
-      const newCheckpoint: Checkpoint = {
+      let serverCheckpoint: Checkpoint | null = null;
+      try {
+        const res = await createCheckpoint(
+          eventId,
+          {
+            name: data.name || 'Pos Kawalan Baru',
+            latitude: data.latitude || activeEvent?.latitude || 3.1492,
+            longitude: data.longitude || activeEvent?.longitude || 101.6938,
+            clueText: data.clueText || '',
+            taskDescription: data.taskDescription || '',
+            scorePoints: data.scorePoints || 150,
+            isStart: !!data.isStart,
+            isFinish: !!data.isFinish,
+            isAttendanceStation: !!data.isAttendanceStation,
+            isHiddenInMap: !!data.isHiddenInMap,
+          },
+          token
+        );
+        if (res && res.checkpoint) {
+          serverCheckpoint = res.checkpoint;
+        }
+      } catch (err) {
+        console.warn('Backend createCheckpoint warning:', err);
+      }
+
+      const newCpId = serverCheckpoint?.id || data.id || `CP-${Math.floor(Math.random() * 900 + 100)}`;
+      const newCheckpoint: Checkpoint = serverCheckpoint || {
         id: newCpId,
         name: data.name || 'Pos Kawalan Baru',
-        latitude: data.latitude || 3.17,
-        longitude: data.longitude || 101.7,
+        latitude: data.latitude || activeEvent?.latitude || 3.1492,
+        longitude: data.longitude || activeEvent?.longitude || 101.6938,
         clueText: data.clueText || '',
         taskDescription: data.taskDescription || '',
         scorePoints: data.scorePoints || 150,
@@ -166,6 +193,7 @@ export default function AdminCheckpointManagerScreen() {
         isStart: data.isStart,
         isFinish: data.isFinish,
         isAttendanceStation: data.isAttendanceStation,
+        isHiddenInMap: data.isHiddenInMap,
       };
 
       setCheckpoints(prev => {
@@ -179,7 +207,6 @@ export default function AdminCheckpointManagerScreen() {
       });
       Alert.alert('Berjaya', 'Pos kawalan baru telah ditambah.');
     }
-
 
     setModalVisible(false);
   };
@@ -373,8 +400,15 @@ export default function AdminCheckpointManagerScreen() {
           {
             text: 'PADAM',
             style: 'destructive',
-            onPress: () => {
+            onPress: async () => {
               if (deleteTargetId) {
+                const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
+                const token = user?.idToken || 'token-admin-casaria';
+                try {
+                  await deleteCheckpoint(eventId, deleteTargetId, token, true);
+                } catch (err) {
+                  console.warn('Backend deleteCheckpoint warning:', err);
+                }
                 setCheckpoints(prev => prev.filter(cp => cp.id !== deleteTargetId));
               }
             },

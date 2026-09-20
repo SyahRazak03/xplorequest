@@ -27,7 +27,7 @@ import { Card, PrimaryButton, SecondaryButton, Badge, CustomModalDialog } from '
 import { useApp } from '../AppContext';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import type { EventConfig } from '../mockData';
-import { saveBoundary } from '../services/checkpointService';
+import { saveBoundary, updateCheckpoint } from '../services/checkpointService';
 
 interface CheckpointPin {
   id: string;
@@ -519,6 +519,22 @@ export default function AdminGeofenceDesignerScreen() {
           return cp;
         })
       );
+
+      // 1b. Persist updated checkpoint coordinates to backend Firestore
+      if (token) {
+        for (const pin of checkpointPins) {
+          try {
+            await updateCheckpoint(
+              targetEventId,
+              pin.id,
+              { latitude: pin.latitude, longitude: pin.longitude },
+              token
+            );
+          } catch (pinErr) {
+            console.warn(`Backend updateCheckpoint warning for ${pin.id}:`, pinErr);
+          }
+        }
+      }
 
       // 2. Persist geofence boundary polygon vertices to backend & AppContext
       if (activeEvent) {

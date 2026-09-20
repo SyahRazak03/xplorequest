@@ -109,6 +109,77 @@ export async function createCheckpoint(
 }
 
 /**
+ * Updates an existing checkpoint (Admin only).
+ */
+export async function updateCheckpoint(
+  eventId: string,
+  checkpointId: string,
+  payload: Partial<CreateCheckpointPayload>,
+  idToken: string
+): Promise<{ checkpoint: Checkpoint; warning?: string }> {
+  const resp = await fetch(
+    `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints/${encodeURIComponent(checkpointId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const json = (await resp.json()) as {
+    success: boolean;
+    data?: Checkpoint;
+    meta?: { warning?: string };
+    error?: { code: string; message: string };
+  };
+
+  if (!resp.ok || !json.success || !json.data) {
+    const msg = json.error?.message ?? 'Gagal mengemaskini pos kawalan.';
+    throw new Error(msg);
+  }
+
+  return {
+    checkpoint: json.data,
+    warning: json.meta?.warning,
+  };
+}
+
+/**
+ * Deletes a checkpoint from Firestore backend (Admin only).
+ */
+export async function deleteCheckpoint(
+  eventId: string,
+  checkpointId: string,
+  idToken: string,
+  force: boolean = true
+): Promise<boolean> {
+  const resp = await fetch(
+    `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints/${encodeURIComponent(checkpointId)}?force=${force}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    }
+  );
+
+  const json = (await resp.json()) as {
+    success: boolean;
+    error?: { code: string; message: string };
+  };
+
+  if (!resp.ok || !json.success) {
+    const msg = json.error?.message ?? 'Gagal memadam pos kawalan.';
+    throw new Error(msg);
+  }
+
+  return true;
+}
+
+/**
  * Saves/updates event geofence boundary polygon (Admin only).
  */
 export async function saveBoundary(

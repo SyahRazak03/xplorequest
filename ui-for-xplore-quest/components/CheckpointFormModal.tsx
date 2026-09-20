@@ -33,7 +33,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
   onSave,
   checkpointsCount,
 }) => {
-  const { rules } = useApp();
+  const { rules, activeEvent } = useApp();
   const [name, setName] = useState('');
   const [clueText, setClueText] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
@@ -129,8 +129,8 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
       clueText,
       taskDescription,
       scorePoints: rules.pointsSystemEnabled ? (Number(scorePoints) || 0) : 0,
-      latitude: checkpoint?.latitude || 3.17 + Math.random() * 0.01,
-      longitude: checkpoint?.longitude || 101.7 + Math.random() * 0.01,
+      latitude: checkpoint?.latitude || activeEvent?.latitude || 3.1492,
+      longitude: checkpoint?.longitude || activeEvent?.longitude || 101.6938,
       statusPerTeam: checkpoint?.statusPerTeam || {},
       isStart: cpType === 'start',
       isFinish: cpType === 'finish',
