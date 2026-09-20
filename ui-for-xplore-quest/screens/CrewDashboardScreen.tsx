@@ -26,7 +26,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, OfflineStatusChip, Skeleto
 
 import { Team, Checkpoint } from '../mockData';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import { subscribeToEventTeams } from '../services/teamService';
+import { subscribeToEventTeams, checkinTeamAttendance } from '../services/teamService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -176,29 +176,36 @@ export default function CrewDashboardScreen() {
     setReleaseModalVisible(true);
   };
 
-  const handleConfirmRelease = () => {
+  const handleConfirmRelease = async () => {
     if (!selectedTeamForRelease) return;
     setIsReleasing(true);
-    setTimeout(() => {
-      setIsReleasing(false);
-      setReleaseModalVisible(false);
-      
-      // Update team status in AppContext
-      setTeams(prev =>
-        prev.map(t =>
-          t.id === selectedTeamForRelease.id
-            ? { ...t, status: 'approved', isPresent: true, attendanceStatus: 'present' }
-            : t
-        )
-      );
 
+    const eventId = activeEvent?.id || user?.eventId || 'EV-001';
+    try {
+      await checkinTeamAttendance(eventId, selectedTeamForRelease.id, user?.idToken);
+    } catch (err) {
+      console.warn('Backend checkinTeamAttendance warning:', err);
+    }
 
-      Alert.alert(
-        'Pelepasan Berjaya',
-        `Pasukan "${selectedTeamForRelease.name}" telah berjaya didaftarkan kehadiran dan dilepaskan mula!`
-      );
-      setSelectedTeamForRelease(null);
-    }, 1500);
+    setIsReleasing(false);
+    setReleaseModalVisible(false);
+
+    // Update team status in AppContext & liveTeams
+    const updatedTeam: Team = {
+      ...selectedTeamForRelease,
+      status: 'approved',
+      isPresent: true,
+      attendanceStatus: 'present',
+    };
+
+    setLiveTeams(prev => prev.map(t => t.id === selectedTeamForRelease.id ? updatedTeam : t));
+    setTeams(prev => prev.map(t => t.id === selectedTeamForRelease.id ? updatedTeam : t));
+
+    Alert.alert(
+      'Pelepasan Berjaya',
+      `Pasukan "${selectedTeamForRelease.name}" telah berjaya didaftarkan kehadiran dan dilepaskan mula!`
+    );
+    setSelectedTeamForRelease(null);
   };
 
   const renderStartPointDashboard = () => {

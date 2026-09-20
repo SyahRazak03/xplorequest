@@ -6,7 +6,7 @@
  */
 
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, Firestore } from 'firebase/firestore';
+import { getFirestore, collection, doc, updateDoc, onSnapshot, Firestore } from 'firebase/firestore';
 import type { Team } from '../mockData';
 
 const firebaseConfig: FirebaseOptions = {
@@ -62,8 +62,8 @@ export function subscribeToEventTeams(
             leaderName: d.leaderName || undefined,
             membersList: d.membersList || undefined,
             phone: d.phone || undefined,
-            isPresent: d.isPresent ?? true,
-            attendanceStatus: d.attendanceStatus || 'present',
+            isPresent: d.isPresent === true,
+            attendanceStatus: d.attendanceStatus || (d.isPresent ? 'present' : 'absent'),
           }));
           onUpdate(apiTeams);
         }
@@ -95,8 +95,8 @@ export function subscribeToEventTeams(
             leaderName: data['leaderName'],
             membersList: data['membersList'],
             phone: data['phone'],
-            isPresent: data['isPresent'],
-            attendanceStatus: data['attendanceStatus'],
+            isPresent: data['isPresent'] === true,
+            attendanceStatus: data['attendanceStatus'] || (data['isPresent'] ? 'present' : 'absent'),
           };
         });
         onUpdate(teams);
@@ -149,4 +149,44 @@ export async function registerTeam(
     skippedCheckpointIds: [],
     leaderName: teamData.leaderName,
   };
+}
+
+/**
+ * Checks in attendance for a team at the start checkpoint (Crew/Admin).
+ */
+export async function checkinTeamAttendance(
+  eventId: string,
+  teamId: string,
+  token?: string
+): Promise<void> {
+  const adminToken = token || 'token-admin-casaria';
+  const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
+
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/attendance/checkin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ teamId }),
+      });
+    } catch (err) {
+      console.warn('Backend API checkinTeamAttendance notice:', err);
+    }
+  }
+
+  try {
+    const db = getFirebaseFirestore();
+    const teamDocRef = doc(db, 'events', eventId, 'teams', teamId);
+    await updateDoc(teamDocRef, {
+      isPresent: true,
+      attendanceStatus: 'present',
+      checkedInAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (fsErr) {
+    console.warn('Firestore direct checkinTeamAttendance notice:', fsErr);
+  }
 }

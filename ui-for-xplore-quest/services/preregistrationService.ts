@@ -207,8 +207,8 @@ export async function approvePreRegistration(
           leaderName: preReg.leaderName,
           membersList: preReg.memberNames.join(', '),
           phone: preReg.leaderPhone,
-          isPresent: true,
-          attendanceStatus: 'present',
+          isPresent: d.isPresent === true,
+          attendanceStatus: d.attendanceStatus || 'absent',
         };
       }
     } catch (err) {
@@ -231,8 +231,8 @@ export async function approvePreRegistration(
     leaderName: preReg.leaderName,
     membersList: preReg.memberNames.join(', '),
     phone: preReg.leaderPhone,
-    isPresent: true,
-    attendanceStatus: 'present',
+    isPresent: false,
+    attendanceStatus: 'absent',
   };
 
   // 2. Create team document in Firestore (only if Cloud Function API fallback needed)
