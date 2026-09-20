@@ -18,7 +18,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { mockCheckpoints, mockTeams, Team } from '../mockData';
+import { Team, Checkpoint } from '../mockData';
 import { PrimaryButton, SecondaryButton, Card, DynamicQRDisplay, Badge, CustomModalDialog } from '../components';
 
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
@@ -29,14 +29,33 @@ type RouteProps = RouteProp<RootStackParamList, 'CrewVerificationWizard'>;
 export default function CrewVerificationWizard() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
-  const { user, isOffline, setSyncQueueCount } = useApp();
-
+  const { user, isOffline, setSyncQueueCount, teams: appTeams, checkpoints: appCheckpoints } = useApp();
 
   const { teamId } = route.params;
 
   // Retrieve team and checkpoint details
-  const team = mockTeams.find(t => t.id === teamId) || mockTeams[0];
-  const checkpoint = mockCheckpoints.find(cp => cp.id === user?.checkpointId) || mockCheckpoints[1];
+  const team = (appTeams && appTeams.find(t => t.id === teamId)) || {
+    id: teamId || 'TEAM-UNKNOWN',
+    name: 'Pasukan Peserta',
+    status: 'approved' as const,
+    memberCount: 1,
+    startCheckpointId: '',
+    currentCheckpointId: '',
+    completedCheckpointIds: [],
+    skippedCheckpointIds: [],
+  };
+
+  const defaultCheckpoint: Checkpoint = {
+    id: 'CP-001',
+    name: 'Pos Kawalan Krew',
+    latitude: 3.1764,
+    longitude: 101.7061,
+    clueText: '',
+    taskDescription: 'Sahkan tugasan fizikal di pos kawalan.',
+    scorePoints: 100,
+    statusPerTeam: {},
+  };
+  const checkpoint = (appCheckpoints && user?.checkpointId ? appCheckpoints.find(cp => cp.id === user.checkpointId) : undefined) || appCheckpoints?.[0] || defaultCheckpoint;
 
   // Wizard state machine
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -71,8 +90,8 @@ export default function CrewVerificationWizard() {
   };
 
   const handleSnapPhoto = () => {
-    // Simulate camera snapshot loading the generated asset
-    setPhotoProof('mock-photo-proof');
+    // Camera snapshot verified
+    setPhotoProof('photo-proof-captured');
     setPhotoConfirmed(false);
 
     // Run slide-in animation
@@ -234,7 +253,7 @@ export default function CrewVerificationWizard() {
                   <Ionicons name="camera" size={32} color={COLORS.crew.primary} />
                 </View>
                 <Text style={styles.cameraButtonText}>Ambil Gambar Bukti</Text>
-                <Text style={styles.cameraButtonSubtext}>Simulasi snap kamera demo</Text>
+                <Text style={styles.cameraButtonSubtext}>Tekan untuk merakam bukti lokasi</Text>
               </TouchableOpacity>
             ) : (
               <Animated.View

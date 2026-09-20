@@ -10,6 +10,7 @@ import type { QrTokenDocument } from '../models';
 import { findCheckpointById } from '../repositories/checkpoint.repository';
 import { findEventById, getEventSecrets } from '../repositories/event.repository';
 import { createQrToken, findActiveQrToken } from '../repositories/qr.repository';
+import { assertEventOwner } from './event.service';
 import {
   buildAttendanceQrPayload,
   buildCheckpointQrPayload,
@@ -52,6 +53,8 @@ export async function generateCheckpointQrService(
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, caller.uid, caller.role, caller.eventId);
 
   const checkpoint = await findCheckpointById(eventId, checkpointId);
   if (!checkpoint) {
@@ -153,6 +156,8 @@ export async function generateAttendanceQrService(
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, caller.uid, caller.role, caller.eventId);
 
   const secrets = await getEventSecrets(eventId);
   if (!secrets || !secrets.hmacSecret) {

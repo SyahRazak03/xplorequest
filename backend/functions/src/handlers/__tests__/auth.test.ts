@@ -66,13 +66,19 @@ jest.mock('../../services/auth.service', () => ({
     name: 'Encik Azman',
     email: 'azman@xplorequest.com',
   }),
-  crewLogin: jest.fn().mockResolvedValue({
-    customToken: 'mock-crew-custom-token',
-    uid: 'crew-123',
-    role: 'crew',
-    name: 'Husna',
-    checkpointId: 'CP-002',
-    eventId: 'EV-001',
+  crewLogin: jest.fn().mockImplementation(async (marshalId: string | undefined, _pinCode: string, checkpointId: string, eventId: string) => {
+    if (checkpointId === 'CP-ATTENDANCE' && (!marshalId || !marshalId.trim())) {
+      const { AppError, ErrorCode } = require('../../utils/errors');
+      throw new AppError(ErrorCode.UNPROCESSABLE_ENTITY, 'ID Marshal diperlukan untuk Pos Kehadiran.');
+    }
+    return {
+      customToken: 'mock-crew-custom-token',
+      uid: marshalId ? 'crew-marshal-123' : 'crew-shared-456',
+      role: 'crew',
+      name: marshalId ? 'Husna' : 'Krew Pos Kawalan',
+      checkpointId,
+      eventId,
+    };
   }),
   participantJoin: jest.fn().mockResolvedValue({
     customToken: 'mock-participant-custom-token',
@@ -150,10 +156,34 @@ describe('Auth Handlers', () => {
       expect(body.success).toBe(false);
     });
 
-    it('returns 200 on valid crew credentials', async () => {
+    it('returns 200 on valid crew credentials with marshalId for Attendance Station', async () => {
       const res = await request(app)
         .post('/auth/crew/login')
-        .send({ marshalId: 'USR-CREW-002', crewPinCode: '1234', checkpointId: 'CP-002', eventId: 'EV-001' });
+        .send({ marshalId: 'USR-CREW-002', crewPinCode: '1234', checkpointId: 'CP-ATTENDANCE', eventId: 'EV-001' });
+
+      expect(res.status).toBe(200);
+      const body = res.body as ApiSuccess<{ role: string; customToken: string }>;
+      expect(body.success).toBe(true);
+      expect(body.data.role).toBe('crew');
+      expect(body.data.customToken).toBe('mock-crew-custom-token');
+    });
+
+    it('returns 422 UNPROCESSABLE_ENTITY when logging into Attendance Station without marshalId', async () => {
+      const res = await request(app)
+        .post('/auth/crew/login')
+        .send({ crewPinCode: '1234', checkpointId: 'CP-ATTENDANCE', eventId: 'EV-001' });
+
+      expect(res.status).toBe(422);
+      const body = res.body as ApiError;
+      expect(body.success).toBe(false);
+      expect(body.error.code).toBe('UNPROCESSABLE_ENTITY');
+      expect(body.error.message).toContain('ID Marshal diperlukan untuk Pos Kehadiran');
+    });
+
+    it('returns 200 on valid crew credentials without marshalId for standard checkpoint', async () => {
+      const res = await request(app)
+        .post('/auth/crew/login')
+        .send({ crewPinCode: '1234', checkpointId: 'CP-002', eventId: 'EV-001' });
 
       expect(res.status).toBe(200);
       const body = res.body as ApiSuccess<{ role: string; customToken: string }>;

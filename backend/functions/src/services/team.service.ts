@@ -11,11 +11,12 @@
  *   • Admin approval/rejection and updates
  */
 
-import type { TeamDocument, TeamStatus } from '../models';
+import type { TeamDocument, TeamStatus, UserRole } from '../models';
 import {
   findEventById,
   findEventByJoinCode,
 } from '../repositories/event.repository';
+import { assertEventOwner } from './event.service';
 import type { PublicTeamView } from '../repositories/team.repository';
 import {
   createTeam,
@@ -117,11 +118,16 @@ export async function listTeamsService(
   eventId: string,
   callerRole: string,
   callerUid?: string,
-  callerTeamId?: string
+  callerTeamId?: string,
+  callerEventId?: string
 ): Promise<TeamDocument[] | PublicTeamView[]> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
+    assertEventOwner(event, callerUid, callerRole as UserRole, callerEventId);
   }
 
   const allTeams = await findTeamsByEvent(eventId);
@@ -146,8 +152,14 @@ export async function getTeamService(
   teamId: string,
   callerRole: string,
   callerUid?: string,
-  callerTeamId?: string
+  callerTeamId?: string,
+  callerEventId?: string
 ): Promise<TeamDocument> {
+  const event = await findEventById(eventId);
+  if (event && callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
+    assertEventOwner(event, callerUid, callerRole as UserRole, callerEventId);
+  }
+
   const team = await findTeamById(eventId, teamId);
   if (!team) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
@@ -174,15 +186,23 @@ export async function updateTeamService(
   eventId: string,
   teamId: string,
   input: UpdateTeamInput,
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<TeamDocument> {
+  const event = await findEventById(eventId);
+  if (!event) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
+
   const team = await findTeamById(eventId, teamId);
   if (!team) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
   }
 
-  const event = await findEventById(eventId);
-  if (event && input.memberCount !== undefined) {
+  if (input.memberCount !== undefined) {
     const maxTeamSize = event.maxTeamSize || 6;
     if (input.memberCount > maxTeamSize) {
       throw new AppError(
@@ -218,15 +238,23 @@ export async function setTeamStatusService(
   eventId: string,
   teamId: string,
   status: TeamStatus,
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<TeamDocument> {
+  const event = await findEventById(eventId);
+  if (!event) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
+
   const team = await findTeamById(eventId, teamId);
   if (!team) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
   }
 
-  const event = await findEventById(eventId);
-  if (event && event.isStarted && team.status !== status) {
+  if (event.isStarted && team.status !== status) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
       'Status kumpulan tidak boleh diubah selepas lumba bermula.'
@@ -250,15 +278,26 @@ export async function setTeamStatusService(
  */
 export async function deleteTeamService(
   eventId: string,
-  teamId: string
+  teamId: string,
+  callerUid?: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<void> {
+  const event = await findEventById(eventId);
+  if (!event) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid) {
+    assertEventOwner(event, callerUid, callerRole, callerEventId);
+  }
+
   const team = await findTeamById(eventId, teamId);
   if (!team) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
   }
 
-  const event = await findEventById(eventId);
-  if (event && event.isStarted) {
+  if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
       'Kumpulan tidak boleh dipadam selepas lumba bermula.'

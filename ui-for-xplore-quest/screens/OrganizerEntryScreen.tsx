@@ -28,7 +28,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { mockUserProfiles } from '../mockData';
+import { adminLogin, adminRegister } from '../services/authService';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'OrganizerEntry'>;
@@ -71,7 +71,7 @@ export default function OrganizerAuthScreen() {
   const [loading, setLoading] = useState(false);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginEmail.trim()) {
       Alert.alert('Ralat', 'Sila masukkan e-mel anda.');
       return;
@@ -80,24 +80,29 @@ export default function OrganizerAuthScreen() {
       Alert.alert('Ralat', 'Sila masukkan kata laluan.');
       return;
     }
-    const adminEmail = mockUserProfiles.admin.email || 'azman@xplorequest.com';
-    if (loginEmail.toLowerCase().trim() !== adminEmail.toLowerCase()) {
-      Alert.alert('E-mel Tidak Dijumpai', `E-mel demo: ${adminEmail}`);
-      return;
-    }
-    if (loginPassword.trim() !== 'kunciOrganisasi2026') {
-      Alert.alert('Kata Laluan Salah', 'Kata laluan demo: kunciOrganisasi2026');
-      return;
-    }
+
+    const cleanEmail = loginEmail.toLowerCase().trim();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      login('admin', mockUserProfiles.admin);
+    try {
+      const authRes = await adminLogin(cleanEmail, loginPassword.trim());
+      login('admin', {
+        id: authRes.uid,
+        name: authRes.name || cleanEmail.split('@')[0] || 'Penganjur Acara',
+        email: authRes.email || cleanEmail,
+        role: 'admin',
+      });
       navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
-    }, 1200);
+    } catch (err: unknown) {
+      Alert.alert(
+        'Log Masuk Gagal',
+        'Akaun e-mel ini belum didaftarkan atau kata laluan tidak sah.\n\nSila mendaftar akaun baharu di tab "Daftar" terlebih dahulu.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!signupName.trim() || !signupOrg.trim() || !signupEmail.trim() || !signupPassword.trim()) {
       Alert.alert('Borang Tidak Lengkap', 'Sila isi semua medan yang diperlukan.');
       return;
@@ -106,21 +111,29 @@ export default function OrganizerAuthScreen() {
       Alert.alert('Kata Laluan Tidak Sepadan', 'Sahkan semula kata laluan anda.');
       return;
     }
+
+    const cleanEmail = signupEmail.toLowerCase().trim();
     setLoading(true);
-    // Simulate account creation — demo auto-logs in as admin
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await adminRegister(signupName.trim(), cleanEmail, signupPassword.trim(), signupOrg.trim());
+      setLoginEmail(cleanEmail);
+      setLoginPassword(signupPassword.trim());
       Alert.alert(
         'Pendaftaran Berjaya! 🎉',
-        'Akaun penganjur anda telah dibuat. Log masuk untuk meneruskan.',
+        'Akaun penganjur anda telah didaftarkan. Sila log masuk dengan e-mel dan kata laluan anda.',
         [{ text: 'Log Masuk', onPress: () => switchTab('login') }]
       );
-    }, 1400);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mendaftar akaun penganjur.';
+      Alert.alert('Pendaftaran Gagal', msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAutofill = () => {
     if (activeTab === 'login') {
-      setLoginEmail(mockUserProfiles.admin.email || 'azman@xplorequest.com');
+      setLoginEmail(process.env['EXPO_PUBLIC_DEMO_ADMIN_EMAIL'] || 'azman@xplorequest.com');
       setLoginPassword('kunciOrganisasi2026');
     } else {
       setSignupName('Ahmad Zulkifli');
@@ -474,11 +487,13 @@ export default function OrganizerAuthScreen() {
               </>
             )}
 
-            {/* Demo Autofill – always visible */}
-            <TouchableOpacity style={styles.autofillBtn} onPress={handleAutofill}>
-              <Ionicons name="flash-outline" size={14} color={COLORS.admin.primary} />
-              <Text style={styles.autofillText}>Isi Auto Akaun Demo</Text>
-            </TouchableOpacity>
+            {/* Dev Autofill */}
+            {__DEV__ && (
+              <TouchableOpacity style={styles.autofillBtn} onPress={handleAutofill}>
+                <Ionicons name="flash-outline" size={14} color={COLORS.admin.primary} />
+                <Text style={styles.autofillText}>Isi Auto Akaun Ujian</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* ── Feature badges ─────────────────────────────────────── */}

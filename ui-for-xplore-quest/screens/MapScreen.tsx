@@ -18,7 +18,7 @@ import MapView, {
 } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { mockCheckpoints, Checkpoint, CheckpointStatus } from '../mockData';
+import { Checkpoint, CheckpointStatus } from '../mockData';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS } from '../theme';
 import { ClueBottomSheet } from '../components/ClueBottomSheet';
 import { useApp } from '../AppContext';
@@ -29,8 +29,8 @@ const { width } = Dimensions.get('window');
 const INITIAL_REGION: Region = {
   latitude: 3.1764,
   longitude: 101.7061,
-  latitudeDelta: 0.01,
-  longitudeDelta: 0.01,
+  latitudeDelta: 0.008,
+  longitudeDelta: 0.008,
 };
 
 // Default event boundary polygon (real GPS vertices)
@@ -112,8 +112,7 @@ export default function MapScreen({
 }: MapScreenProps) {
   const theme = getThemeForRole('participant');
   const { checkpoints } = useApp();
-  const activeCheckpointsList =
-    checkpoints.length > 0 ? checkpoints : mockCheckpoints;
+  const activeCheckpointsList = checkpoints;
 
   const mapRef = useRef<MapView>(null);
 
@@ -216,7 +215,7 @@ export default function MapScreen({
     setIsInsideGeofence(inside);
 
     // Find current active checkpoint
-    const activeCp = activeCheckpointsList.find((cp) => cp.id === currentCpId);
+    const activeCp = activeCheckpointsList.find((cp: Checkpoint) => cp.id === currentCpId);
     if (
       activeCp &&
       typeof activeCp.latitude === 'number' &&
@@ -314,7 +313,7 @@ export default function MapScreen({
           />
 
           {/* Checkpoint Markers Overlay (Role-Projected) */}
-          {activeCheckpointsList.map((cp, idx) => {
+          {activeCheckpointsList.map((cp: Checkpoint, idx: number) => {
             // Respect Security Layer 4: skip rendering markers if coordinates are omitted
             if (
               typeof cp.latitude !== 'number' ||
@@ -450,7 +449,7 @@ export default function MapScreen({
                 <Text style={styles.arrivalBadgeText}>SAMPAI DI ZON 📍</Text>
               </View>
               <Text style={[styles.infoCardTitle, { color: theme.colors.text }]}>
-                {activeCheckpointsList.find((c) => c.id === currentCpId)?.name}
+                {activeCheckpointsList.find((c: Checkpoint) => c.id === currentCpId)?.name}
               </Text>
             </View>
             <Text
@@ -481,7 +480,7 @@ export default function MapScreen({
               />
               <Text style={[styles.infoCardTitle, { color: theme.colors.text }]}>
                 Acara Berjalan: CP{' '}
-                {activeCheckpointsList.findIndex((c) => c.id === currentCpId) + 1}{' '}
+                {activeCheckpointsList.findIndex((c: Checkpoint) => c.id === currentCpId) + 1}{' '}
                 Aktif
               </Text>
             </View>

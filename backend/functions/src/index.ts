@@ -17,14 +17,14 @@
 
 import express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
-
-import { getAdminApp } from './config/firebase';
 import { authRouter } from './handlers/auth';
 import { checkpointsRouter } from './handlers/checkpoints';
 import { eventsRouter } from './handlers/events';
 import { finishRouter } from './handlers/finish';
 import { healthHandler } from './handlers/health';
 import { leaderboardRouter } from './handlers/leaderboard';
+import { preregistrationAdminRouter } from './handlers/preregistration_admin';
+import { publicRouter } from './handlers/public';
 import { qrRouter } from './handlers/qr';
 import { rulesRouter } from './handlers/rules';
 import { scanRouter } from './handlers/scan';
@@ -41,7 +41,7 @@ import { verifyFirebaseToken } from './middleware/auth';
 import { errorHandler } from './utils/errors';
 
 // ── Eagerly initialise Admin SDK on cold start ───────────────────────────────
-getAdminApp();
+// getAdminApp() is called on demand inside request handlers
 
 // ── Express Application ──────────────────────────────────────────────────────
 const app = express();
@@ -49,6 +49,37 @@ const app = express();
 // ── Global Middleware ────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Explicit CORS allowlist middleware
+const ALLOWED_ORIGINS = [
+  'https://xplorequest-cab6c.web.app',
+  'https://xplorequest-cab6c.firebaseapp.com',
+  'http://localhost:8081',
+  'http://localhost:19006',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin && process.env['NODE_ENV'] !== 'production') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Firebase-AppCheck');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 // Security headers
 app.use((_req, res, next) => {
@@ -65,6 +96,10 @@ app.use(verifyAppCheck);
 
 // Health check — public, no auth required
 app.get('/health', healthHandler);
+
+// Public unauthenticated Web Pre-Registration Form endpoints (direct & Firebase Hosting rewrite paths)
+app.use('/public', publicRouter);
+app.use('/api/public', publicRouter);
 
 // Auth routes
 app.use('/auth', authRouter);
@@ -101,6 +136,9 @@ app.use('/events', leaderboardRouter);
 
 // Admin race rules configuration
 app.use('/events', rulesRouter);
+
+// Admin pre-registration review & approval
+app.use('/events/:eventId/pre-registrations', preregistrationAdminRouter);
 
 // Event management
 app.use('/events', verifyFirebaseToken, eventsRouter);

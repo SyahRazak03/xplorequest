@@ -144,7 +144,7 @@ export default function AntiCheatExplainerScreen() {
         <View style={styles.commentaryBox}>
           <Ionicons name="bulb-outline" size={16} color={COLORS.admin.primary} />
           <Text style={styles.commentaryText}>
-            <Text style={styles.boldText}>PENAFIAN TEKNIKAL:</Text> Screen ini dibina khas untuk persembahan (pitch/demo) bagi menjelaskan konsep kriptografi HMAC, geofencing GPS, dan velocity check secara ringkas kepada pihak pengurusan.
+            <Text style={styles.boldText}>PENAFIAN TEKNIKAL:</Text> Modul ini menjelaskan konsep keselamatan kriptografi HMAC, geofencing GPS, dan velocity check secara ringkas bagi memastikan integriti perlumbaan.
           </Text>
         </View>
 

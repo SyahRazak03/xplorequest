@@ -132,15 +132,17 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
             >
               {checkpoint.isStart ? 'MULA' : checkpoint.isFinish ? 'TAMAT' : `CP ${index}`}
             </Text>
-            {rules.pointsSystemEnabled && (
-
               <View style={styles.badgeRow}>
-                <Badge
-                  label={`${checkpoint.scorePoints} Mata`}
-                  state={status === 'completed' ? 'success' : 'info'}
-                />
+                {checkpoint.isAttendanceStation && (
+                  <Badge label="Stesen Kehadiran" state="warning" />
+                )}
+                {rules.pointsSystemEnabled && (
+                  <Badge
+                    label={`${checkpoint.scorePoints} Mata`}
+                    state={status === 'completed' ? 'success' : 'info'}
+                  />
+                )}
               </View>
-            )}
           </View>
 
           <Text

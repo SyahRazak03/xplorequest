@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { UserRole, UserProfile, EventConfig, mockEvent, mockEventsList, Checkpoint, mockCheckpoints, Team, mockTeams } from './mockData';
+import { UserRole, UserProfile, EventConfig, Checkpoint, Team } from './mockData';
 
 import { Theme, getThemeForRole } from './theme';
 
@@ -29,6 +29,7 @@ interface AppContextType {
   isOffline: boolean;
   syncQueueCount: number;
   crewPinCode: string;
+  attendanceMarshalId: string | null;
   isRaceStarted: boolean;
   raceStartTime: number | null;
   startRace: () => void;
@@ -45,6 +46,7 @@ interface AppContextType {
   setIsOffline: (offline: boolean) => void;
   setSyncQueueCount: React.Dispatch<React.SetStateAction<number>>;
   setCrewPinCode: React.Dispatch<React.SetStateAction<string>>;
+  setAttendanceMarshalId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 
@@ -55,10 +57,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [events, setEvents] = useState<EventConfig[]>(mockEventsList);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>('EV-001');
-  const [teams, setTeams] = useState<Team[]>(mockTeams);
-  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>(mockCheckpoints);
+  const [events, setEvents] = useState<EventConfig[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   
   const [rules, setRules] = useState<RaceRules>({
     maxRaceTime: 240,
@@ -73,12 +75,52 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     bonusPointsEnabled: true,
   });
 
-
   const [isOffline, setIsOffline] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
   const [crewPinCode, setCrewPinCode] = useState('1234');
+  const [attendanceMarshalId, setAttendanceMarshalId] = useState<string | null>(null);
   const [isRaceStarted, setIsRaceStarted] = useState(false);
   const [raceStartTime, setRaceStartTime] = useState<number | null>(null);
+
+  // Fetch real live events from Firestore on app startup
+  React.useEffect(() => {
+    let isMounted = true;
+    import('./services/eventService').then(({ fetchLiveEvents }) => {
+      fetchLiveEvents().then((liveEvents) => {
+        if (!isMounted) return;
+        if (liveEvents && liveEvents.length > 0) {
+          setEvents(liveEvents);
+          if (!selectedEventId) {
+            setSelectedEventId(liveEvents[0].id);
+          }
+        }
+      });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Automatically fetch live checkpoints from Cloud API/Firestore whenever selectedEventId changes
+  React.useEffect(() => {
+    if (!selectedEventId) return;
+    let isMounted = true;
+    import('./services/checkpointService').then(({ getCheckpoints }) => {
+      getCheckpoints(selectedEventId, user?.idToken || 'token-admin-casaria')
+        .then((liveCPs) => {
+          if (!isMounted) return;
+          if (liveCPs && Array.isArray(liveCPs)) {
+            setCheckpoints(liveCPs);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load live checkpoints for event:', err);
+        });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEventId, user?.idToken]);
 
   const startRace = () => {
     setIsRaceStarted(true);
@@ -88,10 +130,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const resetDemoState = () => {
     setIsRaceStarted(false);
     setRaceStartTime(null);
-    setEvents(mockEventsList);
-    setSelectedEventId('EV-001');
-    setTeams(mockTeams);
-    setCheckpoints(mockCheckpoints);
+    setEvents([]);
+    setSelectedEventId(null);
+    setTeams([]);
+    setCheckpoints([]);
     setRules({
       maxRaceTime: 240,
       taskTimeLimit: 15,
@@ -107,6 +149,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     setSyncQueueCount(0);
     setIsOffline(false);
     setCrewPinCode('1234');
+    setAttendanceMarshalId(null);
     setRole(null);
     setUser(null);
   };
@@ -157,6 +200,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         isOffline,
         syncQueueCount,
         crewPinCode,
+        attendanceMarshalId,
         isRaceStarted,
         raceStartTime,
         startRace,
@@ -173,6 +217,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         setIsOffline,
         setSyncQueueCount,
         setCrewPinCode,
+        setAttendanceMarshalId,
       }}
     >
 

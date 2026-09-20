@@ -24,50 +24,104 @@ import { Card, Badge, PrimaryButton, SecondaryButton, OfflineStatusChip, Skeleto
 
 
 
-import { mockCheckpoints, mockTeams, Team } from '../mockData';
+import { Team, Checkpoint } from '../mockData';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
+import { subscribeToEventTeams } from '../services/teamService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
 type TabType = 'queue' | 'completed';
 
 export default function CrewDashboardScreen() {
-  const { user, logout, teams, setTeams, isRaceStarted, startRace } = useApp();
+  const { user, logout, teams, setTeams, isRaceStarted, startRace, activeEvent, checkpoints } = useApp();
 
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<any>();
   const completedTeamId = route.params?.completedTeamId;
 
   // Find current checkpoint assigned to this crew member
-  const checkpoint = mockCheckpoints.find(cp => cp.id === user?.checkpointId) || mockCheckpoints[1];
+  const defaultCheckpoint: Checkpoint = {
+    id: 'CP-START',
+    name: 'Stesen Pendaftaran & Pelepasan',
+    latitude: 3.1764,
+    longitude: 101.7061,
+    clueText: '',
+    taskDescription: '',
+    scorePoints: 100,
+    statusPerTeam: {},
+    isStart: true,
+    isAttendanceStation: true,
+  };
+
+  const checkpoint = (checkpoints && user?.checkpointId ? checkpoints.find(cp => cp.id === user.checkpointId) : undefined) || checkpoints[0] || defaultCheckpoint;
 
   const [loading, setLoading] = useState(true);
 
-  // Distribute mock teams across two states for local demo
-  const [queueTeams, setQueueTeams] = useState<Team[]>(
-    mockTeams.filter((_, idx) => idx % 2 === 0)
-  );
-  const [completedTeams, setCompletedTeams] = useState<Team[]>(
-    mockTeams.filter((_, idx) => idx % 2 === 1)
-  );
+  // Live teams state initialized from AppContext
+  const [liveTeams, setLiveTeams] = useState<Team[]>(teams || []);
 
+  // Real-time Firestore onSnapshot listener for event teams
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    const eventId = activeEvent?.id || user?.eventId || 'EV-001';
+    let isMounted = true;
+
+    const unsubscribe = subscribeToEventTeams(
+      eventId,
+      (fetchedTeams) => {
+        if (!isMounted) return;
+        if (fetchedTeams && fetchedTeams.length > 0) {
+          setLiveTeams(fetchedTeams);
+          setTeams(fetchedTeams);
+        }
+        setLoading(false);
+      },
+      (err) => {
+        console.warn('Live teams snapshot subscription fallback to local state:', err);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    );
+
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false);
+      }
+    }, 1500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
+  }, [activeEvent?.id, user?.eventId]);
 
   const [activeTab, setActiveTab] = useState<TabType>('queue');
 
-  // Start Point Crew Specific States
+  // Start Point / Attendance Station Crew Specific States
   const [startActiveTab, setStartActiveTab] = useState<'register' | 'released'>('register');
   const [selectedTeamForRelease, setSelectedTeamForRelease] = useState<Team | null>(null);
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [isReleasing, setIsReleasing] = useState(false);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
-  const startRegisterTeams = teams.filter(t => t.status === 'pending');
-  const startReleasedTeams = teams.filter(t => t.status === 'approved');
+
+  // Dynamically partition queue and completed teams from liveTeams
+  const startRegisterTeams = liveTeams.filter(
+    (t) => t.status === 'approved' && !(t.isPresent === true || t.attendanceStatus === 'present')
+  );
+  const startReleasedTeams = liveTeams.filter(
+    (t) => t.status === 'approved' && (t.isPresent === true || t.attendanceStatus === 'present')
+  );
+
+  const queueTeams = liveTeams.filter(
+    (t) =>
+      (t.currentCheckpointId === checkpoint.id || (t.skippedCheckpointIds && t.skippedCheckpointIds.includes(checkpoint.id))) &&
+      !(t.completedCheckpointIds && t.completedCheckpointIds.includes(checkpoint.id))
+  );
+
+  const completedTeams = liveTeams.filter(
+    (t) => t.completedCheckpointIds && t.completedCheckpointIds.includes(checkpoint.id)
+  );
 
   // End Point (TAMAT) Specific States
   const [endQrValue, setEndQrValue] = useState('');
@@ -85,8 +139,6 @@ export default function CrewDashboardScreen() {
     setEndQrKey(prev => prev + 1);
   };
 
-
-
   const handleConfirmStartRace = () => {
     setStartRaceModalVisible(true);
   };
@@ -94,15 +146,7 @@ export default function CrewDashboardScreen() {
   // Handle routing parameters when completing verification wizard
   useEffect(() => {
     if (completedTeamId) {
-      const teamInQueue = queueTeams.find(t => t.id === completedTeamId);
-
-      if (teamInQueue) {
-        setQueueTeams(prev => prev.filter(t => t.id !== completedTeamId));
-        setCompletedTeams(prev => [teamInQueue, ...prev]);
-        setActiveTab('completed');
-      }
-
-      // Reset routing param to prevent rerun
+      setActiveTab('completed');
       navigation.setParams({ completedTeamId: undefined } as any);
     }
   }, [completedTeamId]);
@@ -142,7 +186,9 @@ export default function CrewDashboardScreen() {
       // Update team status in AppContext
       setTeams(prev =>
         prev.map(t =>
-          t.id === selectedTeamForRelease.id ? { ...t, status: 'approved' } : t
+          t.id === selectedTeamForRelease.id
+            ? { ...t, status: 'approved', isPresent: true, attendanceStatus: 'present' }
+            : t
         )
       );
 
@@ -680,7 +726,7 @@ export default function CrewDashboardScreen() {
     );
   };
 
-  if (checkpoint.isStart) {
+  if (checkpoint.isAttendanceStation) {
     return renderStartPointDashboard();
   }
 

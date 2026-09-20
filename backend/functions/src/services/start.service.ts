@@ -16,9 +16,10 @@
 import * as admin from 'firebase-admin';
 
 import { getFirestore } from '../config/firebase';
-import type { CheckpointDocument, TeamDocument } from '../models';
+import type { CheckpointDocument, TeamDocument, UserRole } from '../models';
 import { findEventById } from '../repositories/event.repository';
 import { findTeamById } from '../repositories/team.repository';
+import { assertEventOwner } from './event.service';
 import { AppError, ErrorCode } from '../utils/errors';
 import type { AttendanceCheckinInput, LateAssignInput } from '../validation';
 
@@ -87,13 +88,17 @@ export function shuffleArray<T>(array: T[]): T[] {
 export async function checkinAttendanceService(
   eventId: string,
   input: AttendanceCheckinInput,
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<TeamDocument> {
   const db = getFirestore();
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const team = await findTeamById(eventId, input.teamId);
   if (!team) {
@@ -154,7 +159,9 @@ export interface StartRaceResult {
 export async function triggerStaggeredStartService(
   eventId: string,
   callerUid: string,
-  forceStart = false
+  forceStart = false,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<StartRaceResult> {
   const db = getFirestore();
   const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
@@ -169,6 +176,9 @@ export async function triggerStaggeredStartService(
     }
 
     const eventData = eventSnap.data() || {};
+    const eventDoc = { ...eventData, id: eventId } as Parameters<typeof assertEventOwner>[0];
+    assertEventOwner(eventDoc, callerUid, callerRole, callerEventId);
+
     if (eventData['isStarted']) {
       throw new AppError(
         ErrorCode.RACE_ALREADY_STARTED,
@@ -319,7 +329,9 @@ export async function assignLateArrivalService(
   eventId: string,
   teamId: string,
   callerUid: string,
-  input?: LateAssignInput
+  input?: LateAssignInput,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<LateAssignResult> {
   const db = getFirestore();
   const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
@@ -334,6 +346,8 @@ export async function assignLateArrivalService(
     }
 
     const eventData = eventSnap.data() || {};
+    const eventDoc = { ...eventData, id: eventId } as Parameters<typeof assertEventOwner>[0];
+    assertEventOwner(eventDoc, callerUid, callerRole, callerEventId);
     if (!eventData['isStarted']) {
       throw new AppError(
         ErrorCode.RACE_NOT_STARTED,

@@ -19,9 +19,7 @@ import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
 import ParticipantDashboardScreen from './ParticipantDashboardScreen';
 import CrewDashboardScreen from './CrewDashboardScreen';
-import { Avatar, Card, Badge, SectionHeader, OfflineStatusChip } from '../components';
-
-import { mockEvent } from '../mockData';
+import { Avatar, Card, Badge, OfflineStatusChip } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
@@ -121,8 +119,8 @@ export default function DashboardScreen() {
             <Avatar initials={getInitials(user?.name)} role={role || 'participant'} size="lg" />
             <View style={styles.userMeta}>
               <Text style={styles.welcomeText}>Selamat Kembali,</Text>
-              <Text style={styles.userName}>{user?.name || 'Pengguna Demo'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'demo@xplorequest.my'}</Text>
+              <Text style={styles.userName}>{user?.name || 'Pengguna'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'admin@xplorequest.com'}</Text>
             </View>
           </View>
           <View style={styles.badgeRow}>
@@ -180,23 +178,6 @@ export default function DashboardScreen() {
                 </Card>
               </TouchableOpacity>
             ))}
-
-            <Card role="admin" style={styles.demoToggleCard} borderAccent="left">
-              <View style={styles.demoToggleRow}>
-                <View style={styles.demoToggleText}>
-                  <Text style={styles.demoToggleTitle}>Simulasi Mod Offline (SQLite Sync)</Text>
-                  <Text style={styles.demoToggleSubtitle}>
-                    Simulasikan kehilangan rangkaian untuk menguji barisan giliran imbasan offline.
-                  </Text>
-                </View>
-                <Switch
-                  value={isOffline}
-                  onValueChange={setIsOffline}
-                  trackColor={{ false: COLORS.border, true: COLORS.admin.accent }}
-                  thumbColor={isOffline ? '#FFFFFF' : '#f4f3f4'}
-                />
-              </View>
-            </Card>
           </View>
         ) : (
           /* Participant or default Active Event Details */
@@ -204,16 +185,16 @@ export default function DashboardScreen() {
             <View style={styles.eventInfoContainer}>
               <View style={styles.infoRow}>
                 <Ionicons name="trophy-outline" size={18} color={theme.colors.primary} />
-                <Text style={styles.eventTitle}>{activeEvent?.name || mockEvent.name}</Text>
+                <Text style={styles.eventTitle}>{activeEvent?.name || 'Tiada Acara Aktif'}</Text>
               </View>
               <View style={styles.infoRowSecondary}>
                 <Ionicons name="calendar-outline" size={16} color={COLORS.textMuted} />
-                <Text style={styles.eventDetailText}>{activeEvent?.date || mockEvent.date}</Text>
+                <Text style={styles.eventDetailText}>{activeEvent?.date || '-'}</Text>
               </View>
               <View style={styles.infoRowSecondary}>
                 <Ionicons name="pin-outline" size={16} color={COLORS.textMuted} />
                 <Text style={styles.eventDetailText} numberOfLines={1}>
-                  {activeEvent?.locationName || mockEvent.locationName}
+                  {activeEvent?.locationName || '-'}
                 </Text>
               </View>
             </View>
@@ -224,75 +205,15 @@ export default function DashboardScreen() {
 
 
 
-        {/* Roadmap Roadmap/Progress */}
-        <View style={styles.sectionContainer}>
-          <SectionHeader
-            title="Pelan Tindakan Demo (Roadmap)"
-            subtitle="Peringkat pembangunan modul untuk KL Event Crew."
-            role={role || 'participant'}
-          />
-          <View style={styles.roadmapContainer}>
-            {roadmap.map((step, index) => (
-              <View key={index} style={styles.roadmapItem}>
-                <View style={styles.stepIndicator}>
-                  {step.done ? (
-                    <View style={[styles.checkCircle, { backgroundColor: theme.colors.primary }]}>
-                      <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                    </View>
-                  ) : (
-                    <View style={styles.emptyCircle} />
-                  )}
-                  {index < roadmap.length - 1 && (
-                    <View style={[styles.stepConnector, step.done && { backgroundColor: theme.colors.primary }]} />
-                  )}
-                </View>
-                <View style={styles.stepDetails}>
-                  <Text style={[styles.stepLabel, step.done && styles.completedStepLabel]}>
-                    {step.label}
-                  </Text>
-                  {!step.done && step.stage && (
-                    <Text style={[styles.stageText, { color: theme.colors.accent }]}>
-                      Unlocks in {step.stage}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
         {/* Actions Showcase */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.showcaseButton, { borderColor: theme.colors.accent, marginBottom: SPACING.sm }]}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('AntiCheatExplainer' as any)}
-          >
-            <Ionicons name="shield-checkmark-outline" size={22} color={theme.colors.accent} />
-            <Text style={[styles.showcaseButtonText, { color: theme.colors.accent }]}>
-              Penjelasan Anti-Cheat QR Dinamik (ADM-07)
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.showcaseButton, { borderColor: theme.colors.primary }]}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('DesignSystemShowcase' as any)}
-          >
-
-            <Ionicons name="color-palette-outline" size={22} color={theme.colors.primary} />
-            <Text style={[styles.showcaseButtonText, { color: theme.colors.primary }]}>
-              Buka Panduan Reka Bentuk (Design System)
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.logoutButton}
             activeOpacity={0.8}
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutButtonText}>Log Keluar Sesi Demo</Text>
+            <Text style={styles.logoutButtonText}>Log Keluar</Text>
           </TouchableOpacity>
         </View>
 

@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   SafeAreaView,
   ScrollView,
-  ActivityIndicator,
   StatusBar,
   TouchableOpacity,
   TextInput,
-  Animated,
   Platform,
   Image,
   Alert,
@@ -22,103 +20,114 @@ import { PrimaryButton, SecondaryButton, Card, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { registerTeam } from '../services/teamService';
 import type { Team } from '../mockData';
+import { useApp } from '../AppContext';
+import RealCameraQRScanner from '../components/RealCameraQRScanner';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ParticipantJoin'>;
 
 export default function ParticipantJoinScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { events, teams, activeEvent, setSelectedEventId, login } = useApp();
 
-  // States: 'input' | 'scanning' | 'pending' | 'error'
-  const [status, setStatus] = useState<'input' | 'scanning' | 'pending' | 'error'>('input');
+  // States: 'input' | 'checkin' | 'pending' | 'error'
+  const [status, setStatus] = useState<'input' | 'checkin' | 'pending' | 'error'>('input');
   const [authError, setAuthError] = useState('');
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Form Fields State
-  const [eventCode, setEventCode] = useState('XT2026');
+  const [eventCode, setEventCode] = useState(activeEvent?.joinCode || activeEvent?.id || 'XT2026');
   const [teamName, setTeamName] = useState('');
-  const [leaderName, setLeaderName] = useState('');
-  const [memberCount, setMemberCount] = useState('4');
   const [registeredTeam, setRegisteredTeam] = useState<Team | null>(null);
 
-  // Animation value for simulated laser scan
-  const laserAnim = React.useRef(new Animated.Value(0)).current;
+  const handleStartSubmit = async () => {
+    const cleanEventCode = eventCode.trim().toUpperCase();
+    const cleanTeamName = teamName.trim();
 
-  useEffect(() => {
-    if (status === 'scanning') {
-      // Loop laser animation
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(laserAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(laserAnim, {
-            toValue: 0,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-
-      // Submit registration in background
-      let isMounted = true;
-      const count = parseInt(memberCount, 10) || 4;
-
-      registerTeam(eventCode.trim(), {
-        name: teamName.trim(),
-        leaderName: leaderName.trim() || undefined,
-        memberCount: count,
-        joinCode: eventCode.trim().toUpperCase(),
-      })
-        .then((team) => {
-          if (isMounted) {
-            setRegisteredTeam(team);
-            setStatus('pending');
-          }
-        })
-        .catch((err: unknown) => {
-          if (isMounted) {
-            const msg = err instanceof Error ? err.message : 'Pendaftaran gagal.';
-            setAuthError(msg);
-            setStatus('error');
-          }
-        });
-
-      return () => {
-        isMounted = false;
-        laserAnim.stopAnimation();
-      };
-    }
-  }, [status, eventCode, teamName, leaderName, memberCount, laserAnim]);
-
-  const handleStartSubmit = () => {
-    if (!eventCode.trim()) {
+    if (!cleanEventCode) {
       Alert.alert('Ralat', 'Sila masukkan Kod Acara.');
       return;
     }
-    if (!teamName.trim()) {
+    if (!cleanTeamName) {
       Alert.alert('Ralat', 'Sila masukkan Nama Kumpulan.');
-      return;
-    }
-    const count = parseInt(memberCount, 10);
-    if (isNaN(count) || count < 1 || count > 6) {
-      Alert.alert('Ralat', 'Jumlah ahli mestilah antara 1 hingga 6 orang.');
       return;
     }
 
     setAuthError('');
-    setStatus('scanning');
+    setLoading(true);
+
+    try {
+      // Find matching event
+      const targetEvent = events.find(
+        (e) => e.id.toUpperCase() === cleanEventCode || (e.joinCode && e.joinCode.toUpperCase() === cleanEventCode)
+      ) || activeEvent;
+
+      if (targetEvent) {
+        setSelectedEventId(targetEvent.id);
+      }
+
+      // Check for approved team in teams state (synced with Firestore)
+      const matchedTeam = teams.find(
+        (t) => t.name.trim().toLowerCase() === cleanTeamName.toLowerCase()
+      );
+
+      if (matchedTeam) {
+        setRegisteredTeam(matchedTeam);
+        if (matchedTeam.status === 'pending') {
+          setAuthError(`Pendaftaran kumpulan "${matchedTeam.name}" masih menantikan kelulusan penganjur.`);
+          setStatus('error');
+        } else {
+          // Approved team found! Move to checkin screen
+          setStatus('checkin');
+        }
+      } else {
+        // Check registration service fallback
+        const team = await registerTeam(cleanEventCode, {
+          name: cleanTeamName,
+          memberCount: 4,
+          joinCode: cleanEventCode,
+        });
+
+        setRegisteredTeam(team);
+        if (team.status === 'approved') {
+          setStatus('checkin');
+        } else {
+          setStatus('pending');
+        }
+      }
+    } catch (_err: unknown) {
+      setAuthError(
+        `Nama kumpulan "${cleanTeamName}" tidak ditemui dalam pendaftaran yang diluluskan bagi Kod Acara ${cleanEventCode}. Sila semak nama kumpulan yang didaftarkan.`
+      );
+      setStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScanSuccess = (_scannedData: string) => {
+    setShowCameraScanner(false);
+    
+    // Log in user and navigate to StaggeredStartScreen
+    if (registeredTeam) {
+      login('participant', {
+        id: `USR-${registeredTeam.id}`,
+        name: registeredTeam.leaderName || registeredTeam.name,
+        email: 'peserta@xplorequest.com',
+        role: 'participant',
+        teamId: registeredTeam.id,
+      });
+    }
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'StaggeredStart' }],
+    });
   };
 
   const handleBack = () => {
     navigation.goBack();
   };
-
-  // Interpolate laser position
-  const translateY = laserAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [10, 190],
-  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -150,9 +159,9 @@ export default function ParticipantJoinScreen() {
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={styles.title}>Daftar Kumpulan Baru</Text>
+                <Text style={styles.title}>Sertai Acara Kumpulan</Text>
                 <Text style={styles.subtitle}>
-                  Sila masukkan kod acara dan butiran kumpulan anda untuk memulakan pendaftaran perlumbaan.
+                  Sila masukkan Kod Acara dan Nama Kumpulan anda yang telah diluluskan oleh penganjur.
                 </Text>
               </View>
 
@@ -182,56 +191,59 @@ export default function ParticipantJoinScreen() {
                   />
                 </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>NAMA KETUA PASUKAN</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Contoh: Ali bin Abu"
-                    value={leaderName}
-                    onChangeText={setLeaderName}
-                    placeholderTextColor={COLORS.textMuted}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>JUMLAH AHLI KUMPULAN</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="4"
-                    value={memberCount}
-                    onChangeText={setMemberCount}
-                    keyboardType="numeric"
-                    maxLength={1}
-                    placeholderTextColor={COLORS.textMuted}
-                  />
-                </View>
-
                 <PrimaryButton
-                  label="Hantar Pendaftaran Kumpulan"
+                  label={loading ? "Menyemak..." : "Sertai Acara (Join Event)"}
                   onPress={handleStartSubmit}
+                  disabled={loading}
                   role="participant"
-                  icon={<Ionicons name="paper-plane-outline" size={20} color={COLORS.textLight} />}
+                  icon={<Ionicons name="log-in-outline" size={20} color={COLORS.textLight} />}
                   style={styles.submitBtn}
                 />
               </Card>
             </View>
           )}
 
-          {status === 'scanning' && (
-            <View style={styles.centeredContainer}>
-              <Text style={styles.scannerTitle}>Menghantar Pendaftaran Kumpulan...</Text>
-              <Text style={styles.scannerSubtitle}>Menyemak kod acara dan mengesahkan maklumat</Text>
+          {status === 'checkin' && (
+            <View style={styles.checkinContainer}>
+              {/* Top Back Button with Dashed Border */}
+              <TouchableOpacity
+                style={styles.dashedBackButton}
+                onPress={() => setStatus('input')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="arrow-back" size={18} color="#6B21A8" />
+                <Text style={styles.dashedBackButtonText}>Kembali</Text>
+              </TouchableOpacity>
 
-              {/* Viewfinder Animation Box */}
-              <View style={styles.viewfinderContainer}>
-                <View style={styles.viewfinder}>
-                  <Animated.View style={[styles.laserLine, { transform: [{ translateY }] }]} />
-                  <Ionicons name="scan" size={200} color="rgba(255,255,255,0.3)" style={styles.scanIcon} />
+              {/* Logo Box */}
+              <View style={styles.logoCardBox}>
+                <Image
+                  source={require('../assets/XploreQuest_Icon.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* Header Title */}
+              <Text style={styles.checkinTitle}>Daftar Masuk Hari Acara</Text>
+
+              {/* Scanner Box Card with Dashed Border */}
+              <View style={styles.checkinDashedCard}>
+                <Text style={styles.scanHeaderTitle}>Imbas QR Urus Setia</Text>
+                
+                <View style={styles.purpleScanIconCircle}>
+                  <Ionicons name="scan-outline" size={48} color="#FFFFFF" />
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setStatus('input')}>
-                <Text style={styles.cancelBtnText}>Batal</Text>
+              {/* Red/Pink Dashed Start Scan Button */}
+              <TouchableOpacity
+                style={styles.startScanDashedButton}
+                onPress={() => setShowCameraScanner(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="camera-outline" size={22} color="#DC2626" style={{ marginRight: 8 }} />
+                <Text style={styles.startScanDashedButtonText}>📷 Imbas QR Pelepasan Mula</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -259,12 +271,12 @@ export default function ParticipantJoinScreen() {
 
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Ketua Pasukan:</Text>
-                    <Text style={styles.detailValue}>{registeredTeam?.leaderName || leaderName || 'N/A'}</Text>
+                    <Text style={styles.detailValue}>{registeredTeam?.leaderName || 'Diisi dalam Borang Web'}</Text>
                   </View>
 
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Jumlah Ahli:</Text>
-                    <Text style={styles.detailValue}>{registeredTeam?.memberCount || memberCount} Orang</Text>
+                    <Text style={styles.detailValue}>{registeredTeam?.memberCount || 4} Orang</Text>
                   </View>
 
                   <View style={styles.detailRow}>
@@ -301,6 +313,15 @@ export default function ParticipantJoinScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* Real Camera QR Scanner Component */}
+        <RealCameraQRScanner
+          visible={showCameraScanner}
+          title="Imbas QR Pelepasan Mula"
+          subtitle="Halakan kamera ke Kod QR Kru / Urus Setia di Checkpoint Pelepasan Mula"
+          onClose={() => setShowCameraScanner(false)}
+          onScanSuccess={handleScanSuccess}
+        />
       </View>
     </SafeAreaView>
   );
@@ -309,10 +330,9 @@ export default function ParticipantJoinScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FAF5FF', // Light purple tint background matching UI photo
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0,
   },
-
   scrollContainer: {
     padding: SPACING.md,
     flexGrow: 1,
@@ -384,67 +404,107 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: SPACING.sm,
   },
+
+  /* Checkin Day UI Styles (matching user screenshot) */
+  checkinContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    width: '100%',
+  },
+  dashedBackButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#6B21A8',
+    borderRadius: RADIUS.md,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginBottom: SPACING.lg,
+    backgroundColor: '#F3E8FF',
+  },
+  dashedBackButtonText: {
+    color: '#6B21A8',
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontSize: 13,
+    marginLeft: 4,
+  },
+  logoCardBox: {
+    width: 90,
+    height: 90,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E9D5FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    ...SHADOWS.sm,
+  },
+  logoImage: {
+    width: 65,
+    height: 65,
+  },
+  checkinTitle: {
+    fontSize: 22,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#1E1B4B',
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  checkinDashedCard: {
+    width: '100%',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#C084FC',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  scanHeaderTitle: {
+    fontSize: 18,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#4C1D95',
+    marginBottom: SPACING.lg,
+  },
+  purpleScanIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#7E22CE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.md,
+  },
+  startScanDashedButton: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#EF4444',
+    borderRadius: 16,
+    backgroundColor: '#FEF2F2',
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
+  },
+  startScanDashedButtonText: {
+    fontSize: 15,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#DC2626',
+  },
+
   centeredContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.xl,
-  },
-  scannerTitle: {
-    fontSize: 18,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.text,
-  },
-  scannerSubtitle: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 4,
-    marginBottom: SPACING.xl,
-  },
-  viewfinderContainer: {
-    width: 250,
-    height: 250,
-    borderRadius: RADIUS.md,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: COLORS.participant.primary,
-    ...SHADOWS.md,
-  },
-  viewfinder: {
-    width: 200,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  laserLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#22C55E',
-    shadowColor: '#22C55E',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 10,
-  },
-  scanIcon: {
-    position: 'absolute',
-  },
-  cancelBtn: {
-    marginTop: SPACING.xl,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xl,
-  },
-  cancelBtnText: {
-    color: COLORS.danger,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    fontSize: 14,
   },
   statusCard: {
     width: '100%',
@@ -507,3 +567,4 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
 });
+

@@ -47,6 +47,13 @@ export interface EventConfig {
   totalCheckpoints: number;
 }
 
+export interface PaymentDetails {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  note?: string;
+}
+
 /** EventConfig as stored in Firestore root document `events/{eventId}` */
 export type EventDocument = EventConfig &
   AuditFields & {
@@ -66,7 +73,36 @@ export type EventDocument = EventConfig &
     rules?: RaceRules;
     /** Admin UID who created the event */
     createdBy: string;
+    /** Unique URL-safe slug for web pre-registration form address */
+    urlSlug?: string;
+    /** Registration entry fee amount in MYR (0 = free) */
+    entryFee?: number;
+    /** Payment bank name, account number, payee info */
+    paymentBankDetails?: string;
+    /** Structured organizer payment details */
+    paymentDetails?: PaymentDetails;
+    /** Storage URL for DuitNow/Bank QR image */
+    paymentQrImageUrl?: string | null;
+    /** Storage URL for top event banner image */
+    bannerImageUrl?: string | null;
+    /** Soft-deletion flag */
+    isArchived?: boolean;
   };
+
+/** Safe public event representation returned to unauthenticated web form callers */
+export interface PublicSafeEventView {
+  id: string;
+  name: string;
+  date: string;
+  locationName: string;
+  bannerImageUrl: string | null;
+  entryFee: number;
+  paymentBankDetails: string;
+  paymentDetails?: PaymentDetails | null;
+  paymentQrImageUrl: string | null;
+  maxTeamSize: number;
+  urlSlug: string;
+}
 
 /** Sensitive Event Credentials stored in `events/{eventId}/secrets/config` (Admin only read) */
 export interface EventSecretsDocument extends AuditFields {
@@ -185,6 +221,25 @@ export type TeamDocument = Team &
     lastScanLocation?: LocationPoint | null;
   };
 
+export type PreRegistrationStatus = 'pending' | 'approved' | 'rejected';
+
+/** Pre-Registration submission as stored in Firestore `events/{eventId}/preRegistrations/{preRegId}` */
+export interface PreRegistrationDocument extends AuditFields {
+  id: string;
+  eventId: string;
+  teamName: string;
+  leaderName: string;
+  leaderWhatsApp: string;
+  memberNames: string[];
+  paymentReceiptUrl: string;
+  paymentReceiptStoragePath: string;
+  status: PreRegistrationStatus;
+  teamId?: string;
+  ipAddress?: string;
+  submittedAt: string;
+  createdBy?: string;
+}
+
 export interface ScanLogDocument extends AuditFields {
   id: string;
   eventId: string;
@@ -212,6 +267,7 @@ export interface Checkpoint {
   statusPerTeam: Record<string, CheckpointStatus>;
   isStart?: boolean;
   isFinish?: boolean;
+  isAttendanceStation?: boolean;
   isHiddenInMap?: boolean;
 }
 
@@ -347,6 +403,7 @@ export interface UserProfile {
   name: string;
   role: UserRole;
   email?: string;
+  organization?: string;
   avatarUrl?: string;
   teamId?: string;
   teamName?: string;
@@ -428,3 +485,4 @@ export interface RaceRules {
   /** Points deducted per minute past max race duration (default: 5) */
   latePenaltyPerMinute?: number;
 }
+

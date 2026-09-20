@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,11 +21,34 @@ import { Team } from '../mockData';
 import { Card, PrimaryButton, Badge, OfflineStatusChip, EmptyState, CustomModalDialog } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
+import { subscribeToEventTeams } from '../services/teamService';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AdminTeamsManager'>;
 
 export default function AdminTeamsManagerScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { teams, setTeams, theme } = useApp();
+  const { activeEvent, teams, setTeams, theme, user } = useApp();
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!activeEvent) return;
+    setLoading(true);
+
+    const unsubscribe = subscribeToEventTeams(
+      activeEvent.id,
+      (newTeams) => {
+        setTeams(newTeams);
+        setLoading(false);
+      },
+      (_err) => {
+        setLoading(false);
+      },
+      user?.idToken
+    );
+
+    return () => unsubscribe();
+  }, [activeEvent, user?.idToken]);
 
   // Expanded card state
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);

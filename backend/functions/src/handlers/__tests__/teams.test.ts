@@ -243,6 +243,7 @@ describe('Teams Handler', () => {
         'EVT-001',
         'admin',
         'admin-123',
+        undefined,
         undefined
       );
     });
@@ -259,7 +260,8 @@ describe('Teams Handler', () => {
         'EVT-001',
         'crew',
         'crew-123',
-        undefined
+        undefined,
+        'EVT-001'
       );
     });
   });
@@ -320,7 +322,9 @@ describe('Teams Handler', () => {
         'EVT-001',
         'TEAM-001',
         expect.objectContaining({ name: 'Harimau Malaya' }),
-        'admin-123'
+        'admin-123',
+        'admin',
+        undefined
       );
     });
   });
@@ -361,7 +365,9 @@ describe('Teams Handler', () => {
         'EVT-001',
         'TEAM-001',
         'approved',
-        'admin-123'
+        'admin-123',
+        'admin',
+        undefined
       );
     });
 
@@ -446,7 +452,7 @@ describe('Teams Handler', () => {
       expect(res.status).toBe(200);
       const body = res.body as ApiSuccess<{ deleted: boolean; eventId: string; teamId: string }>;
       expect(body.data.deleted).toBe(true);
-      expect(mockDeleteTeamService).toHaveBeenCalledWith('EVT-001', 'TEAM-001');
+      expect(mockDeleteTeamService).toHaveBeenCalledWith('EVT-001', 'TEAM-001', 'admin-123', 'admin', undefined);
     });
   });
 });

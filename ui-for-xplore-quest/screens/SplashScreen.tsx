@@ -94,7 +94,7 @@ export default function SplashScreen() {
         <Animated.View style={[styles.footer, { opacity: textFadeAnim }]}>
           <Text style={styles.tagline}>Find your way. Own the race</Text>
           <Text style={styles.clientLabel}>
-            Demo App
+            Explorace Platform
           </Text>
           <View style={styles.tapPromptContainer}>
             <Text style={styles.tapPrompt}>Click to continue</Text>

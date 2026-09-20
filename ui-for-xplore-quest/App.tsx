@@ -23,6 +23,7 @@ import AdminLeaderboardScreen from './screens/AdminLeaderboardScreen';
 import AntiCheatExplainerScreen from './screens/AntiCheatExplainerScreen';
 import AdminEventDetailScreen from './screens/AdminEventDetailScreen';
 import AdminTeamsManagerScreen from './screens/AdminTeamsManagerScreen';
+import AdminPreRegistrationsScreen from './screens/AdminPreRegistrationsScreen';
 
 import { getThemeForRole, UserRole } from './theme';
 
@@ -46,6 +47,7 @@ export type RootStackParamList = {
   AdminCreateEvent: undefined;
   AdminEventDetail: undefined;
   AdminTeamsManager: undefined;
+  AdminPreRegistrations: undefined;
   AdminGeofenceDesigner: undefined;
   AdminCheckpointManager: undefined;
   AdminRulesConfig: undefined;
@@ -107,6 +109,7 @@ export default function App() {
           <Stack.Screen name="AdminCreateEvent" component={AdminCreateEventScreen} />
           <Stack.Screen name="AdminEventDetail" component={AdminEventDetailScreen} />
           <Stack.Screen name="AdminTeamsManager" component={AdminTeamsManagerScreen} />
+          <Stack.Screen name="AdminPreRegistrations" component={AdminPreRegistrationsScreen} />
           <Stack.Screen name="AdminGeofenceDesigner" component={AdminGeofenceDesignerScreen} />
 
 
@@ -139,7 +142,6 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
-      <DemoMenu />
     </AppContextProvider>
   );
 }

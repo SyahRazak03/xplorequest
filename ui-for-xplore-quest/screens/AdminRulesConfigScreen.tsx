@@ -20,11 +20,13 @@ import { useApp } from '../AppContext';
 import { Card, PrimaryButton, SecondaryButton, Badge, CustomModalDialog } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
+import { updateEventRulesService } from '../services/eventService';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
 export default function AdminRulesConfigScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { rules, setRules } = useApp();
+  const { rules, setRules, activeEvent, selectedEventId, user } = useApp();
 
   // Local state for the form inputs
   const [maxRaceTime, setMaxRaceTime] = useState(rules.maxRaceTime);
@@ -40,8 +42,8 @@ export default function AdminRulesConfigScreen() {
   const [bonusPointsEnabled, setBonusPointsEnabled] = useState(rules.bonusPointsEnabled);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleSave = () => {
-    setRules({
+  const handleSave = async () => {
+    const updatedRules = {
       maxRaceTime,
       taskTimeLimit,
       latePenaltyMin,
@@ -52,8 +54,12 @@ export default function AdminRulesConfigScreen() {
       taskTimeLimitEnabled,
       pointPenaltyEnabled,
       bonusPointsEnabled,
-    });
+    };
 
+    setRules(updatedRules);
+
+    const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
+    await updateEventRulesService(eventId, updatedRules, user?.idToken);
 
     setModalVisible(true);
   };
@@ -265,7 +271,7 @@ export default function AdminRulesConfigScreen() {
           <View style={styles.scenarioBox}>
             <View style={styles.scenarioHeader}>
               <Ionicons name="information-circle-outline" size={16} color={COLORS.admin.primary} />
-              <Text style={styles.scenarioHeaderText}>SENARIO ACARA MOCK</Text>
+              <Text style={styles.scenarioHeaderText}>SENARIO SIMULASI PEMARKAHAN</Text>
             </View>
             <Text style={styles.scenarioScenarioText}>
               Sebuah pasukan menamatkan acara <Text style={styles.boldText}>lewat 10 minit</Text> dan terpaksa <Text style={styles.boldText}>melangkau 1 tugasan</Text> pos kawalan.

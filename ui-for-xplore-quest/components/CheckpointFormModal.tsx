@@ -41,6 +41,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
   const [cpType, setCpType] = useState<'standard' | 'start' | 'finish'>('standard');
   const [scorePoints, setScorePoints] = useState('150');
   const [isHiddenInMap, setIsHiddenInMap] = useState(false);
+  const [isAttendanceStation, setIsAttendanceStation] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   // Populate data when modal opens in edit mode
@@ -54,6 +55,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
         setCpType(checkpoint.isStart ? 'start' : checkpoint.isFinish ? 'finish' : 'standard');
         setScorePoints(checkpoint.scorePoints.toString());
         setIsHiddenInMap(!!checkpoint.isHiddenInMap);
+        setIsAttendanceStation(!!checkpoint.isAttendanceStation);
         setImageUri(null); // Local picked image reset
       } else {
         // Reset inputs for add mode
@@ -64,6 +66,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
         setCpNumber((checkpointsCount + 1).toString());
         setScorePoints('150');
         setIsHiddenInMap(false);
+        setIsAttendanceStation(false);
         setImageUri(null);
       }
     }
@@ -131,6 +134,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
       statusPerTeam: checkpoint?.statusPerTeam || {},
       isStart: cpType === 'start',
       isFinish: cpType === 'finish',
+      isAttendanceStation,
       isHiddenInMap,
     });
 
@@ -248,6 +252,37 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                 placeholder="Apakah cabaran fizikal yang mesti diselesaikan oleh pasukan?"
                 multiline={true}
                 numberOfLines={3}
+              />
+            </View>
+
+            {/* Attendance Station Switch */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: isAttendanceStation ? '#FEF3C7' : COLORS.background,
+              borderRadius: RADIUS.md,
+              padding: SPACING.md,
+              marginVertical: SPACING.xs,
+              borderWidth: 1,
+              borderColor: isAttendanceStation ? COLORS.warning : COLORS.border,
+            }}>
+              <View style={{ flex: 1, marginRight: SPACING.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Ionicons name="clipboard-outline" size={18} color={isAttendanceStation ? COLORS.warning : COLORS.admin.primary} />
+                  <Text style={{ fontSize: 13, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text }}>
+                    Stesen Kehadiran (Attendance Station)
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 15 }}>
+                  Pos utama untuk pendaftaran pendaftaran dan kebenaran &apos;Mula Perlumbaan&apos;. Hadkan 1 stesen setiap acara.
+                </Text>
+              </View>
+              <Switch
+                value={isAttendanceStation}
+                onValueChange={setIsAttendanceStation}
+                trackColor={{ false: COLORS.border, true: COLORS.warning }}
+                thumbColor={isAttendanceStation ? '#FFFFFF' : '#F4F4F5'}
               />
             </View>
 

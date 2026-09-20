@@ -16,7 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
-import { mockCheckpoints, mockEvent } from '../mockData';
+import { Checkpoint } from '../mockData';
+import { useApp } from '../AppContext';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import PendingBlockedModal from './PendingBlockedModal';
 import CelebrationModal from './CelebrationModal';
@@ -31,6 +32,7 @@ type FinishLineScreenRouteProp = RouteProp<RootStackParamList, 'FinishLine'>;
 export default function FinishLineScreen() {
   const navigation = useNavigation<FinishLineScreenNavigationProp>();
   const route = useRoute<FinishLineScreenRouteProp>();
+  const { checkpoints: appCheckpoints, activeEvent } = useApp();
   
   // Extract parameters from route
   const { completedCps = [], skippedCps = [], points = 250, elapsedTime = 5075 } = route.params || {};
@@ -84,8 +86,8 @@ export default function FinishLineScreen() {
   };
 
   const handleScanFinishQR = () => {
-    // Check if any of the CP-001 to CP-006 are not completed
-    const requiredCps = mockCheckpoints.filter((cp) => cp.id !== 'CP-TAMAT' && cp.id !== 'CP-START');
+    // Check if any of the non-finish/non-start CPs are not completed
+    const requiredCps = appCheckpoints.filter((cp) => !cp.isFinish && !cp.isStart);
     const firstPending = requiredCps.find((cp) => !completedCps.includes(cp.id));
 
     if (firstPending) {
@@ -112,7 +114,7 @@ export default function FinishLineScreen() {
   const navigateToResults = () => {
     setCelebrationVisible(false);
     navigation.navigate('PersonalResults', {
-      finalPoints: points + 300, // Include CP-008 score points
+      finalPoints: points + 300, // Include CP score points
       elapsedTime: localTimer,
     });
   };
@@ -128,6 +130,18 @@ export default function FinishLineScreen() {
     if (completedCps.includes(cpId)) return COLORS.success;
     if (skippedCps.includes(cpId)) return COLORS.pending;
     return COLORS.textMuted;
+  };
+
+  const finishCp: Checkpoint = appCheckpoints.find(cp => cp.isFinish) || {
+    id: 'CP-TAMAT',
+    name: 'Astaka Garisan Penamat',
+    latitude: 3.178,
+    longitude: 101.7068,
+    clueText: '',
+    taskDescription: '',
+    scorePoints: 300,
+    statusPerTeam: {},
+    isFinish: true,
   };
 
   return (
@@ -157,14 +171,14 @@ export default function FinishLineScreen() {
 
         {/* CP Info Block */}
         <View style={styles.infoCard}>
-          <Text style={[styles.cpCode, { color: theme.colors.accent }]}>POS CP-08 (AKHIR)</Text>
-          <Text style={[styles.cpTitle, { color: theme.colors.text }]}>Astaka Garisan Penamat</Text>
+          <Text style={[styles.cpCode, { color: theme.colors.accent }]}>POS CP-AKHIR</Text>
+          <Text style={[styles.cpTitle, { color: theme.colors.text }]}>{finishCp.name}</Text>
           
           <View style={styles.divider} />
 
           <View style={styles.detailItem}>
             <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
-            <Text style={styles.detailText}>{mockEvent.locationName}</Text>
+            <Text style={styles.detailText}>{activeEvent?.locationName || 'Lokasi Acara'}</Text>
           </View>
           
           <View style={styles.detailItem}>
@@ -195,10 +209,10 @@ export default function FinishLineScreen() {
         {/* Checkpoint checklist overview card */}
         <Card role="participant" title="Status Senarai Semak Pasukan" style={styles.checklistCard}>
           <Text style={styles.checklistSubtitle}>
-            Semua 7 checkpoint terdahulu mestilah bertanda hijau (Selesai) sebelum pendaftaran masuk dibenarkan.
+            Semua checkpoint terdahulu mestilah bertanda hijau (Selesai) sebelum pendaftaran masuk dibenarkan.
           </Text>
           <View style={styles.checklistGrid}>
-            {mockCheckpoints.filter(cp => cp.id !== 'CP-008').map((cp, idx) => {
+            {appCheckpoints.filter(cp => !cp.isFinish).map((cp, idx) => {
               const status = getCpStatusLabel(cp.id);
               const color = getCpStatusColor(cp.id);
               return (
@@ -238,7 +252,7 @@ export default function FinishLineScreen() {
       {/* Camera/QR Scanner Simulation screen */}
       <QRScanSimulationScreen
         visible={scannerVisible}
-        checkpoint={mockCheckpoints.find(cp => cp.id === 'CP-TAMAT')!}
+        checkpoint={finishCp}
         onClose={() => setScannerVisible(false)}
         onScanSuccess={handleScanSuccess}
       />

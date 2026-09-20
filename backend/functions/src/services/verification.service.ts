@@ -13,13 +13,15 @@ import * as crypto from 'crypto';
 
 import * as admin from 'firebase-admin';
 
-import { getFirestore, getStorage } from '../config/firebase';
+import { getFirestore, getStorageBucket } from '../config/firebase';
 import type { AuthenticatedUser } from '../middleware/auth';
 import type {
   CheckpointDocument,
   EventDocument,
   TeamDocument,
 } from '../models';
+import { findEventById } from '../repositories/event.repository';
+import { assertEventOwner } from './event.service';
 import { AppError, ErrorCode } from '../utils/errors';
 import { haversineDistanceMeters } from '../utils/geometry';
 import type {
@@ -28,13 +30,13 @@ import type {
   UploadPhotoProofInput,
 } from '../validation';
 
+import { MAX_IMAGE_SIZE_BYTES, validateImageMagicBytes } from '../utils/image';
+
 const EVENTS_COLLECTION = 'events';
 const TEAMS_SUBCOLLECTION = 'teams';
 const CHECKPOINTS_SUBCOLLECTION = 'checkpoints';
 const SCAN_LOGS_SUBCOLLECTION = 'scanLogs';
 const PROOFS_SUBCOLLECTION = 'photoProofs';
-
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export interface PhotoProofResult {
   photoProofUrl: string;
@@ -67,31 +69,6 @@ export interface ApplyPenaltyResult {
   reason: string;
 }
 
-/**
- * Validates binary image buffer signatures (magic bytes).
- */
-function validateImageMagicBytes(buffer: Buffer, declaredMime: string): boolean {
-  if (buffer.length < 12) return false;
-
-  if (declaredMime === 'image/jpeg') {
-    return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
-  }
-  if (declaredMime === 'image/png') {
-    return (
-      buffer[0] === 0x89 &&
-      buffer[1] === 0x50 &&
-      buffer[2] === 0x4e &&
-      buffer[3] === 0x47
-    );
-  }
-  if (declaredMime === 'image/webp') {
-    const riff = buffer.subarray(0, 4).toString('ascii');
-    const webp = buffer.subarray(8, 12).toString('ascii');
-    return riff === 'RIFF' && webp === 'WEBP';
-  }
-  return false;
-}
-
 // ── 1. Upload Photo Proof (FR-08) ─────────────────────────────────────────────
 
 export async function uploadPhotoProofService(
@@ -101,6 +78,13 @@ export async function uploadPhotoProofService(
   caller: AuthenticatedUser,
   input: UploadPhotoProofInput
 ): Promise<PhotoProofResult> {
+  const event = await findEventById(eventId);
+  if (!event) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  assertEventOwner(event, caller.uid, caller.role, caller.eventId);
+
   // Authorization check: Admin or Assigned Crew
   if (caller.role === 'crew') {
     if (caller.eventId !== eventId || caller.checkpointId !== checkpointId) {
@@ -142,7 +126,7 @@ export async function uploadPhotoProofService(
   const nowMs = Date.now();
   const storagePath = `proofs/${eventId}/${teamId}/${checkpointId}/${nowMs}_${fileHash}.${extension}`;
 
-  const bucket = getStorage().bucket();
+  const bucket = getStorageBucket();
   const file = bucket.file(storagePath);
 
   await file.save(imageBuffer, {
@@ -250,6 +234,7 @@ export async function processOverrideCore(
       throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
     }
     const eventData = eventSnap.data() as EventDocument;
+    assertEventOwner({ ...eventData, id: eventId }, caller.uid, caller.role, caller.eventId);
 
     if (!eventData.isStarted) {
       throw new AppError(ErrorCode.RACE_NOT_STARTED, 'Perlumbaan belum bermula.');
@@ -445,6 +430,7 @@ export async function processPenaltyCore(
       throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
     }
     const eventData = eventSnap.data() as EventDocument;
+    assertEventOwner({ ...eventData, id: eventId }, caller.uid, caller.role, caller.eventId);
 
     if (!teamSnap.exists) {
       throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');

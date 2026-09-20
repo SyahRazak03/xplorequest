@@ -29,6 +29,7 @@ export interface CreateCheckpointPayload {
   geofenceRadiusMeters?: number;
   isStart?: boolean;
   isFinish?: boolean;
+  isAttendanceStation?: boolean;
   isHiddenInMap?: boolean;
   orderIndex?: number;
 }

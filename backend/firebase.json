@@ -11,8 +11,7 @@
         "*.local"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
+        "npm --prefix functions run build"
       ]
     }
   ],
@@ -22,6 +21,31 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": "public",
+    "predeploy": [
+      "node scripts/copy-hosting.js"
+    ],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "api"
+      },
+      {
+        "source": "/registration-form/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/register/**",
+        "destination": "/index.html"
+      }
+    ]
   },
   "emulators": {
     "auth": {

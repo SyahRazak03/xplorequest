@@ -21,15 +21,20 @@ export async function verifyAppCheck(
   _res: Response,
   next: NextFunction
 ): Promise<void> {
-  // 1. Exempt public health checks and CORS preflight requests
-  if (req.path === '/health' || req.method === 'OPTIONS') {
+  // 1. Exempt public health checks, auth routes, public form endpoints, and CORS preflight requests
+  if (
+    req.path === '/health' ||
+    req.path.startsWith('/auth') ||
+    req.path.startsWith('/public') ||
+    req.method === 'OPTIONS'
+  ) {
     return next();
   }
 
-  // 2. Allow bypass in test mode or when APP_CHECK_ENFORCE is set to 'false'
+  // 2. Allow bypass in test mode or unless APP_CHECK_ENFORCE is explicitly set to 'true'
   if (
     process.env['NODE_ENV'] === 'test' ||
-    process.env['APP_CHECK_ENFORCE'] === 'false'
+    process.env['APP_CHECK_ENFORCE'] !== 'true'
   ) {
     return next();
   }

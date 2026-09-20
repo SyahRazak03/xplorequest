@@ -11,7 +11,7 @@
  *   • Race-integrity guards (all mutations blocked when event.isStarted === true)
  */
 
-import type { CheckpointDocument } from '../models';
+import type { CheckpointDocument, UserRole } from '../models';
 import {
   createCheckpoint,
   deleteCheckpoint,
@@ -24,6 +24,7 @@ import {
   findEventById,
   updateEvent,
 } from '../repositories/event.repository';
+import { assertEventOwner } from './event.service';
 import { findTeamById, findTeamsByEvent } from '../repositories/team.repository';
 import { AppError, ErrorCode } from '../utils/errors';
 import {
@@ -51,6 +52,7 @@ export type ParticipantCheckpointView =
       orderIndex: number;
       isStart?: boolean;
       isFinish?: boolean;
+      isAttendanceStation?: boolean;
       isLocked: true;
     };
 
@@ -59,12 +61,16 @@ export type ParticipantCheckpointView =
 export async function saveBoundaryService(
   eventId: string,
   boundary: GeoPoint[],
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<{ eventId: string; boundary: GeoPoint[] }> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   if (event.isStarted) {
     throw new AppError(
@@ -95,11 +101,17 @@ export async function saveBoundaryService(
 export async function createCheckpointService(
   eventId: string,
   input: CreateCheckpointInput,
-  _callerUid?: string
+  callerUid?: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<{ checkpoint: CheckpointDocument; warning?: string }> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid) {
+    assertEventOwner(event, callerUid, callerRole, callerEventId);
   }
 
   if (event.isStarted) {
@@ -115,7 +127,15 @@ export async function createCheckpointService(
   if (input.isFinish) {
     const existingFinish = existingCheckpoints.find((cp) => cp.isFinish);
     if (existingFinish) {
-      await updateCheckpoint(eventId, existingFinish.id, { isFinish: false }, _callerUid);
+      await updateCheckpoint(eventId, existingFinish.id, { isFinish: false }, callerUid);
+    }
+  }
+
+  // Enforce singular isAttendanceStation flag
+  if (input.isAttendanceStation) {
+    const existingAttendance = existingCheckpoints.find((cp) => cp.isAttendanceStation);
+    if (existingAttendance) {
+      await updateCheckpoint(eventId, existingAttendance.id, { isAttendanceStation: false }, callerUid);
     }
   }
 
@@ -151,6 +171,7 @@ export async function createCheckpointService(
     geofenceRadiusMeters: input.geofenceRadiusMeters ?? 50,
     isStart: Boolean(input.isStart),
     isFinish: Boolean(input.isFinish),
+    isAttendanceStation: Boolean(input.isAttendanceStation),
     isHiddenInMap: Boolean(input.isHiddenInMap),
     orderIndex,
     statusPerTeam: {},
@@ -167,12 +188,17 @@ export async function createCheckpointService(
 export async function listCheckpointsService(
   eventId: string,
   callerRole: string,
-  _callerUid?: string,
-  callerTeamId?: string
+  callerUid?: string,
+  callerTeamId?: string,
+  callerEventId?: string
 ): Promise<CheckpointDocument[] | ParticipantCheckpointView[]> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
+    assertEventOwner(event, callerUid, callerRole as UserRole, callerEventId);
   }
 
   const checkpoints = await findCheckpointsByEvent(eventId);
@@ -214,6 +240,7 @@ export async function listCheckpointsService(
       orderIndex: cp.orderIndex,
       isStart: cp.isStart,
       isFinish: cp.isFinish,
+      isAttendanceStation: cp.isAttendanceStation,
       isLocked: true as const,
     };
   });
@@ -225,9 +252,19 @@ export async function getCheckpointService(
   eventId: string,
   checkpointId: string,
   callerRole: string,
-  _callerUid?: string,
-  callerTeamId?: string
+  callerUid?: string,
+  callerTeamId?: string,
+  callerEventId?: string
 ): Promise<CheckpointDocument | ParticipantCheckpointView> {
+  const event = await findEventById(eventId);
+  if (!event) {
+    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
+    assertEventOwner(event, callerUid, callerRole as UserRole, callerEventId);
+  }
+
   const checkpoint = await findCheckpointById(eventId, checkpointId);
   if (!checkpoint) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
@@ -258,6 +295,7 @@ export async function getCheckpointService(
     orderIndex: checkpoint.orderIndex,
     isStart: checkpoint.isStart,
     isFinish: checkpoint.isFinish,
+    isAttendanceStation: checkpoint.isAttendanceStation,
     isLocked: true as const,
   };
 }
@@ -268,12 +306,16 @@ export async function updateCheckpointService(
   eventId: string,
   checkpointId: string,
   input: UpdateCheckpointInput,
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<{ checkpoint: CheckpointDocument; warning?: string }> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   if (event.isStarted) {
     throw new AppError(
@@ -293,6 +335,15 @@ export async function updateCheckpointService(
     const otherFinish = checkpoints.find((cp) => cp.isFinish && cp.id !== checkpointId);
     if (otherFinish) {
       await updateCheckpoint(eventId, otherFinish.id, { isFinish: false }, callerUid);
+    }
+  }
+
+  // Enforce singular isAttendanceStation flag
+  if (input.isAttendanceStation && !existing.isAttendanceStation) {
+    const checkpoints = await findCheckpointsByEvent(eventId);
+    const otherAttendance = checkpoints.find((cp) => cp.isAttendanceStation && cp.id !== checkpointId);
+    if (otherAttendance) {
+      await updateCheckpoint(eventId, otherAttendance.id, { isAttendanceStation: false }, callerUid);
     }
   }
 
@@ -320,12 +371,16 @@ export async function updateCheckpointService(
 export async function reorderCheckpointsService(
   eventId: string,
   checkpointIds: string[],
-  callerUid: string
+  callerUid: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<CheckpointDocument[]> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
   }
+
+  assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   if (event.isStarted) {
     throw new AppError(
@@ -349,11 +404,18 @@ export async function reorderCheckpointsService(
 export async function deleteCheckpointService(
   eventId: string,
   checkpointId: string,
-  force = false
+  force = false,
+  callerUid?: string,
+  callerRole?: UserRole,
+  callerEventId?: string
 ): Promise<void> {
   const event = await findEventById(eventId);
   if (!event) {
     throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+  }
+
+  if (callerUid) {
+    assertEventOwner(event, callerUid, callerRole, callerEventId);
   }
 
   if (event.isStarted) {

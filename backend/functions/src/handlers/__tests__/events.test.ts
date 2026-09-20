@@ -383,17 +383,18 @@ describe('Events Handler', () => {
       expect(res.status).toBe(404);
     });
 
-    it('returns 200 with crewPinCode for admin', async () => {
+    it('returns 200 with crewPinCode and marshalId for admin', async () => {
       const app = buildApp({ role: 'admin' });
-      mockGetCrewPinService.mockResolvedValueOnce({ crewPinCode: '7842' });
+      mockGetCrewPinService.mockResolvedValueOnce({ crewPinCode: '7842', marshalId: 'USR-CREW-002' });
 
       const res = await request(app).get('/events/EVT-001/crew-pin');
 
       expect(res.status).toBe(200);
-      const body = res.body as ApiSuccess<{ crewPinCode: string }>;
+      const body = res.body as ApiSuccess<{ crewPinCode: string; marshalId: string | null }>;
       expect(body.success).toBe(true);
       expect(body.data.crewPinCode).toBe('7842');
-      expect(mockGetCrewPinService).toHaveBeenCalledWith('EVT-001');
+      expect(body.data.marshalId).toBe('USR-CREW-002');
+      expect(mockGetCrewPinService).toHaveBeenCalledWith('EVT-001', 'admin-uid-001');
     });
   });
 

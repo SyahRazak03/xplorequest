@@ -204,16 +204,18 @@ export default function QRScanSimulationScreen({
               </View>
 
               {/* Developer Dev Bypass Override Button */}
-              <View style={styles.bypassContainer}>
-                <TouchableOpacity
-                  style={styles.bypassButton}
-                  onPress={triggerSuccess}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="construct-outline" size={16} color="rgba(255, 255, 255, 0.7)" />
-                  <Text style={styles.bypassButtonText}>Pintas Imbasan (Demo Dev)</Text>
-                </TouchableOpacity>
-              </View>
+              {__DEV__ && (
+                <View style={styles.bypassContainer}>
+                  <TouchableOpacity
+                    style={styles.bypassButton}
+                    onPress={triggerSuccess}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="construct-outline" size={16} color="rgba(255, 255, 255, 0.7)" />
+                    <Text style={styles.bypassButtonText}>Pintas Imbasan (Dev)</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </SafeAreaView>
           </>
         ) : (

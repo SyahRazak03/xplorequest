@@ -25,7 +25,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import { useApp } from '../AppContext';
 import { RootStackParamList } from '../App';
-import { mockEvent, mockCheckpoints } from '../mockData';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
 const { height } = Dimensions.get('window');
@@ -34,6 +33,8 @@ const { height } = Dimensions.get('window');
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 export const DemoMenu = () => {
+  if (!__DEV__) return null;
+
   const {
     login,
     logout,
@@ -58,7 +59,7 @@ export const DemoMenu = () => {
 
   const handleResetData = () => {
     Alert.alert(
-      'Reset Data Demo',
+      'Reset Semula Data',
       'Adakah anda pasti mahu merest semula semua data, penetapan denda, perimeter geofence, dan log status ke tetapan asal?',
       [
         { text: 'Batal', style: 'cancel' },
@@ -68,8 +69,7 @@ export const DemoMenu = () => {
           onPress: () => {
             // Reset context states
             resetDemoState();
-            setActiveEvent(mockEvent);
-            setCheckpoints(mockCheckpoints);
+            setCheckpoints([]);
             setRules({
               maxRaceTime: 240,
               taskTimeLimit: 15,
@@ -111,7 +111,7 @@ export const DemoMenu = () => {
         onPress={() => setMenuVisible(true)}
       >
         <Ionicons name="build" size={20} color="#FFFFFF" />
-        <Text style={styles.triggerText}>Demo Menu</Text>
+        <Text style={styles.triggerText}>Menu Pintas</Text>
       </TouchableOpacity>
 
       {/* Navigation & Jump Modal */}
@@ -127,7 +127,7 @@ export const DemoMenu = () => {
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderTitleRow}>
                 <Ionicons name="construct" size={20} color={COLORS.admin.primary} />
-                <Text style={styles.modalTitle}>Menu Pembentangan Demo</Text>
+                <Text style={styles.modalTitle}>Menu Pintas Navigasi</Text>
               </View>
               <TouchableOpacity onPress={() => setMenuVisible(false)} style={styles.closeBtn}>
                 <Ionicons name="close" size={24} color={COLORS.text} />
@@ -267,7 +267,7 @@ export const DemoMenu = () => {
                   onPress={handleResetData}
                 >
                   <Ionicons name="refresh" size={18} color="#FFFFFF" />
-                  <Text style={styles.resetBtnText}>Reset Semua Data Demo</Text>
+                  <Text style={styles.resetBtnText}>Reset Semula Data Ujian</Text>
                 </TouchableOpacity>
               </View>
 

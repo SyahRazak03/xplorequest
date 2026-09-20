@@ -25,6 +25,7 @@ import { verifyFirebaseToken } from '../middleware/auth';
 import { clearRateLimit, rateLimiter } from '../middleware/rateLimiter';
 import {
   adminLogin,
+  adminRegister,
   crewLogin,
   getMe,
   logout,
@@ -41,6 +42,13 @@ export const authRouter = Router();
 
 // ── Validation schemas ────────────────────────────────────────────────────────
 
+const adminRegisterSchema = z.object({
+  name: z.string().min(1, 'Nama diperlukan.').max(100),
+  email: z.string().email('E-mel tidak sah.').max(254),
+  password: z.string().min(6, 'Kata laluan mestilah sekurang-kurangnya 6 aksara.').max(128),
+  organization: z.string().max(100).optional(),
+});
+
 const adminLoginSchema = z.object({
   email: z.string().email('E-mel tidak sah.').max(254),
   password: z.string().min(6, 'Kata laluan terlalu pendek.').max(128),
@@ -49,9 +57,9 @@ const adminLoginSchema = z.object({
 const crewLoginSchema = z.object({
   marshalId: z
     .string()
-    .min(1, 'Marshal ID diperlukan.')
     .max(64)
-    .transform((v) => v.trim().toUpperCase()),
+    .transform((v) => v.trim().toUpperCase())
+    .optional(),
   crewPinCode: z
     .string()
     .length(4, 'PIN mestilah 4 digit.')
@@ -86,6 +94,22 @@ function getBodyString(req: Request, key: string): string {
   return typeof val === 'string' ? val : '';
 }
 
+// ── POST /auth/admin/register ──────────────────────────────────────────────────
+
+authRouter.post(
+  '/admin/register',
+  asyncHandler(async (req, res) => {
+    const parsed = adminRegisterSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Input tidak sah.');
+    }
+
+    const { name, email, password, organization } = parsed.data;
+    const result = await adminRegister(name, email, password, organization);
+    sendSuccess(res, result);
+  })
+);
+
 // ── POST /auth/admin/login ────────────────────────────────────────────────────
 
 authRouter.post(
@@ -111,7 +135,7 @@ authRouter.post(
 
 authRouter.post(
   '/crew/login',
-  rateLimiter({ identifier: (req) => getBodyString(req, 'marshalId') }),
+  rateLimiter({ identifier: (req) => getBodyString(req, 'marshalId') || getBodyString(req, 'checkpointId') }),
   asyncHandler(async (req, res) => {
     const parsed = crewLoginSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -121,7 +145,7 @@ authRouter.post(
     const { marshalId, crewPinCode, checkpointId, eventId } = parsed.data;
     const result = await crewLogin(marshalId, crewPinCode, checkpointId, eventId);
 
-    await clearRateLimit(getIp(req), marshalId);
+    await clearRateLimit(getIp(req), marshalId || checkpointId);
 
     sendSuccess(res, result);
   })

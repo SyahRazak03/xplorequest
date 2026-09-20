@@ -31,7 +31,7 @@ export const AdminDNFWatchPanel: React.FC<AdminDNFWatchPanelProps> = ({
       <View style={styles.debugRow}>
         <TouchableOpacity style={styles.fastForwardBtn} activeOpacity={0.8} onPress={onFastForward}>
           <Ionicons name="play-forward-outline" size={16} color={COLORS.textLight} />
-          <Text style={styles.fastForwardBtnText}>⏩ Laju Masa Demo (+15 Min)</Text>
+          <Text style={styles.fastForwardBtnText}>⏩ Tambah Masa Ujian (+15 Min)</Text>
         </TouchableOpacity>
       </View>
 

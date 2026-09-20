@@ -181,7 +181,9 @@ describe('Start & Attendance Handlers', () => {
       expect(mockCheckinAttendanceService).toHaveBeenCalledWith(
         'EVT-001',
         { teamId: 'TEAM-001' },
-        'crew-123'
+        'crew-123',
+        'crew',
+        'EVT-001'
       );
     });
   });
@@ -193,12 +195,12 @@ describe('Start & Attendance Handlers', () => {
       const res = await request(app)
         .post('/events/EVT-001/start')
         .set('Authorization', 'Bearer participant-token')
-        .send({});
+        .send({ forceStart: false });
 
       expect(res.status).toBe(403);
     });
 
-    it('returns 409 RACE_ALREADY_STARTED if already started (idempotency)', async () => {
+    it('returns 409 RACE_ALREADY_STARTED if race was already started', async () => {
       mockTriggerStaggeredStartService.mockRejectedValueOnce(
         new AppError(
           ErrorCode.RACE_ALREADY_STARTED,
@@ -209,13 +211,13 @@ describe('Start & Attendance Handlers', () => {
       const res = await request(app)
         .post('/events/EVT-001/start')
         .set('Authorization', 'Bearer admin-token')
-        .send({});
+        .send({ forceStart: false });
 
       expect(res.status).toBe(409);
       expect(res.body.error.code).toBe('RACE_ALREADY_STARTED');
     });
 
-    it('returns 400 BAD_REQUEST if no teams checked in and not forceStart', async () => {
+    it('returns 400 when no teams present and forceStart is false', async () => {
       mockTriggerStaggeredStartService.mockRejectedValueOnce(
         new AppError(
           ErrorCode.BAD_REQUEST,
@@ -226,9 +228,10 @@ describe('Start & Attendance Handlers', () => {
       const res = await request(app)
         .post('/events/EVT-001/start')
         .set('Authorization', 'Bearer admin-token')
-        .send({});
+        .send({ forceStart: false });
 
       expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
     });
 
     it('returns 200 on successful race start and cyclical assignment', async () => {
@@ -245,7 +248,9 @@ describe('Start & Attendance Handlers', () => {
       expect(mockTriggerStaggeredStartService).toHaveBeenCalledWith(
         'EVT-001',
         'admin-123',
-        false
+        false,
+        'admin',
+        undefined
       );
     });
   });
@@ -303,7 +308,9 @@ describe('Start & Attendance Handlers', () => {
         'EVT-001',
         'TEAM-001',
         'crew-123',
-        {}
+        {},
+        'crew',
+        'EVT-001'
       );
     });
   });

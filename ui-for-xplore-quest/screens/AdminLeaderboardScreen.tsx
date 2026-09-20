@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
-import { Card, Badge, AdminDNFWatchPanel, SkeletonLoader } from '../components';
+import { Card, Badge, AdminDNFWatchPanel, SkeletonLoader, EmptyState } from '../components';
 
 import { useApp } from '../AppContext';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
@@ -36,14 +36,14 @@ interface LeaderboardTeam {
   points: number;
   totalTimeFormatted: string;
   penaltiesMinutes: number;
-  status: 'active' | 'finished' | 'dnf';
+  status: 'active' | 'finished' | 'dnf' | 'registered';
   lastChange?: 'up' | 'down' | null;
   elapsedMinutes?: number;
 }
 
 export default function AdminLeaderboardScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { rules } = useApp();
+  const { rules, isRaceStarted, teams: appTeams, activeEvent } = useApp();
 
   const [loading, setLoading] = useState(true);
 
@@ -60,18 +60,8 @@ export default function AdminLeaderboardScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-
-  // Initial leaderboard mock data state
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardTeam[]>([
-    { teamId: 'TEAM-004', teamName: 'Rimba Rangers', points: 470, totalTimeFormatted: '1j 12m', penaltiesMinutes: 0, status: 'finished' },
-    { teamId: 'TEAM-007', teamName: 'Kancil Pintar', points: 370, totalTimeFormatted: '1j 35m', penaltiesMinutes: 0, status: 'finished' },
-    { teamId: 'TEAM-001', teamName: 'Pasukan Harimau', points: 250, totalTimeFormatted: '1j 50m', penaltiesMinutes: 5, status: 'active', elapsedMinutes: 110 },
-    { teamId: 'TEAM-002', teamName: 'Team Garuda Malaysia', points: 150, totalTimeFormatted: '2j 05m', penaltiesMinutes: 15, status: 'active', elapsedMinutes: 140 },
-    { teamId: 'TEAM-006', teamName: 'Helang Gunung', points: 100, totalTimeFormatted: '2j 45m', penaltiesMinutes: 10, status: 'active', elapsedMinutes: 200 },
-    { teamId: 'TEAM-003', teamName: 'Bintang Selat', points: 40, totalTimeFormatted: '3j 22m', penaltiesMinutes: 0, status: 'active', elapsedMinutes: 220 },
-    { teamId: 'TEAM-005', teamName: 'Wira Selatan', points: 0, totalTimeFormatted: 'N/A', penaltiesMinutes: 0, status: 'dnf' },
-    { teamId: 'TEAM-008', teamName: 'Panglima Tasik', points: 0, totalTimeFormatted: 'N/A', penaltiesMinutes: 0, status: 'dnf' },
-  ]);
+  // Leaderboard data state dynamically managed
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardTeam[]>([]);
 
   // Flash notification state for live changes
   const [tickerMessage, setTickerMessage] = useState<string | null>(null);
@@ -109,7 +99,7 @@ export default function AdminLeaderboardScreen() {
         return t;
       })
     );
-    setTickerMessage('Masa Demo dipercepatkan: +15 Minit bagi semua kumpulan aktif.');
+    setTickerMessage('Masa simulasi dipercepatkan: +15 Minit bagi semua kumpulan aktif.');
   };
 
 
@@ -131,8 +121,10 @@ export default function AdminLeaderboardScreen() {
     ).start();
   }, []);
 
-  // 2. Simulated real-time sorting/ticking updates
+  // 2. Simulated real-time sorting/ticking updates (only when race has started)
   useEffect(() => {
+    if (!isRaceStarted) return;
+
     const liveInterval = setInterval(() => {
       // Choose 2 random indexes (excluding DNF statuses for points fluctuation)
       const nonDnfIndices: number[] = [];
@@ -205,18 +197,34 @@ export default function AdminLeaderboardScreen() {
     return () => clearInterval(liveInterval);
   }, [leaderboardData]);
 
+  // Derive list of teams that have scanned attendance at Start Checkpoint
+  const attendedTeams = appTeams.filter((t) => t.isPresent || t.attendanceStatus === 'present');
+
+  const rawList: LeaderboardTeam[] = attendedTeams.map((t) => ({
+    teamId: t.id,
+    teamName: t.name,
+    points: (t as any).points ?? 0,
+    totalTimeFormatted: (t as any).totalTimeFormatted || '--:--',
+    penaltiesMinutes: (t as any).penaltiesMinutes || 0,
+    status: (t.status === 'approved' ? (isRaceStarted ? 'active' : 'registered') : (t.status as any)) || 'registered',
+  }));
+
+  const activeList = isRaceStarted && leaderboardData.length > 0 ? leaderboardData : rawList;
+
   // Filter logic
-  const filteredData = leaderboardData.filter(team => {
+  const filteredData = activeList.filter((team) => {
     if (filter === 'all') return true;
     return team.status === filter;
   });
 
-  const getStatusBadge = (status: 'active' | 'finished' | 'dnf') => {
+  const getStatusBadge = (status: 'active' | 'finished' | 'dnf' | 'registered') => {
     switch (status) {
       case 'finished':
         return <Badge label="SELESAI" state="success" size="sm" />;
       case 'dnf':
         return <Badge label="DNF" state="danger" size="sm" />;
+      case 'registered':
+        return <Badge label="BERDAFTAR" state="success" size="sm" />;
       case 'active':
       default:
         return <Badge label="AKTIF" state="pending" size="sm" />;
@@ -284,10 +292,12 @@ export default function AdminLeaderboardScreen() {
           </View>
         </View>
 
-        {/* Live pulsing dot indicator */}
-        <View style={styles.liveIndicatorContainer}>
-          <Animated.View style={[styles.liveDot, { opacity: pulseOpacity }]} />
-          <Text style={styles.liveIndicatorText}>LIVE</Text>
+        {/* Live / Status indicator */}
+        <View style={[styles.liveIndicatorContainer, !isRaceStarted && { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+          <Animated.View style={[styles.liveDot, { opacity: isRaceStarted ? pulseOpacity : 1, backgroundColor: isRaceStarted ? COLORS.success : COLORS.warning }]} />
+          <Text style={[styles.liveIndicatorText, { color: isRaceStarted ? COLORS.success : COLORS.warning }]}>
+            {isRaceStarted ? 'LIVE' : 'BELUM MULA'}
+          </Text>
         </View>
       </View>
 
@@ -327,7 +337,21 @@ export default function AdminLeaderboardScreen() {
 
       {/* Leaderboard Table / Rows */}
       <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
-        {filter === 'all' && (
+        {!isRaceStarted && (
+          <View style={styles.pendingInfoBanner}>
+            <Ionicons name="information-circle-outline" size={20} color={COLORS.admin.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pendingBannerTitle}>
+                Pelepasan Acara Belum Bermula
+              </Text>
+              <Text style={styles.pendingBannerSubtitle}>
+                Keputusan live, pemantauan timer, dan denda DNF akan diaktifkan secara automatik sebaik sahaja krew pos kawalan memulakan pelepasan perlumbaan.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {isRaceStarted && filter === 'all' && (
           <AdminDNFWatchPanel
             teams={leaderboardData
               .filter(t => t.status === 'active' && t.elapsedMinutes !== undefined)
@@ -342,10 +366,11 @@ export default function AdminLeaderboardScreen() {
         )}
 
         {filteredData.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="podium-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyText}>Tiada data kedudukan</Text>
-          </View>
+          <EmptyState
+            title="Tiada Pasukan Hadir Lagi"
+            description="Belum ada pasukan yang mengimbas imbasan kehadiran di Pos Kehadiran Mula. Senarai akan dikemas kini secara automatik apabila imbasan disahkan."
+            icon="people-outline"
+          />
         ) : (
           filteredData.map((team, idx) => {
             // Find overall rank index in complete sorted array to display correct medals
@@ -602,5 +627,44 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginTop: SPACING.sm,
+  },
+  pendingInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.admin.primaryLight,
+    borderWidth: 1.5,
+    borderColor: COLORS.admin.primary,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  pendingBannerTitle: {
+    fontSize: 13,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.admin.primary,
+  },
+  pendingBannerSubtitle: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  startRaceTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.admin.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 12,
+    paddingHorizontal: SPACING.md,
+    gap: 8,
+    marginBottom: SPACING.xs,
+    ...SHADOWS.sm,
+  },
+  startRaceTriggerText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
 });

@@ -10,6 +10,8 @@
 import { Router } from 'express';
 
 import { requireRole, verifyFirebaseToken } from '../middleware/auth';
+import { findEventById } from '../repositories/event.repository';
+import { assertEventOwner } from '../services/event.service';
 import { getLeaderboardService } from '../services/leaderboard.service';
 import { AppError, ErrorCode, asyncHandler, sendSuccess } from '../utils/errors';
 
@@ -29,13 +31,12 @@ leaderboardRouter.get(
 
     const caller = req.user!;
 
-    // Explicit REST Handler Authorization Guard
-    if (caller.role !== 'admin' && caller.eventId !== eventId) {
-      throw new AppError(
-        ErrorCode.FORBIDDEN,
-        'Akses ditolak: Anda hanya boleh melihat papan pendahulu untuk acara anda sendiri.'
-      );
+    const event = await findEventById(eventId);
+    if (!event) {
+      throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
     }
+
+    assertEventOwner(event, caller.uid, caller.role, caller.eventId);
 
     const leaderboardEntries = await getLeaderboardService(eventId);
     sendSuccess(res, leaderboardEntries, 200);

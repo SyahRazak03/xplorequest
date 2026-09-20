@@ -10,6 +10,7 @@ import * as admin from 'firebase-admin';
 import { getFirestore } from '../config/firebase';
 import type { AuthenticatedUser } from '../middleware/auth';
 import type { EventDocument, RaceRules } from '../models';
+import { assertEventOwner } from './event.service';
 import { AppError, ErrorCode } from '../utils/errors';
 import type { UpdateRaceRulesInput } from '../validation';
 
@@ -52,6 +53,7 @@ export async function updateRaceRulesService(
   }
 
   const eventData = eventSnap.data() as EventDocument;
+  assertEventOwner(eventData, caller.uid, caller.role, caller.eventId);
   const currentRules: RaceRules = {
     ...DEFAULT_RACE_RULES,
     ...(eventData.rules || {}),

@@ -57,9 +57,11 @@ startRouter.post(
     }
 
     const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
     const body = req.body as ReturnType<typeof AttendanceCheckinSchema.parse>;
 
-    const team = await checkinAttendanceService(eventId, body, uid);
+    const team = await checkinAttendanceService(eventId, body, uid, role, callerEventId);
 
     sendSuccess(res, team, 200);
   })
@@ -79,12 +81,16 @@ startRouter.post(
     }
 
     const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
     const body = req.body as ReturnType<typeof StartRaceSchema.parse>;
 
     const result = await triggerStaggeredStartService(
       eventId,
       uid,
-      body.forceStart
+      body.forceStart,
+      role,
+      callerEventId
     );
 
     // Side-effect: Non-blocking push notifications for starting checkpoint assignments
@@ -114,13 +120,17 @@ startRouter.post(
     }
 
     const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
     const body = req.body as ReturnType<typeof LateAssignSchema.parse>;
 
     const result = await assignLateArrivalService(
       eventId,
       teamId,
       uid,
-      body
+      body,
+      role,
+      callerEventId
     );
 
     sendSuccess(res, result, 200);

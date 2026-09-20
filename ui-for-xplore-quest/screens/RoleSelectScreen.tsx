@@ -24,9 +24,7 @@ type RoleSelectScreenNavigationProp = NativeStackNavigationProp<RootStackParamLi
 
 export default function RoleSelectScreen() {
   const navigation = useNavigation<RoleSelectScreenNavigationProp>();
-  const { setTemporaryRole, setRules } = useApp();
-  const [pointsModalVisible, setPointsModalVisible] = React.useState(false);
-
+  const { setTemporaryRole } = useApp();
 
   const roles = [
     {
@@ -61,20 +59,11 @@ export default function RoleSelectScreen() {
     },
   ];
 
-  const selectPointsSystem = (enabled: boolean) => {
-    setRules(prev => ({
-      ...prev,
-      pointsSystemEnabled: enabled,
-    }));
-    setPointsModalVisible(false);
-    navigation.navigate('ParticipantJoin');
-  };
-
   const handleRoleSelect = (roleId: 'participant' | 'crew' | 'admin') => {
     // Set theme context instantly for login screen color updates
     setTemporaryRole(roleId);
     if (roleId === 'participant') {
-      setPointsModalVisible(true);
+      navigation.navigate('ParticipantJoin');
     } else if (roleId === 'crew') {
       navigation.navigate('CrewSelectCheckpoint');
     } else if (roleId === 'admin') {
@@ -96,7 +85,7 @@ export default function RoleSelectScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Pilih Peranan</Text>
           <Text style={styles.subtitle}>
-            Sila pilih peranan anda untuk memulakan sesi demonstrasi XploreQuest.
+            Sila pilih peranan anda untuk memulakan XploreQuest.
           </Text>
         </View>
 
@@ -147,70 +136,12 @@ export default function RoleSelectScreen() {
         {/* Info Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Aplikasi ini tidak memerlukan internet untuk sesi demo. Semua data disimulasikan dari mockData.ts.
+            Aplikasi XploreQuest sedia untuk pengurusan acara explorace langsung.
           </Text>
         </View>
       </ScrollView>
-      {/* Points System Selector Modal — Field Journal Theme */}
-      <Modal
-        visible={pointsModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setPointsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            {/* Washi tape top corner flourish */}
-            <View style={styles.modalWashiTape} pointerEvents="none">
-              <View style={styles.modalWashiTapeInner} />
-            </View>
-
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Format Sistem Acara</Text>
-              <TouchableOpacity onPress={() => setPointsModalVisible(false)} style={styles.modalCloseBtn}>
-                <Ionicons name="close" size={20} color={COLORS.participant.primary} />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.modalSubText}>
-              Sila pilih format pemarkahan untuk sesi demonstrasi Ketua Kumpulan:
-            </Text>
-
-            {/* Option 1: Points System Enabled */}
-            <TouchableOpacity
-              style={[styles.optionCard, { borderColor: COLORS.participant.primary, borderWidth: 1.5 }]}
-              onPress={() => selectPointsSystem(true)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.optionIconWrapper, { backgroundColor: COLORS.participant.primaryLight }]}>
-                <Ionicons name="trophy-outline" size={24} color={COLORS.participant.primary} />
-              </View>
-              <View style={styles.optionTextWrapper}>
-                <Text style={[styles.optionTitle, { color: COLORS.participant.primary }]}>Format Sistem Mata (Points)</Text>
-                <Text style={styles.optionDesc}>Menggunakan mata bonus, penalti tolak mata, dan paparan skor pada dashboard.</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Option 2: Points System Disabled */}
-            <TouchableOpacity
-              style={[styles.optionCard, { borderColor: COLORS.border, borderWidth: 1.5 }]}
-              onPress={() => selectPointsSystem(false)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.optionIconWrapper, { backgroundColor: COLORS.background }]}>
-                <Ionicons name="time-outline" size={24} color={COLORS.textMuted} />
-              </View>
-              <View style={styles.optionTextWrapper}>
-                <Text style={[styles.optionTitle, { color: COLORS.text }]}>Format Masa Sahaja (Tanpa Mata)</Text>
-                <Text style={styles.optionDesc}>Sistem pemarkahan ditutup. Kedudukan kumpulan dinilai berdasarkan masa terpantas.</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
-
 }
 
 const styles = StyleSheet.create({

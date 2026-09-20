@@ -113,6 +113,65 @@ export const CreateEventSchema = z.object({
     .max(6, 'Saiz maksimum kumpulan ialah 6 orang.')
     .optional()
     .default(4),
+
+  urlSlug: z
+    .string()
+    .min(2, 'Slug URL mestilah sekurang-kurangnya 2 aksara.')
+    .max(100, 'Slug URL tidak boleh melebihi 100 aksara.')
+    .regex(/^[a-z0-9-]+$/, 'Slug URL hanya boleh mengandungi huruf kecil, nombor, dan sempang (-).')
+    .optional(),
+
+  entryFee: z
+    .number({ invalid_type_error: 'Yuran pendaftaran mestilah nombor.' })
+    .min(0, 'Yuran pendaftaran tidak boleh negatif.')
+    .optional()
+    .default(0),
+
+  paymentBankDetails: z
+    .string()
+    .max(1000, 'Maklumat bank tidak boleh melebihi 1000 aksara.')
+    .optional()
+    .default(''),
+
+  paymentQrImageUrl: z.string().url('URL gambar QR pembayaran tidak sah.').nullable().optional(),
+
+  bannerImageUrl: z.string().url('URL gambar banner tidak sah.').nullable().optional(),
+
+  paymentDetails: z.lazy(() => PaymentDetailsSchema).nullable().optional(),
+});
+
+// ── Payment Details Schemas (Feature 4C) ──────────────────────────────────────
+
+export const PaymentDetailsSchema = z.object({
+  bankName: z
+    .string()
+    .max(100, 'Nama bank tidak boleh melebihi 100 aksara.')
+    .trim()
+    .optional()
+    .default(''),
+  accountHolderName: z
+    .string()
+    .max(100, 'Nama pemegang akaun tidak boleh melebihi 100 aksara.')
+    .trim()
+    .optional()
+    .default(''),
+  accountNumber: z
+    .string()
+    .max(50, 'Nombor akaun tidak boleh melebihi 50 aksara.')
+    .regex(/^[0-9\-\s]*$/, 'Nombor akaun hanya boleh mengandungi nombor, sempang, dan ruang.')
+    .trim()
+    .optional()
+    .default(''),
+  note: z
+    .string()
+    .max(500, 'Nota tidak boleh melebihi 500 aksara.')
+    .trim()
+    .optional()
+    .default(''),
+});
+
+export const UpdatePaymentDetailsSchema = z.object({
+  paymentDetails: PaymentDetailsSchema,
 });
 
 /**
@@ -210,6 +269,7 @@ export const CreateCheckpointSchema = z.object({
     .default(50),
   isStart: z.boolean().optional().default(false),
   isFinish: z.boolean().optional().default(false),
+  isAttendanceStation: z.boolean().optional().default(false),
   isHiddenInMap: z.boolean().optional().default(false),
   orderIndex: z.number().int().optional(),
 });
@@ -281,6 +341,16 @@ export const UploadPhotoProofSchema = z.object({
   }),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
+});
+
+export const UploadEventAssetSchema = z.object({
+  assetType: z.enum(['banner', 'payment_qr'], {
+    errorMap: () => ({ message: "Jenis aset mestilah 'banner' atau 'payment_qr'." }),
+  }),
+  imageBase64: z.string().min(1, 'Data imej base64 diperlukan.'),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
+    errorMap: () => ({ message: 'Format imej mestilah image/jpeg, image/png, atau image/webp.' }),
+  }),
 });
 
 export const ManualOverrideSchema = z.object({
@@ -355,6 +425,40 @@ export const BatchSyncSchema = z.object({
     .max(100, 'Maksimum 100 item dibenarkan dalam satu kelompok sync.'),
 });
 
+// ── Web Pre-Registration Schemas (Feature 4B) ─────────────────────────────────
+
+export const MalaysianPhoneSchema = z
+  .string({ required_error: 'Nombor WhatsApp ketua diperlukan.' })
+  .trim()
+  .regex(/^(\+?60|0)1[0-46-9][0-9]{7,8}$/, 'Nombor WhatsApp mestilah nombor telefon Malaysia yang sah (contoh: 0123456789 atau +60123456789).');
+
+export const PreRegisterSchema = z.object({
+  teamName: z
+    .string({ required_error: 'Nama kumpulan diperlukan.' })
+    .min(1, 'Nama kumpulan tidak boleh kosong.')
+    .max(100, 'Nama kumpulan tidak boleh melebihi 100 aksara.')
+    .trim(),
+  leaderName: z
+    .string({ required_error: 'Nama ketua kumpulan diperlukan.' })
+    .min(1, 'Nama ketua kumpulan tidak boleh kosong.')
+    .max(100, 'Nama ketua kumpulan tidak boleh melebihi 100 aksara.')
+    .trim(),
+  leaderWhatsApp: MalaysianPhoneSchema,
+  memberNames: z
+    .array(
+      z
+        .string()
+        .min(1, 'Nama ahli tidak boleh kosong.')
+        .max(100, 'Nama ahli tidak boleh melebihi 100 aksara.')
+        .trim()
+    )
+    .max(5, 'Jumlah ahli tambahan tidak boleh melebihi 5 orang.'),
+  imageBase64: z.string({ required_error: 'Resit pembayaran diperlukan.' }).min(1, 'Resit pembayaran tidak boleh kosong.'),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
+    errorMap: () => ({ message: 'Format resit mestilah image/jpeg, image/png, atau image/webp.' }),
+  }),
+});
+
 // ── Inferred Types ────────────────────────────────────────────────────────────
 
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
@@ -375,6 +479,7 @@ export type ScanCheckpointQrInput = z.infer<typeof ScanCheckpointQrSchema>;
 export type SkipCheckpointInput = z.infer<typeof SkipCheckpointSchema>;
 export type FinishRaceScanInput = z.infer<typeof FinishRaceScanSchema>;
 export type UploadPhotoProofInput = z.infer<typeof UploadPhotoProofSchema>;
+export type UploadEventAssetInput = z.infer<typeof UploadEventAssetSchema>;
 export type ManualOverrideInput = z.infer<typeof ManualOverrideSchema>;
 export type ApplyPenaltyInput = z.infer<typeof ApplyPenaltySchema>;
 export type UpdateRaceRulesInput = z.infer<typeof UpdateRaceRulesSchema>;
@@ -382,6 +487,8 @@ export type RegisterUserInput = z.infer<typeof RegisterUserSchema>;
 export type JoinEventInput = z.infer<typeof JoinEventSchema>;
 export type SyncQueueItemInput = z.infer<typeof SyncQueueItemSchema>;
 export type BatchSyncInput = z.infer<typeof BatchSyncSchema>;
+export type PreRegisterInput = z.infer<typeof PreRegisterSchema>;
+export type UpdatePaymentDetailsInput = z.infer<typeof UpdatePaymentDetailsSchema>;
 
 // ── Validation Middleware Factory ─────────────────────────────────────────────
 

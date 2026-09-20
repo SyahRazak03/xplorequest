@@ -17,11 +17,9 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { mockEvent } from '../mockData';
 import { PrimaryButton, SecondaryButton } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { adminLogin } from '../services/authService';
-import { setPendingMarshalId } from '../services/authState';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 type LoginScreenRouteProp = RouteProp<RootStackParamList, 'Login'>;
@@ -30,12 +28,11 @@ export default function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<LoginScreenRouteProp>();
   const { role } = route.params || { role: 'participant' };
-  const { login, theme } = useApp();
+  const { login, theme, activeEvent } = useApp();
 
   // Inputs state
   const [eventCode, setEventCode] = useState('');
   const [teamName, setTeamName] = useState('');
-  const [marshalId, setMarshalId] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
@@ -50,13 +47,16 @@ export default function LoginScreen() {
   }, [role]);
 
   const handleAutofill = () => {
-    // Pre-fills demo credentials — these authenticate against real Firebase Auth
-    // (see seed.ts for how these accounts are created).
+    // Demo credentials autofill is strictly restricted to non-production development builds
+    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env['NODE_ENV'] !== 'production';
+    if (!isDev) {
+      Alert.alert('Not Available', 'Demo autofill is disabled in production builds.');
+      return;
+    }
+
     if (role === 'participant') {
-      setEventCode(mockEvent.joinCode || 'XT2026');
+      setEventCode(activeEvent?.joinCode || activeEvent?.id || 'XT2026');
       setTeamName('Pasukan Harimau');
-    } else if (role === 'crew') {
-      setMarshalId('USR-CREW-002');
     } else if (role === 'admin') {
       setAdminEmail(process.env['EXPO_PUBLIC_DEMO_ADMIN_EMAIL'] ?? 'azman@xplorequest.com');
       setAdminPassword(process.env['EXPO_PUBLIC_DEMO_ADMIN_PASSWORD'] ?? '');
@@ -79,12 +79,6 @@ export default function LoginScreen() {
       // Navigate to ParticipantJoin which performs the real auth via QR.
       navigation.navigate('ParticipantJoin');
     } else if (role === 'crew') {
-      if (!marshalId.trim()) {
-        Alert.alert('Ralat', 'Sila masukkan ID Krew Marshal.');
-        return;
-      }
-      // Store marshalId for the second step (PIN entry in CrewSelectCheckpoint)
-      setPendingMarshalId(marshalId.trim());
       navigation.navigate('CrewSelectCheckpoint');
     } else if (role === 'admin') {
       if (!adminEmail.trim()) {
@@ -126,7 +120,7 @@ export default function LoginScreen() {
       case 'crew':
         return {
           title: 'Krew Log Masuk',
-          subtitle: 'Kebenaran khas krew marshal bertugas untuk mengurus pos kawalan.',
+          subtitle: 'Pilih pos kawalan bertugas hari ini untuk memulakan tugasan krew.',
           icon: 'qr-code',
         };
       case 'admin':
@@ -212,21 +206,10 @@ export default function LoginScreen() {
 
             {role === 'crew' && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>ID Krew Marshal</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    isFocused === 'marshalId' && { borderColor: theme.colors.primary, borderWidth: 1.5 },
-                  ]}
-                  placeholder="Contoh: USR-CREW-002"
-                  placeholderTextColor="rgba(28, 46, 36, 0.4)"
-                  autoCapitalize="characters"
-                  value={marshalId}
-                  onChangeText={setMarshalId}
-                  onFocus={() => setIsFocused('marshalId')}
-                  onBlur={() => setIsFocused(null)}
-                />
-                <Text style={styles.inputHint}>Masukkan ID krew unik anda yang berdaftar di sistem.</Text>
+                <Text style={styles.label}>Akses Tugasan Krew Pos Kawalan</Text>
+                <Text style={styles.inputHint}>
+                  Pilihan pos kawalan dan pengesahan PIN/Marshal ID akan dilengkapkan di skrin seterusnya.
+                </Text>
               </View>
             )}
 
@@ -273,27 +256,31 @@ export default function LoginScreen() {
             {/* Login Action Buttons */}
             <View style={styles.buttonSpacing}>
               <PrimaryButton
-                label={loading ? 'Memproses...' : 'Masuk Dashboard'}
+                label={loading ? 'Memproses...' : (role === 'crew' ? 'Pilih Pos Kawalan' : 'Masuk Dashboard')}
                 onPress={handleLogin}
                 role={role}
                 loading={loading}
               />
             </View>
 
-            <SecondaryButton
-              label="Isi Auto Akaun Demo"
-              onPress={handleAutofill}
-              role={role}
-            />
+            {__DEV__ && (
+              <SecondaryButton
+                label="Isi Auto Akaun Ujian"
+                onPress={handleAutofill}
+                role={role}
+              />
+            )}
           </View>
 
           {/* Quick Info Box */}
-          <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.textMuted} />
-            <Text style={styles.infoText}>
-              Bagi tujuan pembentangan projek, butang <Text style={styles.boldText}>Isi Auto Akaun Demo</Text> disediakan untuk membolehkan demonstrasi berjalan lancar tanpa menaip kata laluan secara manual.
-            </Text>
-          </View>
+          {__DEV__ && (
+            <View style={styles.infoBox}>
+              <Ionicons name="information-circle-outline" size={20} color={COLORS.textMuted} />
+              <Text style={styles.infoText}>
+                Butang <Text style={styles.boldText}>Isi Auto Akaun Ujian</Text> disediakan bagi membolehkan pengujian berjalan lancar tanpa menaip kata laluan secara manual.
+              </Text>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

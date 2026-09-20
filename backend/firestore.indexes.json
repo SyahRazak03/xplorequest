@@ -43,13 +43,7 @@
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
-    {
-      "collectionGroup": "checkpoints",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "orderIndex", "order": "ASCENDING" }
-      ]
-    },
+
     {
       "collectionGroup": "leaderboard",
       "queryScope": "COLLECTION",
@@ -80,6 +74,32 @@
       "fields": [
         { "fieldPath": "result", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "preRegistrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "qr_tokens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "checkpointId", "order": "ASCENDING" },
+        { "fieldPath": "teamId", "order": "ASCENDING" },
+        { "fieldPath": "expiresAt", "order": "DESCENDING" }
       ]
     }
   ],

@@ -31,13 +31,13 @@ interface OtherTeamMock {
 
 export default function StaggeredStartScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { theme, isRaceStarted, startRace } = useApp();
+  const { theme, isRaceStarted, startRace, teams, checkpoints } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const [animation] = useState(new Animated.Value(0));
   const [showWaitingModal, setShowWaitingModal] = useState(false);
   const [autoStartCountdown, setAutoStartCountdown] = useState(10);
 
-  // 10-second auto-start countdown timer for mock demo
+  // 10-second auto-start countdown timer for demo
   useEffect(() => {
     if (isRaceStarted) {
       setShowWaitingModal(false);
@@ -62,32 +62,18 @@ export default function StaggeredStartScreen() {
     }
   }, [autoStartCountdown, isRaceStarted]);
 
-  const otherTeams: OtherTeamMock[] = [
-    {
-      name: 'Rimba Rangers',
-      checkpointNumber: 4,
-      checkpointName: 'Dataran Kereta Kuda',
-      icon: 'leaf-outline',
-    },
-    {
-      name: 'Helang Gunung',
-      checkpointNumber: 5,
-      checkpointName: 'Pusat Rekreasi Air (Kayak)',
-      icon: 'water-outline',
-    },
-    {
-      name: 'Kancil Pintar',
-      checkpointNumber: 6,
-      checkpointName: 'Taman Canopy Walk',
-      icon: 'walk-outline',
-    },
-    {
-      name: 'Team Garuda Malaysia',
-      checkpointNumber: 2,
-      checkpointName: 'Jambatan Gantung Titiwangsa',
-      icon: 'git-commit-outline',
-    },
-  ];
+  // Derive other teams dynamically from live teams in AppContext
+  const otherTeams = (teams || []).map((t, idx) => {
+    const cp = checkpoints && checkpoints.length > 0
+      ? checkpoints[idx % checkpoints.length]
+      : { id: `CP-${idx + 1}`, name: `Pos Kawalan ${idx + 1}` };
+    return {
+      name: t.name,
+      checkpointNumber: idx + 1,
+      checkpointName: cp.name || `Pos Kawalan ${idx + 1}`,
+      icon: 'flag-outline',
+    };
+  });
 
   const toggleExpand = () => {
     const toValue = isExpanded ? 0 : 1;
@@ -227,7 +213,7 @@ export default function StaggeredStartScreen() {
             }}>
               <Ionicons name="timer-outline" size={14} color={COLORS.participant.primary} />
               <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.participant.primary }}>
-                Pelepasan Auto Demo: {autoStartCountdown}s
+                Pelepasan Auto: {autoStartCountdown}s
               </Text>
             </View>
           )}
@@ -242,7 +228,7 @@ export default function StaggeredStartScreen() {
           <Text style={styles.footerHint}>
             {isRaceStarted 
               ? 'Perlumbaan telah bermula! Tekan untuk terus ke Dashboard.' 
-              : `Perlumbaan akan dimulakan secara automatik dalam ${autoStartCountdown} saat (Demo).`}
+              : `Perlumbaan akan dimulakan secara automatik dalam ${autoStartCountdown} saat.`}
           </Text>
         </View>
       </ScrollView>

@@ -59,5 +59,22 @@ service firebase.storage {
     match /exports/{eventId}/{filename} {
       allow read, write: if isAdmin();
     }
+
+    // ── Public Event Assets (Banners & Payment QRs) ──────────────
+    // Path: /events/{eventId}/public/{assetType}/{filename}
+    match /events/{eventId}/public/{assetType}/{filename} {
+      // Publicly readable for banner and payment QR images so unauthenticated web form visitors can display them.
+      allow read: if assetType in ['banner', 'payment_qr'];
+      // Direct client writes disabled; all uploads must pass through backend Cloud Function for magic-byte verification.
+      allow write: if false;
+    }
+
+    // ── Payment Receipt Uploads (Feature 4B) ───────────────────
+    // Path: /pre_registrations/{eventId}/{filename}
+    match /pre_registrations/{eventId}/{filename} {
+      allow read: if true;
+      // Direct client writes disabled; all uploads must pass through backend Cloud Function for magic-byte verification.
+      allow write: if false;
+    }
   }
 }

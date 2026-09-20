@@ -18,6 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
 import { Checkpoint } from '../mockData';
+import { createCheckpoint } from '../services/checkpointService';
 
 import { Card, PrimaryButton, SecondaryButton, Badge, CheckpointFormModal, SkeletonLoader, EmptyState, CustomModalDialog } from '../components';
 
@@ -27,7 +28,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>
 
 export default function AdminCheckpointManagerScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { checkpoints, setCheckpoints } = useApp();
+  const { checkpoints, setCheckpoints, activeEvent, selectedEventId, user } = useApp();
 
   const [loading, setLoading] = useState(true);
 
@@ -103,7 +104,34 @@ export default function AdminCheckpointManagerScreen() {
     setCheckpoints(normalizeCheckpoints(updated));
   };
 
-  const handleSaveCheckpoint = (data: Partial<Checkpoint>) => {
+  const handleSaveCheckpoint = async (data: Partial<Checkpoint>) => {
+    const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
+    const token = user?.idToken || 'token-admin-casaria';
+
+    let serverCheckpoint: Checkpoint | null = null;
+    try {
+      const res = await createCheckpoint(
+        eventId,
+        {
+          name: data.name || 'Pos Kawalan Baru',
+          latitude: data.latitude || 3.17,
+          longitude: data.longitude || 101.7,
+          clueText: data.clueText || 'Koleksi klu pos kawalan',
+          taskDescription: data.taskDescription || 'Imbas QR Code di pos kawalan',
+          scorePoints: data.scorePoints || 150,
+          isStart: !!data.isStart,
+          isFinish: !!data.isFinish,
+          isAttendanceStation: !!data.isAttendanceStation,
+        },
+        token
+      );
+      if (res && res.checkpoint) {
+        serverCheckpoint = res.checkpoint;
+      }
+    } catch (err) {
+      console.warn('Backend createCheckpoint warning (saved locally to AppContext):', err);
+    }
+
     if (selectedCheckpoint) {
       // Edit Mode
       setCheckpoints(prev => {
@@ -111,11 +139,12 @@ export default function AdminCheckpointManagerScreen() {
           if (cp.id === selectedCheckpoint.id) {
             return { ...cp, ...data } as Checkpoint;
           }
-          // Enforce singular start/finish rules
+          // Enforce singular start/finish/attendance rules
           return {
             ...cp,
             isStart: data.isStart ? false : cp.isStart,
             isFinish: data.isFinish ? false : cp.isFinish,
+            isAttendanceStation: data.isAttendanceStation ? false : cp.isAttendanceStation,
           };
         });
 
@@ -136,6 +165,7 @@ export default function AdminCheckpointManagerScreen() {
         statusPerTeam: {},
         isStart: data.isStart,
         isFinish: data.isFinish,
+        isAttendanceStation: data.isAttendanceStation,
       };
 
       setCheckpoints(prev => {
@@ -143,6 +173,7 @@ export default function AdminCheckpointManagerScreen() {
           ...cp,
           isStart: data.isStart ? false : cp.isStart,
           isFinish: data.isFinish ? false : cp.isFinish,
+          isAttendanceStation: data.isAttendanceStation ? false : cp.isAttendanceStation,
         }));
         return normalizeCheckpoints([...updated, newCheckpoint]);
       });

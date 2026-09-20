@@ -115,8 +115,9 @@ checkpointsRouter.get(
     const role = getRole(req);
     const uid = req.user?.uid;
     const teamId = req.user?.teamId;
+    const callerEventId = req.user?.eventId;
 
-    const checkpoints = await listCheckpointsService(eventId, role, uid, teamId);
+    const checkpoints = await listCheckpointsService(eventId, role, uid, teamId, callerEventId);
 
     sendSuccess(res, checkpoints, 200, {
       total: checkpoints.length,
@@ -165,8 +166,9 @@ checkpointsRouter.get(
     const role = getRole(req);
     const uid = req.user?.uid;
     const teamId = req.user?.teamId;
+    const callerEventId = req.user?.eventId;
 
-    const checkpoint = await getCheckpointService(eventId, checkpointId, role, uid, teamId);
+    const checkpoint = await getCheckpointService(eventId, checkpointId, role, uid, teamId, callerEventId);
 
     sendSuccess(res, checkpoint);
   })
@@ -213,8 +215,9 @@ checkpointsRouter.delete(
       throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID dan Checkpoint ID diperlukan.');
     }
 
+    const uid = requireUid(req);
     const force = req.query['force'] === 'true';
-    await deleteCheckpointService(eventId, checkpointId, force);
+    await deleteCheckpointService(eventId, checkpointId, force, uid);
 
     sendSuccess(res, { deleted: true, eventId, checkpointId });
   })

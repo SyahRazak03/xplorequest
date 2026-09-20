@@ -188,6 +188,22 @@ export async function findAllEvents(): Promise<EventDocument[]> {
 }
 
 /**
+ * Returns non-archived events created by a specific owner UID.
+ * Used for role-scoped admin event list views.
+ */
+export async function findEventsByOwner(ownerUid: string): Promise<EventDocument[]> {
+  const db = getFirestore();
+  const snap = await db
+    .collection(EVENTS_COLLECTION)
+    .where('createdBy', '==', ownerUid)
+    .where('isArchived', '==', false)
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  return snap.docs.map(toEventDocument);
+}
+
+/**
  * Returns active (non-started, non-finished, non-archived) events.
  * Used for the crew/participant list view — public fields only.
  */
@@ -238,6 +254,49 @@ export async function findEventByJoinCode(
   }
 
   return toEventDocument(snap.docs[0]);
+}
+
+/**
+ * Looks up an event by its urlSlug.
+ * Used for uniqueness validation and public endpoint resolution.
+ */
+export async function findEventBySlug(
+  slug: string
+): Promise<EventDocument | null> {
+  const db = getFirestore();
+  const snap = await db
+    .collection(EVENTS_COLLECTION)
+    .where('urlSlug', '==', slug.toLowerCase())
+    .where('isArchived', '==', false)
+    .limit(1)
+    .get();
+
+  if (!snap.empty) {
+    return toEventDocument(snap.docs[0]);
+  }
+
+  // Fallback 1: Check if slug is directly an event document ID
+  const docSnap = await db.collection(EVENTS_COLLECTION).doc(slug).get();
+  if (docSnap.exists) {
+    const event = toEventDocument(docSnap);
+    if (!event.isArchived) {
+      return event;
+    }
+  }
+
+  // Fallback 2: Check if slug matches joinCode
+  const joinCodeSnap = await db
+    .collection(EVENTS_COLLECTION)
+    .where('joinCode', '==', slug.toUpperCase())
+    .where('isArchived', '==', false)
+    .limit(1)
+    .get();
+
+  if (!joinCodeSnap.empty) {
+    return toEventDocument(joinCodeSnap.docs[0]);
+  }
+
+  return null;
 }
 
 /**

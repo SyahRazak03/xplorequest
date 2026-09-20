@@ -20,7 +20,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../AppContext';
-import { mockEvent, mockCheckpoints, mockLeaderboard, Checkpoint, CheckpointStatus } from '../mockData';
+import { Checkpoint, CheckpointStatus } from '../mockData';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { Card, Badge, ProgressBar, CheckpointListItem, ToastNotification, OfflineStatusChip } from '../components';
 
@@ -33,7 +33,7 @@ const { width } = Dimensions.get('window');
 type TabType = 'dashboard' | 'map' | 'scan' | 'profile';
 
 export default function ParticipantDashboardScreen() {
-  const { user, theme, logout, rules, isRaceStarted, raceStartTime } = useApp();
+  const { user, theme, logout, rules, isRaceStarted, raceStartTime, checkpoints, activeEvent, teams } = useApp();
 
   const activeTheme = getThemeForRole('participant');
   const navigation = useNavigation<any>();
@@ -107,13 +107,12 @@ export default function ParticipantDashboardScreen() {
   // 3. Scan & Skip Logic Helpers
   // -------------------------------------------------------------
   const getOrderedCheckpoints = () => {
-    const startCP = mockCheckpoints.find(cp => cp.isStart);
-    const finishCP = mockCheckpoints.find(cp => cp.isFinish);
-    const middleCPs = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish);
+    const startCP = checkpoints.find((cp: Checkpoint) => cp.isStart);
+    const finishCP = checkpoints.find((cp: Checkpoint) => cp.isFinish);
+    const middleCPs = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish);
     
-    // For Pasukan Harimau / standard demo, starting checkpoint is CP-003
-    const teamStartCpId = 'CP-003';
-    const startIdx = middleCPs.findIndex(cp => cp.id === teamStartCpId);
+    const teamStartCpId = (user as any)?.assignedCheckpointId || 'CP-003';
+    const startIdx = middleCPs.findIndex((cp: Checkpoint) => cp.id === teamStartCpId);
     
     let orderedMiddle: Checkpoint[] = [];
     if (startIdx !== -1) {
@@ -124,12 +123,12 @@ export default function ParticipantDashboardScreen() {
     } else {
       orderedMiddle = middleCPs;
     }
-    
-    return [
-      ...(startCP ? [startCP] : []),
-      ...orderedMiddle,
-      ...(finishCP ? [finishCP] : [])
-    ];
+
+    const result: Checkpoint[] = [];
+    if (startCP) result.push(startCP);
+    result.push(...orderedMiddle);
+    if (finishCP) result.push(finishCP);
+    return result;
   };
 
   const orderedCheckpoints = getOrderedCheckpoints();
@@ -190,7 +189,7 @@ export default function ParticipantDashboardScreen() {
     setCurrentCpId(nextCp.id);
     
     // Toast feedback using standard display index
-    const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(orderedCheckpoints[currentCpIndex]) + 1;
+    const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(orderedCheckpoints[currentCpIndex]) + 1;
     triggerToast(`Pos CP-${displayIndex} ditangguhkan. Aktif: ${nextCp.name}`, 'warning');
 
   };
@@ -214,7 +213,7 @@ export default function ParticipantDashboardScreen() {
       });
       return;
     }
-    const targetCp = orderedCheckpoints.find((cp) => cp.id === cpIdToScan);
+    const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) {
       Alert.alert('Cabaran Tamat', 'Tiada checkpoint aktif untuk diimbas.');
       return;
@@ -225,7 +224,7 @@ export default function ParticipantDashboardScreen() {
   };
 
   const handleScanCompleted = (cpIdToScan: string) => {
-    const targetCp = orderedCheckpoints.find((cp) => cp.id === cpIdToScan);
+    const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) return;
 
     const pointsEarned = targetCp.scorePoints;
@@ -242,13 +241,13 @@ export default function ParticipantDashboardScreen() {
     // Remove from skipped list if it was pending
     setSkippedCps((prev) => prev.filter((id) => id !== cpIdToScan));
     
-    const currentCpIndex = orderedCheckpoints.findIndex((cp) => cp.id === cpIdToScan);
+    const currentCpIndex = orderedCheckpoints.findIndex((cp: Checkpoint) => cp.id === cpIdToScan);
 
     if (cpIdToScan === currentCpId) {
       if (currentCpIndex < orderedCheckpoints.length - 1) {
         const nextCp = orderedCheckpoints[currentCpIndex + 1];
         setCurrentCpId(nextCp.id);
-        const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
+        const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
         triggerToast(`Imbasan berjaya! CP-${displayIndex} selesai. Aktif: ${nextCp.name}`, 'success');
       } else {
         // Finished the entire race!
@@ -257,7 +256,7 @@ export default function ParticipantDashboardScreen() {
       }
     } else {
       // Tapped a pending checkpoint to complete it
-      const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
+      const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
       triggerToast(`Imbasan berjaya! CP-${displayIndex} diselesaikan daripada status tertunda.`, 'success');
     }
 
@@ -269,7 +268,7 @@ export default function ParticipantDashboardScreen() {
     if (!manualCode.trim()) return;
     
     const cpIdToScan = cpIdBeingScanned || currentCpId;
-    const targetCp = orderedCheckpoints.find((cp) => cp.id === cpIdToScan);
+    const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) return;
 
     if (manualCode.toUpperCase() === `PASS${cpIdToScan.replace('-', '')}`) {
@@ -290,20 +289,20 @@ export default function ParticipantDashboardScreen() {
       // Remove from skipped list
       setSkippedCps((prev) => prev.filter((id) => id !== cpIdToScan));
       
-      const currentCpIndex = orderedCheckpoints.findIndex((cp) => cp.id === cpIdToScan);
+      const currentCpIndex = orderedCheckpoints.findIndex((cp: Checkpoint) => cp.id === cpIdToScan);
 
       if (cpIdToScan === currentCpId) {
         if (currentCpIndex < orderedCheckpoints.length - 1) {
           const nextCp = orderedCheckpoints[currentCpIndex + 1];
           setCurrentCpId(nextCp.id);
-          const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
+          const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
           triggerToast(`Kod sah! CP-${displayIndex} selesai. Aktif: ${nextCp.name}`, 'success');
         } else {
           setCurrentCpId('');
           triggerToast(`Tamat Cabaran! Tahniah pasukan anda berjaya menyelesaikan cabaran!`, 'success');
         }
       } else {
-        const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
+        const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
         triggerToast(`Kod sah! CP-${displayIndex} diselesaikan daripada status tertunda.`, 'success');
       }
     } else {
@@ -413,9 +412,9 @@ export default function ParticipantDashboardScreen() {
         {/* Active Checkpoint Instruction Pane */}
         {currentCpId ? (
           (() => {
-            const currentCp = orderedCheckpoints.find((cp) => cp.id === currentCpId);
+            const currentCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
             if (!currentCp) return null;
-            const displayIndex = mockCheckpoints.filter(cp => !cp.isStart && !cp.isFinish).indexOf(currentCp) + 1;
+            const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(currentCp) + 1;
             return (
 
 
@@ -540,10 +539,10 @@ export default function ParticipantDashboardScreen() {
               Anda telah melangkau checkpoint ini kerana kesesakan. Sila kembali ke lokasi ini apabila keadaan mengizinkan untuk menyelesaikan tugasan.
             </Text>
             <View style={{ marginTop: 12, gap: 8 }}>
-              {mockCheckpoints
-                .filter((cp) => skippedCps.includes(cp.id))
-                .map((cp) => {
-                  const displayIndex = mockCheckpoints.filter(c => !c.isStart && !c.isFinish).indexOf(cp) + 1;
+              {checkpoints
+                .filter((cp: Checkpoint) => skippedCps.includes(cp.id))
+                .map((cp: Checkpoint) => {
+                  const displayIndex = checkpoints.filter((c: Checkpoint) => !c.isStart && !c.isFinish).indexOf(cp) + 1;
                   return (
                     <TouchableOpacity
                       key={cp.id}
@@ -587,8 +586,8 @@ export default function ParticipantDashboardScreen() {
           <Text style={[styles.listHeaderTitle, { color: activeTheme.colors.text }]}>
             Senarai Semak Laluan Acara
           </Text>
-          {orderedCheckpoints.map((cp) => {
-            const displayIndex = mockCheckpoints.filter(c => !c.isStart && !c.isFinish).indexOf(cp) + 1;
+          {orderedCheckpoints.map((cp: Checkpoint) => {
+            const displayIndex = checkpoints.filter((c: Checkpoint) => !c.isStart && !c.isFinish).indexOf(cp) + 1;
             return (
               <CheckpointListItem
                 key={cp.id}
@@ -713,56 +712,58 @@ export default function ParticipantDashboardScreen() {
 
         {/* Leaderboard Card */}
         <Card role="participant" title="Kedudukan Semasa Kumpulan">
-          {mockLeaderboard.map((team, idx) => {
-            const isUserTeam = team.teamName === 'Pasukan Harimau';
-            return (
-              <View
-                key={team.teamId}
-                style={[
-                  styles.leaderboardRow,
-                  { borderBottomColor: activeTheme.colors.border },
-                  isUserTeam && {
-                    backgroundColor: activeTheme.colors.primaryLight,
-                    borderRadius: activeTheme.radius.sm,
-                    paddingHorizontal: 8,
-                  },
-                ]}
-              >
-                <View style={styles.leaderboardLeft}>
-                  <Text
-                    style={[
-                      styles.rankText,
-                      { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
-                      idx === 0 && { color: '#EAB308', fontWeight: 'bold' },
-                    ]}
-                  >
-                    #{team.rank}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.teamNameText,
-                      { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
-                      isUserTeam && { fontWeight: 'bold' },
-                    ]}
-                  >
-                    {team.teamName}
-                  </Text>
-                </View>
-
-                <View style={styles.leaderboardRight}>
-                  {rules.pointsSystemEnabled && (
-                    <Text style={[styles.pointsText, { color: activeTheme.colors.text }]}>
-                      {team.points} Pts
+          {teams.length === 0 ? (
+            <Text style={{ fontSize: 13, color: activeTheme.colors.textMuted, fontStyle: 'italic', paddingVertical: 8 }}>
+              Tiada data kedudukan kumpulan lagi.
+            </Text>
+          ) : (
+            teams.map((team: any, idx: number) => {
+              const isUserTeam = team.name === ((user as any)?.teamName || 'Pasukan Harimau');
+              return (
+                <View
+                  key={team.id || idx}
+                  style={[
+                    styles.leaderboardRow,
+                    { borderBottomColor: activeTheme.colors.border },
+                    isUserTeam && {
+                      backgroundColor: activeTheme.colors.primaryLight,
+                      borderRadius: activeTheme.radius.sm,
+                      paddingHorizontal: 8,
+                    },
+                  ]}
+                >
+                  <View style={styles.leaderboardLeft}>
+                    <Text
+                      style={[
+                        styles.rankText,
+                        { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
+                        idx === 0 && { color: '#EAB308', fontWeight: 'bold' },
+                      ]}
+                    >
+                      #{idx + 1}
                     </Text>
-                  )}
-                  <Text style={[styles.timeText, { color: activeTheme.colors.textMuted }]}>
-                    {team.totalTimeFormatted}
-                  </Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.teamNameText,
+                        { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
+                        isUserTeam && { fontWeight: 'bold' },
+                      ]}
+                    >
+                      {team.name}
+                    </Text>
+                  </View>
 
-              </View>
-            );
-          })}
+                  <View style={styles.leaderboardRight}>
+                    {rules.pointsSystemEnabled && (
+                      <Text style={[styles.pointsText, { color: activeTheme.colors.text }]}>
+                        {team.totalPoints || 0} Pts
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })
+          )}
         </Card>
 
         {/* Logout Button */}
@@ -772,7 +773,7 @@ export default function ParticipantDashboardScreen() {
           activeOpacity={0.7}
         >
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-          <Text style={styles.logoutBtnText}>Log Keluar Sesi Demo</Text>
+          <Text style={styles.logoutBtnText}>Log Keluar</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -785,18 +786,25 @@ export default function ParticipantDashboardScreen() {
       <View style={[styles.headerPanel, { backgroundColor: activeTheme.colors.card, borderBottomColor: activeTheme.colors.border }]}>
         <View style={styles.headerInfo}>
           <Text style={[styles.headerEventName, { color: activeTheme.colors.text }]} numberOfLines={1}>
-            {mockEvent.name}
+            {activeEvent?.name || 'XploreQuest Event'}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
             <Text style={[styles.headerTeamName, { color: activeTheme.colors.primary, marginTop: 0 }]}>
-              🏆 Pasukan Harimau
+              🏆 {(user as any)?.teamName || user?.name || 'Kumpulan Peserta'}
             </Text>
             <OfflineStatusChip />
           </View>
         </View>
         <TouchableOpacity
           style={styles.headerInfoBtn}
-          onPress={() => Alert.alert('Informasi Acara', `${mockEvent.name}\nTarikh: ${mockEvent.date}\nSempadan: ${mockEvent.locationName}`)}
+          onPress={() =>
+            Alert.alert(
+              'Informasi Acara',
+              `${activeEvent?.name || 'XploreQuest'}\nTarikh: ${activeEvent?.date || '-'}\nLokasi: ${
+                activeEvent?.locationName || '-'
+              }`
+            )
+          }
         >
           <Ionicons name="information-circle-outline" size={24} color={activeTheme.colors.textMuted} />
         </TouchableOpacity>
@@ -831,9 +839,9 @@ export default function ParticipantDashboardScreen() {
                 Masukkan kod manual 6-aksara yang diberikan oleh Marshal di pos kawalan aktif.
               </Text>
               
-              {currentCpId && (
+              {__DEV__ && currentCpId && (
                 <Text style={styles.demoHintText}>
-                  💡 Petunjuk Demo: Kod laluan untuk checkpoint aktif ialah{' '}
+                  💡 Kod Ujian Dev: Kod laluan untuk checkpoint aktif ialah{' '}
                   <Text style={{ fontWeight: 'bold' }}>{`PASS${currentCpId.replace('-', '')}`}</Text>
                 </Text>
               )}
@@ -976,7 +984,7 @@ export default function ParticipantDashboardScreen() {
         visible={detailModalVisible}
         checkpoint={selectedCpForDetail}
         status={selectedCpForDetail ? getCheckpointStatus(selectedCpForDetail.id) : 'locked'}
-        index={selectedCpForDetail ? mockCheckpoints.indexOf(selectedCpForDetail) : 0}
+        index={selectedCpForDetail ? checkpoints.indexOf(selectedCpForDetail) : 0}
         onClose={() => {
           setDetailModalVisible(false);
           setSelectedCpForDetail(null);
@@ -996,7 +1004,7 @@ export default function ParticipantDashboardScreen() {
       {/* QR Scan Simulator Modal */}
       <QRScanSimulationScreen
         visible={qrSimVisible}
-        checkpoint={mockCheckpoints.find((cp) => cp.id === (cpIdBeingScanned || currentCpId)) || null}
+        checkpoint={checkpoints.find((cp: Checkpoint) => cp.id === (cpIdBeingScanned || currentCpId)) || null}
         onClose={() => setQrSimVisible(false)}
         onScanSuccess={handleScanCompleted}
       />

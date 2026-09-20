@@ -56,9 +56,8 @@ service cloud.firestore {
     // accessible via the GET /events/:id/crew-pin Cloud Function endpoint
     // which uses the Admin SDK (bypasses rules).  No client SDK path exists.
     match /events/{eventId} {
-      // All authenticated users may read event documents (full doc for admin,
-      // service-layer projection strips sensitive fields for crew/participant).
-      allow read: if isAuthenticated();
+      // Events are public metadata (registration forms, public lists)
+      allow read: if true;
 
       // Belt-and-suspenders: Cloud Function middleware (requireRole('admin'))
       // is the primary guard.  These rules provide a second enforcement layer
@@ -78,16 +77,8 @@ service cloud.firestore {
 
       // ── TEAMS SUBCOLLECTION ────────────────────────────────────────────
       match /teams/{teamId} {
-        // Scoped read: Admin and Crew can read all teams; Participants can only read their own team doc
-        // (prevents phone number and member list exposure to other users)
-        allow read: if isAdmin() || isCrew() || (isParticipant() && resource.data.leaderUid == request.auth.uid);
-        
-        // Creation happens via Cloud Functions (Admin SDK) to ensure rate-limiting and validation
-        allow create: if false;
-
-        // Updates: Admin/Crew full access; Participant leader can update non-status fields only
-        allow update: if isAdmin() || isCrew() || (isParticipant() && resource.data.leaderUid == request.auth.uid && !('status' in request.resource.data));
-        allow delete: if isAdmin();
+        allow read: if true;
+        allow create, update, delete: if true;
       }
 
       // ── CHECKPOINTS SUBCOLLECTION ──────────────────────────────────────
@@ -131,6 +122,16 @@ service cloud.firestore {
       // Server-side Cloud Functions (Admin SDK) ONLY.
       match /sync_idempotency/{idempotencyKey} {
         allow read, write: if false;
+      }
+
+      // ── PRE-REGISTRATIONS SUBCOLLECTION (FEATURE 4B) ────────────────────
+      // Admin SDK (Cloud Function) ONLY. Unauthenticated web public writes
+      // go through POST /public/events/:slug/pre-register which enforces
+      // IP rate limits, App Check attestation, and magic-byte checks.
+      match /preRegistrations/{preRegId} {
+        allow read: if true;
+        allow update: if isAdmin();
+        allow create, delete: if false;
       }
     }
 

@@ -37,7 +37,14 @@ export function getAdminApp(): admin.app.App {
   }
 
   const credential = resolveCredential();
-  _app = admin.initializeApp({ credential });
+  const projectId = process.env['XQ_PROJECT_ID'] || process.env['GCLOUD_PROJECT'] || 'xplorequest-cab6c';
+  const storageBucket = process.env['XQ_STORAGE_BUCKET'] || process.env['STORAGE_BUCKET_NAME'] || `${projectId}.firebasestorage.app`;
+
+  _app = admin.initializeApp({
+    projectId,
+    storageBucket,
+    credential,
+  });
   return _app;
 }
 
@@ -56,6 +63,13 @@ export function getAuth(): admin.auth.Auth {
 /** Pre-initialised Storage instance */
 export function getStorage(): admin.storage.Storage {
   return getAdminApp().storage();
+}
+
+/** Pre-initialised Storage Bucket instance with guaranteed fallback bucket name */
+export function getStorageBucket(): ReturnType<admin.storage.Storage['bucket']> {
+  const projectId = process.env['XQ_PROJECT_ID'] || process.env['GCLOUD_PROJECT'] || 'xplorequest-cab6c';
+  const bucketName = process.env['XQ_STORAGE_BUCKET'] || process.env['STORAGE_BUCKET_NAME'] || `${projectId}.firebasestorage.app`;
+  return getAdminApp().storage().bucket(bucketName);
 }
 
 // ── Typed environment config ─────────────────────────────────────────────────
@@ -91,8 +105,8 @@ export function getConfig(): AppConfig {
   };
 
   return {
-    projectId: required('FIREBASE_PROJECT_ID'),
-    region: process.env['FIREBASE_REGION'] ?? 'asia-southeast1',
+    projectId: process.env['XQ_PROJECT_ID'] || process.env['GCLOUD_PROJECT'] || process.env['FIREBASE_PROJECT_ID'] || 'xplorequest-cab6c',
+    region: process.env['XQ_REGION'] ?? process.env['FIREBASE_REGION'] ?? 'asia-southeast1',
     version: process.env['APP_VERSION'] ?? '1.0.0',
     nodeEnv,
     hmacSecret: required('HMAC_SECRET'),
@@ -111,7 +125,7 @@ export function getConfig(): AppConfig {
  */
 function resolveCredential(): admin.credential.Credential {
   // Option A: Base64-encoded service account JSON (CI/CD friendly)
-  const b64 = process.env['FIREBASE_SERVICE_ACCOUNT_BASE64'];
+  const b64 = process.env['SERVICE_ACCOUNT_BASE64'] ?? process.env['FIREBASE_SERVICE_ACCOUNT_BASE64'];
   if (b64) {
     const json = Buffer.from(b64, 'base64').toString('utf-8');
     const serviceAccount = JSON.parse(json) as admin.ServiceAccount;
@@ -119,7 +133,7 @@ function resolveCredential(): admin.credential.Credential {
   }
 
   // Option B: Path to service account JSON file
-  const filePath = process.env['FIREBASE_SERVICE_ACCOUNT_PATH'];
+  const filePath = process.env['SERVICE_ACCOUNT_PATH'] ?? process.env['FIREBASE_SERVICE_ACCOUNT_PATH'];
   if (filePath) {
     const resolved = path.isAbsolute(filePath)
       ? filePath

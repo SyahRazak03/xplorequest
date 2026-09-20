@@ -100,8 +100,9 @@ teamsRouter.get(
     const role = getRole(req);
     const uid = req.user?.uid;
     const teamId = req.user?.teamId;
+    const callerEventId = req.user?.eventId;
 
-    const teams = await listTeamsService(eventId, role, uid, teamId);
+    const teams = await listTeamsService(eventId, role, uid, teamId, callerEventId);
 
     sendSuccess(res, teams, 200, {
       total: teams.length,
@@ -153,8 +154,9 @@ teamsRouter.get(
     const role = getRole(req);
     const uid = req.user?.uid;
     const callerTeamId = req.user?.teamId;
+    const callerEventId = req.user?.eventId;
 
-    const team = await getTeamService(eventId, teamId, role, uid, callerTeamId);
+    const team = await getTeamService(eventId, teamId, role, uid, callerTeamId, callerEventId);
 
     sendSuccess(res, team);
   })
@@ -177,13 +179,17 @@ teamsRouter.patch(
     }
 
     const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
     const { status } = req.body as ReturnType<typeof TeamStatusUpdateSchema.parse>;
 
     const updated = await setTeamStatusService(
       eventId,
       teamId,
       status as TeamStatus,
-      uid
+      uid,
+      role,
+      callerEventId
     );
 
     sendSuccess(res, updated);
@@ -206,11 +212,15 @@ teamsRouter.patch(
     }
 
     const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
     const updated = await updateTeamService(
       eventId,
       teamId,
       req.body as ReturnType<typeof UpdateTeamSchema.parse>,
-      uid
+      uid,
+      role,
+      callerEventId
     );
 
     sendSuccess(res, updated);
@@ -231,7 +241,10 @@ teamsRouter.delete(
       throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID dan Team ID diperlukan.');
     }
 
-    await deleteTeamService(eventId, teamId);
+    const uid = requireUid(req);
+    const role = req.user?.role;
+    const callerEventId = req.user?.eventId;
+    await deleteTeamService(eventId, teamId, uid, role, callerEventId);
 
     sendSuccess(res, { deleted: true, eventId, teamId });
   })

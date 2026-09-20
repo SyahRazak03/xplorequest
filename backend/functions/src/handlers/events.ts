@@ -34,6 +34,8 @@ import {
   listEventsService,
   rotateHmacSecretService,
   updateEventService,
+  updatePaymentDetailsService,
+  uploadEventAssetService,
 } from '../services/event.service';
 import {
   AppError,
@@ -44,6 +46,8 @@ import {
 import {
   CreateEventSchema,
   UpdateEventSchema,
+  UpdatePaymentDetailsSchema,
+  UploadEventAssetSchema,
   validateBody,
 } from '../validation';
 
@@ -98,7 +102,8 @@ eventsRouter.get(
   requireRole('admin', 'crew', 'participant'),
   asyncHandler(async (req, res) => {
     const role = requireRole_(req);
-    const result = await listEventsService(role);
+    const uid = req.user?.uid;
+    const result = await listEventsService(role, uid);
 
     sendSuccess(
       res,
@@ -126,7 +131,8 @@ eventsRouter.get(
       throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID diperlukan.');
     }
 
-    const data = await getCrewPinService(eventId);
+    const uid = requireUid(req);
+    const data = await getCrewPinService(eventId, uid);
     sendSuccess(res, data);
   })
 );
@@ -143,8 +149,32 @@ eventsRouter.get(
     }
 
     const role = requireRole_(req);
-    const event = await getEventService(eventId, role);
+    const uid = req.user?.uid;
+    const callerEventId = req.user?.eventId;
+    const event = await getEventService(eventId, role, uid, callerEventId);
     sendSuccess(res, event);
+  })
+);
+
+// ── PATCH /events/:id/payment-details — Update Event Payment Details ────────
+
+eventsRouter.patch(
+  '/:id/payment-details',
+  requireRole('admin'),
+  validateBody(UpdatePaymentDetailsSchema),
+  asyncHandler(async (req, res) => {
+    const eventId = String(req.params['id'] ?? '');
+    if (!eventId) {
+      throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID diperlukan.');
+    }
+
+    const uid = requireUid(req);
+    const updated = await updatePaymentDetailsService(
+      eventId,
+      req.body as ReturnType<typeof UpdatePaymentDetailsSchema.parse>,
+      uid
+    );
+    sendSuccess(res, updated);
   })
 );
 
@@ -184,6 +214,32 @@ eventsRouter.delete(
     const uid = requireUid(req);
     await deleteEventService(eventId, uid);
     sendSuccess(res, { archived: true, eventId });
+  })
+);
+
+// ── POST /events/:id/assets — Upload Event Public Asset (Banner / Payment QR)
+
+eventsRouter.post(
+  '/:id/assets',
+  requireRole('admin'),
+  validateBody(UploadEventAssetSchema),
+  asyncHandler(async (req, res) => {
+    const eventId = String(req.params['id'] ?? '');
+    if (!eventId) {
+      throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID diperlukan.');
+    }
+
+    const caller = req.user;
+    if (!caller) {
+      throw new AppError(ErrorCode.UNAUTHORIZED, 'Pengesahan diperlukan.');
+    }
+
+    const result = await uploadEventAssetService(
+      eventId,
+      caller,
+      req.body as ReturnType<typeof UploadEventAssetSchema.parse>
+    );
+    sendSuccess(res, result);
   })
 );
 
