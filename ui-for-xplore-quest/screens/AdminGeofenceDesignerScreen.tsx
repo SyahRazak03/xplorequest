@@ -190,6 +190,21 @@ export default function AdminGeofenceDesignerScreen() {
       }));
   });
 
+  useEffect(() => {
+    if (checkpoints && checkpoints.length > 0) {
+      setCheckpointPins(
+        checkpoints
+          .filter((c) => typeof c.latitude === 'number' && typeof c.longitude === 'number')
+          .map((c) => ({
+            id: c.id,
+            name: c.name,
+            latitude: c.latitude,
+            longitude: c.longitude,
+          }))
+      );
+    }
+  }, [checkpoints]);
+
   const [modalConfig, setModalConfig] = useState<{
     visible: boolean;
     title: string;

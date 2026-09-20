@@ -67,19 +67,7 @@ export default function AdminCheckpointManagerScreen() {
   };
 
   const normalizeCheckpoints = (list: Checkpoint[]) => {
-    const sorted = sortCheckpoints(list);
-    let standardIndex = 1;
-    return sorted.map((cp) => {
-      if (cp.isStart) {
-        return { ...cp, id: 'CP-START' };
-      } else if (cp.isFinish) {
-        return { ...cp, id: 'CP-TAMAT' };
-      } else {
-        const id = `CP-${standardIndex.toString().padStart(3, '0')}`;
-        standardIndex++;
-        return { ...cp, id };
-      }
-    });
+    return sortCheckpoints(list);
   };
 
   const handleMoveUp = (index: number) => {
@@ -272,7 +260,7 @@ export default function AdminCheckpointManagerScreen() {
               <View style={styles.cardHeader}>
                 <View style={styles.cpIconContainer}>
                   <Text style={[styles.cpIconText, (cp.isStart || cp.isFinish) && { fontSize: 9 }]}>
-                    {cp.isStart ? 'MULA' : cp.isFinish ? 'TAMAT' : cp.id.replace('CP-', '')}
+                    {cp.isStart ? 'MULA' : cp.isFinish ? 'TAMAT' : cp.id.startsWith('CP-') ? cp.id.replace('CP-', '') : `CP ${index}`}
                   </Text>
                 </View>
 
