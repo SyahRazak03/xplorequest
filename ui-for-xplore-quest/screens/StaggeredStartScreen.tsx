@@ -31,13 +31,12 @@ interface OtherTeamMock {
 
 export default function StaggeredStartScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { theme, isRaceStarted, startRace, teams, checkpoints } = useApp();
+  const { user, activeEvent, isRaceStarted, teams, checkpoints } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const [animation] = useState(new Animated.Value(0));
   const [showWaitingModal, setShowWaitingModal] = useState(false);
-  const [autoStartCountdown, setAutoStartCountdown] = useState(10);
 
-  // 10-second auto-start countdown timer for demo
+  // Automatic real-time redirection to ParticipantDashboardScreen when Crew starts race
   useEffect(() => {
     if (isRaceStarted) {
       setShowWaitingModal(false);
@@ -45,28 +44,38 @@ export default function StaggeredStartScreen() {
         index: 0,
         routes: [{ name: 'Dashboard' }],
       });
-      return;
     }
+  }, [isRaceStarted, navigation]);
 
-    const timer = setInterval(() => {
-      setAutoStartCountdown(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+  // Find logged-in participant's team
+  const currentTeam = (teams || []).find(
+    (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
+  ) || (teams && teams.length > 0 ? teams[0] : null);
 
-    return () => clearInterval(timer);
-  }, [isRaceStarted]);
+  const currentTeamIndex = currentTeam ? (teams || []).findIndex((t) => t.id === currentTeam.id) : 0;
+  const safeTeamIndex = currentTeamIndex >= 0 ? currentTeamIndex : 0;
 
-  // Trigger startRace cleanly when countdown reaches 0
-  useEffect(() => {
-    if (autoStartCountdown === 0 && !isRaceStarted) {
-      startRace();
-    }
-  }, [autoStartCountdown, isRaceStarted]);
+  // Sourced directly from AdminCheckpointManagerScreen via AppContext `checkpoints`
+  const validCheckpoints = (checkpoints && checkpoints.length > 0)
+    ? checkpoints
+    : [
+        { id: 'CP-START', name: 'GATE 3 / Pos Mula', type: 'start' },
+        { id: 'CP-001', name: 'Dataran Kereta Kuda', type: 'normal' },
+        { id: 'CP-002', name: 'Tasik Casa Ria', type: 'normal' },
+      ];
+
+  const assignedCheckpointIndex = safeTeamIndex % validCheckpoints.length;
+  const assignedCheckpoint = validCheckpoints[assignedCheckpointIndex];
+
+  const checkpointTitleText = `Pos Kawalan ${assignedCheckpointIndex + 1}`;
+  const checkpointNameText = assignedCheckpoint.name || `Dataran Kereta Kuda`;
+
+  // Sourced directly from AdminEventDetailScreen via AppContext `activeEvent`
+  const eventNameText = activeEvent?.name || 'Cabaran Tasik Titiwangsa';
 
   // Derive other teams dynamically from live teams in AppContext
   const otherTeams = (teams || []).map((t, idx) => {
-    const cp = checkpoints && checkpoints.length > 0
-      ? checkpoints[idx % checkpoints.length]
-      : { id: `CP-${idx + 1}`, name: `Pos Kawalan ${idx + 1}` };
+    const cp = validCheckpoints[idx % validCheckpoints.length];
     return {
       name: t.name,
       checkpointNumber: idx + 1,
@@ -98,7 +107,7 @@ export default function StaggeredStartScreen() {
 
   const listHeight = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 280], // Approximate height for the 4 rows
+    outputRange: [0, 280],
   });
 
   return (
@@ -108,14 +117,14 @@ export default function StaggeredStartScreen() {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Branding */}
+        {/* Header Branding - Dynamic Event Name from AdminEventDetailScreen */}
         <View style={styles.header}>
-          <Text style={styles.headerSubtitle}>Cabaran Tasik Titiwangsa</Text>
+          <Text style={styles.headerSubtitle}>{eventNameText}</Text>
           <Text style={styles.headerTitle}>Pelepasan Kumpulan</Text>
           <View style={styles.divider} />
         </View>
 
-        {/* Assigned Start Point Card */}
+        {/* Assigned Start Point Card - Dynamic Checkpoint from AdminCheckpointManagerScreen */}
         <Card style={styles.checkpointCard} role="participant">
           <View style={styles.badgeWrapper}>
             <Badge label="LOKASI PERMULAAN ANDA" state="success" />
@@ -137,12 +146,11 @@ export default function StaggeredStartScreen() {
             <View style={[styles.pingCircle, styles.ping2]} />
           </View>
 
-          {/* Checkpoint Name */}
+          {/* Checkpoint Name Sourced from AdminCheckpointManagerScreen */}
           <View style={styles.checkpointDetails}>
-            <Text style={styles.checkpointLabel}>Checkpoint Anda</Text>
-            <Text style={styles.checkpointTitle}>Checkpoint 3</Text>
-            <Text style={styles.checkpointName}>Dataran Kereta Kuda</Text>
-
+            <Text style={styles.checkpointLabel}>Checkpoint Anda ({currentTeam ? currentTeam.name : 'Pasukan Anda'})</Text>
+            <Text style={styles.checkpointTitle}>{checkpointTitleText}</Text>
+            <Text style={styles.checkpointName}>{checkpointNameText}</Text>
           </View>
 
           {/* Explanation Banner */}
@@ -194,16 +202,15 @@ export default function StaggeredStartScreen() {
           </Animated.View>
         </Card>
 
-        {/* Action Button & Auto Start Demo Countdown */}
+        {/* Action Button & Waiting State */}
         <View style={styles.actionContainer}>
-          {/* Live 10s Demo Auto Start Indicator */}
           {!isRaceStarted && (
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: 'rgba(91, 58, 158, 0.1)',
               paddingHorizontal: 14,
-              paddingVertical: 6,
+              paddingVertical: 8,
               borderRadius: RADIUS.full,
               marginBottom: SPACING.md,
               gap: 6,
@@ -211,24 +218,25 @@ export default function StaggeredStartScreen() {
               borderColor: COLORS.participant.primary,
               borderStyle: 'dashed'
             }}>
-              <Ionicons name="timer-outline" size={14} color={COLORS.participant.primary} />
+              <Ionicons name="time-outline" size={16} color={COLORS.participant.primary} />
               <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.participant.primary }}>
-                Pelepasan Auto: {autoStartCountdown}s
+                Menantikan Pelepasan Mula Penganjur / Urus Setia...
               </Text>
             </View>
           )}
 
           <PrimaryButton
-            label={isRaceStarted ? "Mulai Sekarang (Let's Go!)" : `Mulai Sekarang (${autoStartCountdown}s)`}
+            label={isRaceStarted ? "Mulai Sekarang (Let's Go!)" : "Perlumbaan Belum Bermula"}
             onPress={handleStart}
+            disabled={!isRaceStarted}
             role="participant"
-            icon={<Ionicons name={isRaceStarted ? "play-outline" : "time-outline"} size={18} color={COLORS.textLight} />}
+            icon={<Ionicons name={isRaceStarted ? "play-outline" : "lock-closed-outline"} size={18} color={COLORS.textLight} />}
             style={styles.startButton}
           />
           <Text style={styles.footerHint}>
             {isRaceStarted 
               ? 'Perlumbaan telah bermula! Tekan untuk terus ke Dashboard.' 
-              : `Perlumbaan akan dimulakan secara automatik dalam ${autoStartCountdown} saat.`}
+              : 'Urus setia di Pos Permulaan belum menekan MULAKAN PERLUMBAAN. Skrin ini akan dilencongkan secara automatik sebaik sahaja perlumbaan bermula.'}
           </Text>
         </View>
       </ScrollView>
@@ -255,7 +263,7 @@ export default function StaggeredStartScreen() {
             <View style={styles.pulseNotice}>
               <View style={styles.pulseDot} />
               <Text style={styles.pulseNoticeText}>
-                Aplikasi akan memulakan perlumbaan dan melencong ke Dashboard secara automatik dalam {autoStartCountdown} saat.
+                Aplikasi akan memulakan perlumbaan dan melencong ke Dashboard secara automatik sebaik sahaja Urus Setia memulakan perlumbaan.
               </Text>
             </View>
 
