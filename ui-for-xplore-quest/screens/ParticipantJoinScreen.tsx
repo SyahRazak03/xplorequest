@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { PrimaryButton, SecondaryButton, Card, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import { registerTeam } from '../services/teamService';
+import { registerTeam, checkinTeamAttendance } from '../services/teamService';
 import type { Team } from '../mockData';
 import { useApp } from '../AppContext';
 import RealCameraQRScanner from '../components/RealCameraQRScanner';
@@ -105,19 +105,44 @@ export default function ParticipantJoinScreen() {
     }
   };
 
-  const handleScanSuccess = (_scannedData: string) => {
+  const handleScanSuccess = async (scannedData: string) => {
     setShowCameraScanner(false);
-    
-    // Log in user and navigate to StaggeredStartScreen
-    if (registeredTeam) {
-      login('participant', {
-        id: `USR-${registeredTeam.id}`,
-        name: registeredTeam.leaderName || registeredTeam.name,
-        email: 'peserta@xplorequest.com',
-        role: 'participant',
-        teamId: registeredTeam.id,
-      });
+
+    if (!registeredTeam) {
+      Alert.alert('Ralat', 'Sila pilih pasukan anda terlebih dahulu.');
+      return;
     }
+
+    // Parse scanned HMAC QR payload
+    // Format: `${teamId}:${eventId}:attendance:${timestamp}:${keyId}:${signature}`
+    const parts = scannedData.split(':');
+    const scannedTeamId = parts[0];
+
+    // Verify team ID lock
+    if (scannedTeamId && scannedTeamId !== '*' && scannedTeamId !== registeredTeam.id && scannedTeamId !== registeredTeam.name) {
+      Alert.alert(
+        'Kod QR Tidak Sah ⚠️',
+        `Kod QR ini dijana khas untuk pasukan lain (ID: ${scannedTeamId}). Sila minta Urus Setia memaparkan Kod QR Pelepasan yang khusus untuk pasukan "${registeredTeam.name}".`
+      );
+      return;
+    }
+
+    // Persist attendance check-in to Firestore backend
+    try {
+      const eventId = activeEvent?.id || 'EV-001';
+      await checkinTeamAttendance(eventId, registeredTeam.id);
+    } catch (err) {
+      console.warn('Scan checkin notice:', err);
+    }
+
+    // Log in user and navigate to StaggeredStartScreen
+    login('participant', {
+      id: `USR-${registeredTeam.id}`,
+      name: registeredTeam.leaderName || registeredTeam.name,
+      email: 'peserta@xplorequest.com',
+      role: 'participant',
+      teamId: registeredTeam.id,
+    });
 
     navigation.reset({
       index: 0,

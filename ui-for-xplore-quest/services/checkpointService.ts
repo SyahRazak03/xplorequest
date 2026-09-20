@@ -368,3 +368,45 @@ export async function finishRaceScan(
   return json.data;
 }
 
+export interface AttendanceQRResponse {
+  payload: string;
+  eventId: string;
+  teamId: string;
+  keyId: number;
+  timestamp: number;
+}
+
+/**
+ * Generates a team-specific HMAC-SHA256 signed attendance QR code for start check-in (Crew/Admin).
+ */
+export async function generateAttendanceQR(
+  eventId: string,
+  teamId: string,
+  idToken: string
+): Promise<AttendanceQRResponse> {
+  const resp = await fetch(
+    `${API_BASE}/events/${encodeURIComponent(eventId)}/attendance/qr`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ teamId }),
+    }
+  );
+
+  const json = (await resp.json()) as {
+    success: boolean;
+    data?: AttendanceQRResponse;
+    error?: { code: string; message: string };
+  };
+
+  if (!resp.ok || !json.success || !json.data) {
+    const msg = json.error?.message ?? 'Gagal menjana Kod QR Pelepasan Kehadiran.';
+    throw new Error(msg);
+  }
+
+  return json.data;
+}
+

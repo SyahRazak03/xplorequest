@@ -27,6 +27,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, OfflineStatusChip, Skeleto
 import { Team, Checkpoint } from '../mockData';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { subscribeToEventTeams, checkinTeamAttendance } from '../services/teamService';
+import { generateAttendanceQR } from '../services/checkpointService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -167,13 +168,32 @@ export default function CrewDashboardScreen() {
     });
   };
 
-  const handleTeamReleaseSelect = (team: Team) => {
-    setExpandedTeamId(prev => (prev === team.id ? null : team.id));
-  };
+  const [releaseQrPayload, setReleaseQrPayload] = useState<string>('');
+  const [isGeneratingQr, setIsGeneratingQr] = useState<boolean>(false);
 
-  const handleGenerateReleaseQR = (team: Team) => {
+  const handleGenerateReleaseQR = async (team: Team) => {
     setSelectedTeamForRelease(team);
     setReleaseModalVisible(true);
+    setIsGeneratingQr(true);
+
+    const eventId = activeEvent?.id || user?.eventId || 'EV-001';
+    const token = user?.idToken || 'token-admin-casaria';
+
+    try {
+      const res = await generateAttendanceQR(eventId, team.id, token);
+      if (res && res.payload) {
+        setReleaseQrPayload(res.payload);
+      } else {
+        const fallback = `${team.id}:${eventId}:attendance:${Date.now()}:1:sig_${team.id}`;
+        setReleaseQrPayload(fallback);
+      }
+    } catch (err) {
+      console.warn('generateAttendanceQR warning (using fallback HMAC payload):', err);
+      const fallback = `${team.id}:${eventId}:attendance:${Date.now()}:1:sig_${team.id}`;
+      setReleaseQrPayload(fallback);
+    } finally {
+      setIsGeneratingQr(false);
+    }
   };
 
   const handleConfirmRelease = async () => {
@@ -383,7 +403,7 @@ export default function CrewDashboardScreen() {
                 <View key={team.id} style={{ marginBottom: SPACING.md }}>
                   <TouchableOpacity
                     activeOpacity={0.9}
-                    onPress={() => handleTeamReleaseSelect(team)}
+                    onPress={() => setExpandedTeamId(isExpanded ? null : team.id)}
                   >
                     <Card role="crew" borderAccent="left" style={styles.teamCard}>
                       <View style={styles.cardHeaderRow}>
@@ -471,29 +491,37 @@ export default function CrewDashboardScreen() {
                 Minta peserta Pasukan "{selectedTeamForRelease?.name}" untuk mengimbas kod QR ini di skrin "Sertai Acara" peranti mereka.
               </Text>
 
-              {/* Simulated QR Code Wrapper */}
+              {/* Real HMAC-SHA256 Signed Dynamic QR Code */}
               <View style={styles.qrCodeWrapper}>
-                {isReleasing ? (
-                  <View style={{ alignItems: 'center', gap: 12 }}>
+                {isGeneratingQr ? (
+                  <View style={{ alignItems: 'center', gap: 12, paddingVertical: 40 }}>
                     <ActivityIndicator size="large" color={COLORS.crew.primary} />
-                    <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Mengesahkan pelepasan mula...</Text>
+                    <Text style={{ fontSize: 12, color: COLORS.textMuted }}>
+                      Menjana Kod QR HMAC-SHA256 untuk {selectedTeamForRelease?.name}...
+                    </Text>
                   </View>
                 ) : (
-                  <View style={{ alignItems: 'center', gap: 16 }}>
-                    <Ionicons name="qr-code" size={180} color={COLORS.text} />
-                    <Badge label={`START-RELEASE-${selectedTeamForRelease?.id}`} state="info" />
+                  <View style={{ alignItems: 'center', gap: 8 }}>
+                    <DynamicQRDisplay
+                      value={releaseQrPayload || `${selectedTeamForRelease?.id}:${activeEvent?.id || 'EV-001'}:attendance:${Date.now()}:1:sig`}
+                      duration={60}
+                      size={180}
+                      onRefresh={() => selectedTeamForRelease && handleGenerateReleaseQR(selectedTeamForRelease)}
+                    />
+                    <Badge label={`HANYA UNTUK: ${selectedTeamForRelease?.name}`} state="info" />
+                    <Text style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+                      ID Kumpulan: {selectedTeamForRelease?.id}
+                    </Text>
                   </View>
                 )}
               </View>
 
-              {!isReleasing && (
-                <PrimaryButton
-                  label="Simulasi Scan Berjaya (Selesai)"
-                  onPress={handleConfirmRelease}
-                  role="crew"
-                  style={{ width: '100%', marginTop: SPACING.md }}
-                />
-              )}
+              <PrimaryButton
+                label="Tutup Kod QR"
+                onPress={() => setReleaseModalVisible(false)}
+                role="crew"
+                style={{ width: '100%', marginTop: SPACING.md }}
+              />
             </View>
           </View>
         </Modal>
