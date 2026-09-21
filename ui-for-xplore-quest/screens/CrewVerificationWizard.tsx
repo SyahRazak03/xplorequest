@@ -29,7 +29,7 @@ type RouteProps = RouteProp<RootStackParamList, 'CrewVerificationWizard'>;
 export default function CrewVerificationWizard() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
-  const { user, isOffline, setSyncQueueCount, teams: appTeams, checkpoints: appCheckpoints } = useApp();
+  const { user, isOffline, setSyncQueueCount, teams: appTeams, checkpoints: appCheckpoints, activeEvent } = useApp();
 
   const { teamId } = route.params;
 
@@ -48,8 +48,8 @@ export default function CrewVerificationWizard() {
   const defaultCheckpoint: Checkpoint = {
     id: 'CP-001',
     name: 'Pos Kawalan Krew',
-    latitude: 3.1764,
-    longitude: 101.7061,
+    latitude: activeEvent?.latitude || 3.1764,
+    longitude: activeEvent?.longitude || 101.7061,
     clueText: '',
     taskDescription: 'Sahkan tugasan fizikal di pos kawalan.',
     scorePoints: 100,

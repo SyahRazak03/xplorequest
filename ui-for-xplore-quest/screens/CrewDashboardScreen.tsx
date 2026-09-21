@@ -44,8 +44,8 @@ export default function CrewDashboardScreen() {
   const defaultCheckpoint: Checkpoint = {
     id: 'CP-START',
     name: 'Stesen Pendaftaran & Pelepasan',
-    latitude: 3.1764,
-    longitude: 101.7061,
+    latitude: activeEvent?.latitude || 3.1764,
+    longitude: activeEvent?.longitude || 101.7061,
     clueText: '',
     taskDescription: '',
     scorePoints: 100,
@@ -177,7 +177,7 @@ export default function CrewDashboardScreen() {
     setIsGeneratingQr(true);
 
     const eventId = activeEvent?.id || user?.eventId || 'EV-001';
-    const token = user?.idToken || 'token-admin-casaria';
+    const token = user?.idToken || 'token-admin-xplorequest';
 
     try {
       const res = await generateAttendanceQR(eventId, team.id, token);
