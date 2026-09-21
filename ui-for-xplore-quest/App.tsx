@@ -10,8 +10,6 @@ import DashboardScreen from './screens/DashboardScreen';
 import LoginScreen from './screens/LoginScreen';
 import RoleSelectScreen from './screens/RoleSelectScreen';
 import SplashScreen from './screens/SplashScreen';
-import ParticipantJoinScreen from './screens/ParticipantJoinScreen';
-import CrewSelectCheckpointScreen from './screens/CrewSelectCheckpointScreen';
 import OrganizerEntryScreen from './screens/OrganizerEntryScreen';
 import StaggeredStartScreen from './screens/StaggeredStartScreen';
 import CrewVerificationWizard from './screens/CrewVerificationWizard';
@@ -30,6 +28,9 @@ import { getThemeForRole, UserRole } from './theme';
 
 
 import FinishLineScreen from './screens/FinishLineScreen';
+import ParticipantJoinScreen from './screens/ParticipantJoinScreen';
+import ParticipantAttendanceScanScreen from './screens/ParticipantAttendanceScanScreen';
+import CrewSelectCheckpointScreen from './screens/CrewSelectCheckpointScreen';
 import PersonalResultsScreen from './screens/PersonalResultsScreen';
 import { DemoMenu, navigationRef } from './components';
 
@@ -39,6 +40,7 @@ export type RootStackParamList = {
   RoleSelect: undefined;
   Login: { role: UserRole };
   ParticipantJoin: undefined;
+  ParticipantAttendanceScan: undefined;
   CrewSelectCheckpoint: undefined;
   OrganizerEntry: undefined;
   StaggeredStart: undefined;
@@ -101,6 +103,7 @@ export default function App() {
           <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="ParticipantJoin" component={ParticipantJoinScreen} />
+          <Stack.Screen name="ParticipantAttendanceScan" component={ParticipantAttendanceScanScreen} />
           <Stack.Screen name="CrewSelectCheckpoint" component={CrewSelectCheckpointScreen} />
           <Stack.Screen name="OrganizerEntry" component={OrganizerEntryScreen} />
           <Stack.Screen name="StaggeredStart" component={StaggeredStartScreen} />
