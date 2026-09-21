@@ -37,18 +37,57 @@ export default function ParticipantDashboardScreen() {
 
   const activeTheme = getThemeForRole('participant');
   const navigation = useNavigation<any>();
-  
+
+  // Find logged-in participant's team
+  const currentTeam = (teams || []).find(
+    (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
+  ) || (teams && teams.length > 0 ? teams[0] : null);
+
+  const currentTeamIndex = currentTeam ? (teams || []).findIndex((t) => t.id === currentTeam.id) : 0;
+  const safeTeamIndex = currentTeamIndex >= 0 ? currentTeamIndex : 0;
+
+  const rawCheckpoints: Checkpoint[] = (checkpoints && checkpoints.length > 0)
+    ? checkpoints
+    : [
+        { id: 'CP-START', name: 'GATE 3', latitude: 3.172, longitude: 101.7, clueText: 'Pos Mula Attendance', taskDescription: 'Imbas QR Attendance', scorePoints: 0, statusPerTeam: {}, isStart: true },
+        { id: 'CP-001', name: '255', latitude: 3.173, longitude: 101.71, clueText: 'Checkpoint 255', taskDescription: 'Selesaikan cabaran 255', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-002', name: '256', latitude: 3.174, longitude: 101.72, clueText: 'Checkpoint 256', taskDescription: 'Selesaikan cabaran 256', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-END', name: 'GATE 2', latitude: 3.175, longitude: 101.73, clueText: 'Garisan Penamat', taskDescription: 'Pelepasan Tamat', scorePoints: 20, statusPerTeam: {}, isFinish: true },
+      ];
+
+  const startCP = rawCheckpoints.find((cp: Checkpoint) => cp.isStart || (cp as any).type === 'start') || rawCheckpoints[0];
+  const finishCP = rawCheckpoints.find((cp: Checkpoint) => cp.isFinish || (cp as any).type === 'finish') || rawCheckpoints[rawCheckpoints.length - 1];
+  const normalCPs = rawCheckpoints.filter((cp: Checkpoint) => 
+    cp.id !== startCP?.id && cp.id !== finishCP?.id && !cp.isStart && !cp.isFinish
+  );
+
+  const assignedNormalIndex = normalCPs.length > 0 ? (safeTeamIndex % normalCPs.length) : 0;
+  const assignedNormalCP = normalCPs.length > 0 ? normalCPs[assignedNormalIndex] : null;
+
   // -------------------------------------------------------------
-  // 1. Race States (Dynamic for demo interaction)
+  // 1. Race States
   // -------------------------------------------------------------
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [completedCps, setCompletedCps] = useState<string[]>(['CP-START']);
+  const [completedCps, setCompletedCps] = useState<string[]>([]);
   const [skippedCps, setSkippedCps] = useState<string[]>([]);
-  const [currentCpId, setCurrentCpId] = useState<string>('CP-003');
-  const [points, setPoints] = useState(0); // 0 points initially
+  const [currentCpId, setCurrentCpId] = useState<string>('');
+  const [points, setPoints] = useState(0);
 
-  
+  // Auto mark Start Checkpoint as completed (Attendance QR scanned)
+  useEffect(() => {
+    if (startCP && !completedCps.includes(startCP.id)) {
+      setCompletedCps(prev => Array.from(new Set([...prev, startCP.id])));
+    }
+  }, [startCP?.id]);
+
+  // Auto set active checkpoint to team's assigned initial normal CP
+  useEffect(() => {
+    if (assignedNormalCP && !currentCpId && !completedCps.includes(assignedNormalCP.id)) {
+      setCurrentCpId(assignedNormalCP.id);
+    }
+  }, [assignedNormalCP?.id, currentCpId]);
+
   // Checkpoint Detail Modal states
   const [selectedCpForDetail, setSelectedCpForDetail] = useState<Checkpoint | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -104,29 +143,19 @@ export default function ParticipantDashboardScreen() {
   };
 
   // -------------------------------------------------------------
-  // 3. Scan & Skip Logic Helpers
+  // 3. Scan & Skip Logic Helpers (Cyclical Route Calculation)
   // -------------------------------------------------------------
   const getOrderedCheckpoints = () => {
-    const startCP = checkpoints.find((cp: Checkpoint) => cp.isStart);
-    const finishCP = checkpoints.find((cp: Checkpoint) => cp.isFinish);
-    const middleCPs = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish);
-    
-    const teamStartCpId = (user as any)?.assignedCheckpointId || 'CP-003';
-    const startIdx = middleCPs.findIndex((cp: Checkpoint) => cp.id === teamStartCpId);
-    
-    let orderedMiddle: Checkpoint[] = [];
-    if (startIdx !== -1) {
-      orderedMiddle = [
-        ...middleCPs.slice(startIdx),
-        ...middleCPs.slice(0, startIdx)
-      ];
-    } else {
-      orderedMiddle = middleCPs;
-    }
+    if (normalCPs.length === 0) return rawCheckpoints;
+
+    const orderedNormal = [
+      ...normalCPs.slice(assignedNormalIndex),
+      ...normalCPs.slice(0, assignedNormalIndex),
+    ];
 
     const result: Checkpoint[] = [];
     if (startCP) result.push(startCP);
-    result.push(...orderedMiddle);
+    result.push(...orderedNormal);
     if (finishCP) result.push(finishCP);
     return result;
   };
@@ -134,12 +163,12 @@ export default function ParticipantDashboardScreen() {
   const orderedCheckpoints = getOrderedCheckpoints();
 
   const canFinish = orderedCheckpoints
-    .filter(cp => cp.id !== 'CP-TAMAT')
+    .filter(cp => cp.id !== finishCP?.id && !cp.isFinish && cp.id !== 'CP-TAMAT')
     .every(cp => completedCps.includes(cp.id) || skippedCps.includes(cp.id));
 
   const getCheckpointStatus = (cpId: string): CheckpointStatus => {
     if (completedCps.includes(cpId)) return 'completed';
-    if (skippedCps.includes(cpId)) return 'pending'; // 'pending' maps to skipped in status icon
+    if (skippedCps.includes(cpId)) return 'pending';
     if (currentCpId === cpId) return 'active';
     return 'locked';
   };
@@ -147,11 +176,11 @@ export default function ParticipantDashboardScreen() {
   const [cpIdBeingScanned, setCpIdBeingScanned] = useState<string>('');
 
   const openCheckpointDetail = (checkpoint: Checkpoint) => {
-    if (checkpoint.id === 'CP-TAMAT') {
+    if (checkpoint.isFinish || checkpoint.id === finishCP?.id || checkpoint.id === 'CP-TAMAT') {
       if (!canFinish) {
         Alert.alert(
           'Akses Dihalang',
-          'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos CP-01 hingga CP-06 sebelum mendaftar masuk di Garisan Penamat.'
+          'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos kawalan sebelum mendaftar masuk di Garisan Penamat.'
         );
         return;
       }

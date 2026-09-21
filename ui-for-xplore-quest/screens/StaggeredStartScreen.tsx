@@ -56,30 +56,47 @@ export default function StaggeredStartScreen() {
   const safeTeamIndex = currentTeamIndex >= 0 ? currentTeamIndex : 0;
 
   // Sourced directly from AdminCheckpointManagerScreen via AppContext `checkpoints`
-  const validCheckpoints = (checkpoints && checkpoints.length > 0)
+  const rawCheckpoints = (checkpoints && checkpoints.length > 0)
     ? checkpoints
     : [
-        { id: 'CP-START', name: 'GATE 3 / Pos Mula', type: 'start' },
-        { id: 'CP-001', name: 'Dataran Kereta Kuda', type: 'normal' },
-        { id: 'CP-002', name: 'Tasik Casa Ria', type: 'normal' },
+        { id: 'CP-START', name: 'GATE 3', isStart: true, type: 'start' },
+        { id: 'CP-001', name: '255', isStart: false, isFinish: false, type: 'normal' },
+        { id: 'CP-002', name: '256', isStart: false, isFinish: false, type: 'normal' },
+        { id: 'CP-END', name: 'GATE 2', isFinish: true, type: 'finish' },
       ];
 
-  const assignedCheckpointIndex = safeTeamIndex % validCheckpoints.length;
-  const assignedCheckpoint = validCheckpoints[assignedCheckpointIndex];
+  // 1. Separate start, finish, and intermediate normal checkpoints
+  const startCP = rawCheckpoints.find((cp: any) => cp.isStart || cp.type === 'start') || rawCheckpoints[0];
+  const finishCP = rawCheckpoints.find((cp: any) => cp.isFinish || cp.type === 'finish') || rawCheckpoints[rawCheckpoints.length - 1];
+  
+  // Normal checkpoints are intermediate ones (excluding start & finish)
+  const normalCPs = rawCheckpoints.filter((cp: any) => 
+    cp.id !== startCP.id && cp.id !== finishCP.id && !cp.isStart && !cp.isFinish
+  );
+  const safeNormalCPs = normalCPs.length > 0 ? normalCPs : [startCP];
 
-  const checkpointTitleText = `Pos Kawalan ${assignedCheckpointIndex + 1}`;
+  // 2. Calculate assigned normal starting checkpoint for current team
+  const assignedNormalIndex = safeTeamIndex % safeNormalCPs.length;
+  const assignedCheckpoint = safeNormalCPs[assignedNormalIndex];
+
+  const checkpointTitleText = `Checkpoint Mula: CP ${assignedNormalIndex + 1}`;
   const checkpointNameText = assignedCheckpoint.name || `Dataran Kereta Kuda`;
 
   // Sourced directly from AdminEventDetailScreen via AppContext `activeEvent`
-  const eventNameText = activeEvent?.name || 'Cabaran Tasik Titiwangsa';
+  const eventNameText = activeEvent?.name || 'Casaria Race 2026';
 
   // Derive other teams dynamically from live teams in AppContext
-  const otherTeams = (teams || []).map((t, idx) => {
-    const cp = validCheckpoints[idx % validCheckpoints.length];
+  const otherTeams = (teams && teams.length > 0 ? teams : [
+    { id: 'team-255', name: 'Team 255' },
+    { id: 'team-mahcewa', name: 'Team Mahcewa' },
+    { id: 'team-guard', name: 'Team Guard' },
+    { id: 'team-dev', name: 'Dev' },
+  ]).map((t, idx) => {
+    const cp = safeNormalCPs[idx % safeNormalCPs.length];
     return {
       name: t.name,
-      checkpointNumber: idx + 1,
-      checkpointName: cp.name || `Pos Kawalan ${idx + 1}`,
+      checkpointNumber: (idx % safeNormalCPs.length) + 1,
+      checkpointName: cp.name || `Pos Kawalan ${(idx % safeNormalCPs.length) + 1}`,
       icon: 'flag-outline',
     };
   });
@@ -157,7 +174,7 @@ export default function StaggeredStartScreen() {
           <View style={styles.explainerBanner}>
             <Ionicons name="information-circle-outline" size={20} color={COLORS.participant.primary} style={styles.explainerIcon} />
             <Text style={styles.explainerText}>
-              Untuk mengelakkan kesesakan di laluan, kumpulan akan memulakan perlumbaan dari checkpoint yang berbeza!
+              <Text style={{ fontWeight: '700' }}>{startCP.name}</Text> (Pos Mula) telah disahkan hadir. Perlumbaan anda akan bermula dari <Text style={{ fontWeight: '700' }}>{checkpointNameText}</Text> untuk mengelakkan kesesakan!
             </Text>
           </View>
         </Card>
