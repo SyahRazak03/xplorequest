@@ -160,18 +160,24 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // Derive theme from active role; fallback to 'participant' if not logged in/set
   const activeTheme = getThemeForRole(role || 'participant');
 
-  // Restore persisted session on app mount
+  // Restore persisted hardware-encrypted session on app mount
   React.useEffect(() => {
+    let isMounted = true;
     import('./services/storageService').then(({ loadUserSession }) => {
-      const session = loadUserSession();
-      if (session && session.user) {
-        setRole(session.role);
-        setUser(session.user);
-        if (session.user.eventId) {
-          setSelectedEventId(session.user.eventId);
+      loadUserSession().then((session) => {
+        if (!isMounted) return;
+        if (session && session.user) {
+          setRole(session.role);
+          setUser(session.user);
+          if (session.user.eventId) {
+            setSelectedEventId(session.user.eventId);
+          }
         }
-      }
+      });
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = (newRole: UserRole, userProfile: UserProfile | null) => {
