@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { Checkpoint, EventConfig } from '../mockData';
+import { Checkpoint, EventConfig } from '../types';
 import { PrimaryButton, SecondaryButton, Card, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { crewLogin } from '../services/authService';

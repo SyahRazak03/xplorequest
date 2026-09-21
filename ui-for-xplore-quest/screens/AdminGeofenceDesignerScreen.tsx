@@ -26,7 +26,7 @@ import { RootStackParamList } from '../App';
 import { Card, PrimaryButton, SecondaryButton, Badge, CustomModalDialog } from '../components';
 import { useApp } from '../AppContext';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import type { EventConfig } from '../mockData';
+import type { EventConfig } from '../types';
 import { saveBoundary, updateCheckpoint } from '../services/checkpointService';
 
 interface CheckpointPin {

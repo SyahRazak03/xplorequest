@@ -18,7 +18,7 @@ import MapView, {
 } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { Checkpoint, CheckpointStatus } from '../mockData';
+import { Checkpoint, CheckpointStatus } from '../types';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS } from '../theme';
 import { ClueBottomSheet } from '../components/ClueBottomSheet';
 import { useApp } from '../AppContext';

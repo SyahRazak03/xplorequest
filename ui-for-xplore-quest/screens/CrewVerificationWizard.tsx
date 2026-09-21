@@ -18,7 +18,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { Team, Checkpoint } from '../mockData';
+import { Team, Checkpoint } from '../types';
 import { PrimaryButton, SecondaryButton, Card, DynamicQRDisplay, Badge, CustomModalDialog } from '../components';
 
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';

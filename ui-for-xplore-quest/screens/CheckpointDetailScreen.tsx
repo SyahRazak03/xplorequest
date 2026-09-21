@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Checkpoint, CheckpointStatus } from '../mockData';
+import { Checkpoint, CheckpointStatus } from '../types';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS } from '../theme';
 import { Badge } from '../components/Badge';
 import { useApp } from '../AppContext';

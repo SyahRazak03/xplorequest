@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { Checkpoint } from '../mockData';
+import { Checkpoint } from '../types';
 import { createCheckpoint, updateCheckpoint, deleteCheckpoint } from '../services/checkpointService';
 
 import { Card, PrimaryButton, SecondaryButton, Badge, CheckpointFormModal, SkeletonLoader, EmptyState, CustomModalDialog } from '../components';

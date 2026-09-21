@@ -1,12 +1,7 @@
 /**
- * mockData.ts
- * Self-contained Mock Data Layer for XploreQuest
- * Created for Dapo Awoknyee Resources (KL Event Crew) client demo.
+ * types.ts
+ * Clean TypeScript Interfaces & Types for XploreQuest
  */
-
-// ==========================================
-// 1. TypeScript Interfaces
-// ==========================================
 
 export type UserRole = 'participant' | 'crew' | 'admin';
 export type CheckpointStatus = 'locked' | 'active' | 'pending' | 'completed';
@@ -38,7 +33,6 @@ export interface EventConfig {
   geofenceBoundary?: Array<{ latitude: number; longitude: number }>;
 }
 
-
 export interface Team {
   id: string;
   name: string;
@@ -55,17 +49,15 @@ export interface Team {
   attendanceStatus?: 'absent' | 'present' | 'late';
 }
 
-
 export interface Checkpoint {
   id: string;
   name: string;
-  latitude: number; // For geofencing demo mapping
+  latitude: number;
   longitude: number;
   clueText: string;
   taskDescription: string;
   scorePoints: number;
   geofenceRadiusMeters?: number;
-  // Dynamic status mapping per team ID: Record<teamId, CheckpointStatus>
   statusPerTeam: Record<string, CheckpointStatus>;
   isStart?: boolean;
   isFinish?: boolean;
@@ -76,10 +68,10 @@ export interface Checkpoint {
 export interface Marshal {
   id: string;
   name: string;
-  checkpointId: string; // 1:1 binding to Checkpoint
+  checkpointId: string;
   phone: string;
   avatarUrl?: string;
-  activeQueueCount: number; // Simulated pending team arrivals
+  activeQueueCount: number;
 }
 
 export interface LeaderboardEntry {
@@ -87,9 +79,9 @@ export interface LeaderboardEntry {
   teamName: string;
   rank: number;
   points: number;
-  totalTimeFormatted: string; // e.g. "1j 42m" (Malaysian Jam/Minit)
+  totalTimeFormatted: string;
   penaltiesMinutes: number;
-  isDNF: boolean; // Did Not Finish flag (e.g. out of time limit)
+  isDNF: boolean;
 }
 
 export interface UserProfile {
@@ -98,52 +90,8 @@ export interface UserProfile {
   role: UserRole;
   email?: string;
   avatarUrl?: string;
-  // Role-specific fields
-  teamId?: string; // If participant
-  checkpointId?: string; // If crew/marshal
+  teamId?: string;
+  checkpointId?: string;
   eventId?: string;
   idToken?: string;
 }
-
-// ==========================================
-// 2. Empty Default Data Arrays (Production Ready)
-// ==========================================
-
-export const mockEvent: EventConfig = {
-  id: '',
-  name: '',
-  date: '',
-  maxDurationSeconds: 14400,
-  locationName: '',
-  totalCheckpoints: 0,
-};
-
-export const mockEventsList: EventConfig[] = [];
-
-export const mockTeams: Team[] = [];
-
-export const mockCheckpoints: Checkpoint[] = [];
-
-export const mockMarshals: Marshal[] = [];
-
-export const mockLeaderboard: LeaderboardEntry[] = [];
-
-export const mockUserProfiles: Record<UserRole, UserProfile> = {
-  participant: {
-    id: '',
-    name: '',
-    role: 'participant',
-  },
-  crew: {
-    id: '',
-    name: '',
-    role: 'crew',
-  },
-  admin: {
-    id: '',
-    name: '',
-    role: 'admin',
-  },
-};
-
-

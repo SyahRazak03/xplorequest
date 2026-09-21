@@ -24,7 +24,7 @@ import { Card, Badge, PrimaryButton, SecondaryButton, OfflineStatusChip, Skeleto
 
 
 
-import { Team, Checkpoint } from '../mockData';
+import { Team, Checkpoint } from '../types';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { subscribeToEventTeams, checkinTeamAttendance } from '../services/teamService';
 import { generateAttendanceQR } from '../services/checkpointService';

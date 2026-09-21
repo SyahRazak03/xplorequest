@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { UserRole, UserProfile, EventConfig, Checkpoint, Team } from './mockData';
+import { UserRole, UserProfile, EventConfig, Checkpoint, Team } from './types';
 
 import { Theme, getThemeForRole } from './theme';
 

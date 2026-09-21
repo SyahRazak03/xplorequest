@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import type { EventConfig, PaymentDetails } from '../mockData';
+import type { EventConfig, PaymentDetails } from '../types';
 
 const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
 

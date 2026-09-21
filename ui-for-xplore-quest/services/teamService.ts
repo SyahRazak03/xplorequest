@@ -7,7 +7,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getFirestore, collection, doc, updateDoc, onSnapshot, Firestore } from 'firebase/firestore';
-import type { Team } from '../mockData';
+import type { Team } from '../types';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey:     process.env['EXPO_PUBLIC_FIREBASE_API_KEY']     ?? '',

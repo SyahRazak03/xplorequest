@@ -20,7 +20,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../AppContext';
-import { Checkpoint, CheckpointStatus } from '../mockData';
+import { Checkpoint, CheckpointStatus } from '../types';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { Card, Badge, ProgressBar, CheckpointListItem, ToastNotification, OfflineStatusChip } from '../components';
 

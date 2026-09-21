@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Checkpoint } from '../mockData';
+import { Checkpoint } from '../types';
 import { PrimaryButton, SecondaryButton } from './';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { useApp } from '../AppContext';

@@ -15,7 +15,7 @@ import {
   onSnapshot,
   Firestore,
 } from 'firebase/firestore';
-import type { Team } from '../mockData';
+import type { Team } from '../types';
 
 export interface PreRegistrationItem {
   id: string;

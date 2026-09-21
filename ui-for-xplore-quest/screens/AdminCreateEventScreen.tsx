@@ -25,7 +25,7 @@ import { useApp } from '../AppContext';
 import { createLiveEvent } from '../services/eventService';
 import { Card, PrimaryButton, SecondaryButton, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import type { EventConfig } from '../mockData';
+import type { EventConfig } from '../types';
 
 const GOOGLE_MAPS_API_KEY =
   process.env['EXPO_PUBLIC_GOOGLE_MAPS_API_KEY'] ||

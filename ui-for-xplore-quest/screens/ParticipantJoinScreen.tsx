@@ -19,7 +19,7 @@ import { RootStackParamList } from '../App';
 import { PrimaryButton, SecondaryButton, Card, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { registerTeam, checkinTeamAttendance } from '../services/teamService';
-import type { Team } from '../mockData';
+import type { Team } from '../types';
 import { useApp } from '../AppContext';
 import RealCameraQRScanner from '../components/RealCameraQRScanner';
 
