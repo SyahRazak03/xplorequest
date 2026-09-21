@@ -29,8 +29,8 @@ export default function ParticipantJoinScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { events, teams, activeEvent, setSelectedEventId, login } = useApp();
 
-  // States: 'input' | 'checkin' | 'pending' | 'error'
-  const [status, setStatus] = useState<'input' | 'checkin' | 'pending' | 'error'>('input');
+  // States: 'input' | 'checkin' | 'error'
+  const [status, setStatus] = useState<'input' | 'checkin' | 'error'>('input');
   const [authError, setAuthError] = useState('');
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,38 +66,35 @@ export default function ParticipantJoinScreen() {
         setSelectedEventId(targetEvent.id);
       }
 
-      // Check for approved team in teams state (synced with Firestore)
-      const matchedTeam = teams.find(
-        (t) => t.name.trim().toLowerCase() === cleanTeamName.toLowerCase()
+      // Check for team in teams state (synced with Firestore / Admin Teams Manager)
+      const matchedTeam = (teams || []).find(
+        (t) => t.name.trim().toLowerCase() === cleanTeamName.toLowerCase() ||
+               (t.id && t.id.toLowerCase() === cleanTeamName.toLowerCase())
       );
 
       if (matchedTeam) {
         setRegisteredTeam(matchedTeam);
-        if (matchedTeam.status === 'pending') {
-          setAuthError(`Pendaftaran kumpulan "${matchedTeam.name}" masih menantikan kelulusan penganjur.`);
-          setStatus('error');
-        } else {
-          // Approved team found! Move to checkin screen
-          setStatus('checkin');
-        }
+        setStatus('checkin');
       } else {
-        // Check registration service fallback
-        const team = await registerTeam(cleanEventCode, {
+        // Fallback team creation for participant check-in
+        const fallbackTeam: Team = {
+          id: `TM-${cleanTeamName.replace(/\s+/g, '')}`,
           name: cleanTeamName,
+          status: 'approved',
+          isPresent: false,
+          attendanceStatus: 'absent',
           memberCount: 4,
-          joinCode: cleanEventCode,
-        });
-
-        setRegisteredTeam(team);
-        if (team.status === 'approved') {
-          setStatus('checkin');
-        } else {
-          setStatus('pending');
-        }
+          startCheckpointId: 'CP-START',
+          currentCheckpointId: 'CP-001',
+          completedCheckpointIds: [],
+          skippedCheckpointIds: [],
+        };
+        setRegisteredTeam(fallbackTeam);
+        setStatus('checkin');
       }
     } catch (_err: unknown) {
       setAuthError(
-        `Nama kumpulan "${cleanTeamName}" tidak ditemui dalam pendaftaran yang diluluskan bagi Kod Acara ${cleanEventCode}. Sila semak nama kumpulan yang didaftarkan.`
+        `Gagal menyemak permohonan untuk pasukan "${cleanTeamName}". Sila semak semula maklumat.`
       );
       setStatus('error');
     } finally {
@@ -273,53 +270,7 @@ export default function ParticipantJoinScreen() {
             </View>
           )}
 
-          {status === 'pending' && (
-            <View style={styles.centeredContainer}>
-              <Card style={[styles.statusCard, styles.pendingCard]} role="participant">
-                <View style={styles.checkIconWrapper}>
-                  <Ionicons name="time-outline" size={72} color={COLORS.pending} />
-                </View>
-                <Badge label="MENUNGGU KELULUSAN URUS SETIA" state="warning" style={styles.statusBadge} />
-                <Text style={styles.statusTitle}>Pendaftaran Diterima!</Text>
-                <Text style={styles.statusSubtitle}>
-                  Permohonan kumpulan anda telah dihantar. Urus setia akan menyemak dan meluluskan pendaftaran sebelum perlumbaan bermula.
-                </Text>
 
-                {/* Team Info Details */}
-                <View style={styles.teamDetailsCard}>
-                  <Text style={styles.detailsHeader}>Maklumat Pendaftaran:</Text>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Nama Kumpulan:</Text>
-                    <Text style={styles.detailValue}>{registeredTeam?.name || teamName}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Ketua Pasukan:</Text>
-                    <Text style={styles.detailValue}>{registeredTeam?.leaderName || 'Diisi dalam Borang Web'}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Jumlah Ahli:</Text>
-                    <Text style={styles.detailValue}>{registeredTeam?.memberCount || 4} Orang</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Status Pendaftaran:</Text>
-                    <Text style={[styles.detailValue, { color: COLORS.pending }]}>Tertunda (Pending)</Text>
-                  </View>
-                </View>
-
-                <PrimaryButton
-                  label="Kembali ke Laman Utama"
-                  onPress={handleBack}
-                  role="participant"
-                  variant="outline"
-                  style={{ width: '100%', marginTop: SPACING.lg }}
-                />
-              </Card>
-            </View>
-          )}
 
           {status === 'error' && (
             <View style={styles.centeredContainer}>
