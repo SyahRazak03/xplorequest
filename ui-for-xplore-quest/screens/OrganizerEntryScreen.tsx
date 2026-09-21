@@ -169,7 +169,16 @@ export default function OrganizerAuthScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* ── Back ──────────────────────────────────────────────────── */}
-          <TouchableOpacity style={styles.backRow} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.backRow}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.reset({ index: 0, routes: [{ name: 'RoleSelect' }] });
+              }
+            }}
+          >
             <Ionicons name="arrow-back-outline" size={22} color={COLORS.text} />
             <Text style={styles.backText}>Kembali</Text>
           </TouchableOpacity>

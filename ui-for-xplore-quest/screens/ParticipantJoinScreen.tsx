@@ -129,7 +129,14 @@ export default function ParticipantJoinScreen() {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'RoleSelect' }],
+      });
+    }
   };
 
   return (
