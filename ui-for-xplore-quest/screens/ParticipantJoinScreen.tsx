@@ -268,7 +268,7 @@ export default function ParticipantJoinScreen() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="camera-outline" size={22} color="#DC2626" style={{ marginRight: 8 }} />
-                <Text style={styles.startScanDashedButtonText}>📷 Imbas QR Pelepasan Mula</Text>
+                <Text style={styles.startScanDashedButtonText}>📷 Scan Attendance QR</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -342,8 +342,8 @@ export default function ParticipantJoinScreen() {
         {/* Real Camera QR Scanner Component */}
         <RealCameraQRScanner
           visible={showCameraScanner}
-          title="Imbas QR Pelepasan Mula"
-          subtitle="Halakan kamera ke Kod QR Kru / Urus Setia di Checkpoint Pelepasan Mula"
+          title="Scan Attendance QR"
+          subtitle="Halakan kamera ke Kod QR Kehadiran Urus Setia di Checkpoint Permulaan"
           onClose={() => setShowCameraScanner(false)}
           onScanSuccess={handleScanSuccess}
         />
