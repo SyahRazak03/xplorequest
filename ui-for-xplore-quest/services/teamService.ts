@@ -23,6 +23,39 @@ function getFirebaseFirestore(): Firestore {
 
 const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
 
+export async function fetchEventTeams(eventId: string, token?: string): Promise<Team[]> {
+  const adminToken = token || 'token-admin-casaria';
+  if (!API_BASE) return [];
+  try {
+    const res = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams`, {
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+      },
+    });
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      return json.data.map((d: any) => ({
+        id: d.id,
+        name: d.name || 'Pasukan',
+        status: d.status || 'approved',
+        memberCount: d.memberCount || 1,
+        startCheckpointId: d.startCheckpointId || 'CP-START',
+        currentCheckpointId: d.currentCheckpointId || 'CP-START',
+        completedCheckpointIds: Array.isArray(d.completedCheckpointIds) ? d.completedCheckpointIds : [],
+        skippedCheckpointIds: Array.isArray(d.skippedCheckpointIds) ? d.skippedCheckpointIds : [],
+        leaderName: d.leaderName || undefined,
+        membersList: d.membersList || undefined,
+        phone: d.phone || undefined,
+        isPresent: d.isPresent === true,
+        attendanceStatus: d.attendanceStatus || (d.isPresent ? 'present' : 'absent'),
+      }));
+    }
+  } catch (err) {
+    console.warn('fetchEventTeams warning:', err);
+  }
+  return [];
+}
+
 /**
  * Subscribes to live team updates for an event using Cloud Functions REST API and Firestore onSnapshot.
  *

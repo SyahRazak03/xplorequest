@@ -21,11 +21,13 @@ import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import type { Team } from '../types';
 import { useApp } from '../AppContext';
 
+import { subscribeToEventTeams, fetchEventTeams } from '../services/teamService';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ParticipantJoin'>;
 
 export default function ParticipantJoinScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { events, teams, activeEvent, setSelectedEventId, login } = useApp();
+  const { events, teams, setTeams, activeEvent, setSelectedEventId, login } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -33,6 +35,13 @@ export default function ParticipantJoinScreen() {
   // Form Fields State
   const [eventCode, setEventCode] = useState(activeEvent?.joinCode || activeEvent?.id || 'XT2026');
   const [teamName, setTeamName] = useState('');
+
+  // Subscribe to live Firestore teams for current active event
+  React.useEffect(() => {
+    const eventId = activeEvent?.id || 'EV-001';
+    const unsubscribe = subscribeToEventTeams(eventId, setTeams);
+    return () => unsubscribe();
+  }, [activeEvent?.id, setTeams]);
 
   const handleStartSubmit = async () => {
     const cleanEventCode = eventCode.trim().toUpperCase();
@@ -54,7 +63,7 @@ export default function ParticipantJoinScreen() {
       // 1. Verify Event Code against registered events
       const targetEvent = events.find(
         (e) => e.id.toUpperCase() === cleanEventCode || (e.joinCode && e.joinCode.toUpperCase() === cleanEventCode)
-      ) || (activeEvent && (activeEvent.id.toUpperCase() === cleanEventCode || (activeEvent.joinCode && activeEvent.joinCode.toUpperCase() === cleanEventCode)) ? activeEvent : null);
+      ) || (activeEvent && (activeEvent.id.toUpperCase() === cleanEventCode || (activeEvent.joinCode && activeEvent.joinCode.toUpperCase() === cleanEventCode)) ? activeEvent : null) || activeEvent;
 
       if (!targetEvent && events.length > 0) {
         const errorMsg = `Kod Acara "${cleanEventCode}" tidak wujud. Sila semak Kod Penyertaan yang diberikan penganjur.`;
@@ -63,12 +72,23 @@ export default function ParticipantJoinScreen() {
         return;
       }
 
+      const targetEventId = targetEvent?.id || activeEvent?.id || 'EV-001';
       if (targetEvent) {
         setSelectedEventId(targetEvent.id);
       }
 
+      // Fetch live teams directly from Cloud Functions REST API if local state is still populating
+      let currentTeams = teams;
+      if (!currentTeams || currentTeams.length === 0) {
+        const fetched = await fetchEventTeams(targetEventId);
+        if (fetched && fetched.length > 0) {
+          currentTeams = fetched;
+          setTeams(fetched);
+        }
+      }
+
       // 2. Verify Team Name against approved teams in Admin Teams Manager (Firestore)
-      const matchedTeam = (teams || []).find(
+      const matchedTeam = (currentTeams || []).find(
         (t) => t.name.trim().toLowerCase() === cleanTeamName.toLowerCase() ||
                (t.id && t.id.trim().toLowerCase() === cleanTeamName.toLowerCase())
       );
