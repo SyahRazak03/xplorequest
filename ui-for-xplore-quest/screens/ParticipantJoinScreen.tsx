@@ -51,57 +51,58 @@ export default function ParticipantJoinScreen() {
     setLoading(true);
 
     try {
-      // Find matching event
+      // 1. Verify Event Code against registered events
       const targetEvent = events.find(
         (e) => e.id.toUpperCase() === cleanEventCode || (e.joinCode && e.joinCode.toUpperCase() === cleanEventCode)
-      ) || activeEvent;
+      ) || (activeEvent && (activeEvent.id.toUpperCase() === cleanEventCode || (activeEvent.joinCode && activeEvent.joinCode.toUpperCase() === cleanEventCode)) ? activeEvent : null);
+
+      if (!targetEvent && events.length > 0) {
+        const errorMsg = `Kod Acara "${cleanEventCode}" tidak wujud. Sila semak Kod Penyertaan yang diberikan penganjur.`;
+        setAuthError(errorMsg);
+        Alert.alert('Ralat Log Masuk', errorMsg);
+        return;
+      }
 
       if (targetEvent) {
         setSelectedEventId(targetEvent.id);
       }
 
-      // Check for approved team in teams state (synced with Firestore / Admin Teams Manager)
+      // 2. Verify Team Name against approved teams in Admin Teams Manager (Firestore)
       const matchedTeam = (teams || []).find(
         (t) => t.name.trim().toLowerCase() === cleanTeamName.toLowerCase() ||
-               (t.id && t.id.toLowerCase() === cleanTeamName.toLowerCase())
+               (t.id && t.id.trim().toLowerCase() === cleanTeamName.toLowerCase())
       );
 
-      let teamToAuth: Team;
-
-      if (matchedTeam) {
-        teamToAuth = matchedTeam;
-      } else {
-        // Construct team session object for check-in
-        teamToAuth = {
-          id: `TM-${cleanTeamName.replace(/\s+/g, '')}`,
-          name: cleanTeamName,
-          status: 'approved',
-          isPresent: false,
-          attendanceStatus: 'absent',
-          memberCount: 4,
-          startCheckpointId: 'CP-START',
-          currentCheckpointId: 'CP-001',
-          completedCheckpointIds: [],
-          skippedCheckpointIds: [],
-        };
+      if (!matchedTeam) {
+        const errorMsg = `Nama kumpulan "${cleanTeamName}" tidak ditemui dalam senarai pendaftaran yang diluluskan bagi Kod Acara ${cleanEventCode}. Sila semak semula ejaan nama kumpulan anda.`;
+        setAuthError(errorMsg);
+        Alert.alert('Ralat Log Masuk', errorMsg);
+        return;
       }
 
-      // 1. Establish global participant team account session
+      if (matchedTeam.status === 'pending') {
+        const errorMsg = `Pendaftaran kumpulan "${matchedTeam.name}" masih dalam status menantikan kelulusan penganjur.`;
+        setAuthError(errorMsg);
+        Alert.alert('Status Pendaftaran', errorMsg);
+        return;
+      }
+
+      // 3. Login succeeded! Establish global participant team account session
       login('participant', {
-        id: `USR-${teamToAuth.id}`,
-        name: teamToAuth.name,
+        id: `USR-${matchedTeam.id}`,
+        name: matchedTeam.leaderName || matchedTeam.name,
         role: 'participant',
-        teamId: teamToAuth.id,
-        email: `${teamToAuth.id.toLowerCase()}@xplorequest.com`,
-        eventId: targetEvent?.id || 'EV-001',
+        teamId: matchedTeam.id,
+        email: `${matchedTeam.id.toLowerCase()}@xplorequest.com`,
+        eventId: targetEvent?.id || activeEvent?.id || 'EV-001',
       });
 
-      // 2. Automatically navigate to dedicated ParticipantAttendanceScanScreen
+      // 4. Automatically navigate to dedicated ParticipantAttendanceScanScreen
       navigation.navigate('ParticipantAttendanceScan');
     } catch (_err: unknown) {
-      setAuthError(
-        `Gagal menyemak permohonan untuk pasukan "${cleanTeamName}". Sila semak semula maklumat.`
-      );
+      const errorMsg = `Gagal menyemak permohonan untuk pasukan "${cleanTeamName}". Sila semak semula maklumat.`;
+      setAuthError(errorMsg);
+      Alert.alert('Ralat Log Masuk', errorMsg);
     } finally {
       setLoading(false);
     }

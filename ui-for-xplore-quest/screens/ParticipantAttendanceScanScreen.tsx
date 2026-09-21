@@ -31,7 +31,7 @@ export default function ParticipantAttendanceScanScreen() {
   // Derive authenticated team account details from AppContext / Firestore
   const currentTeam: Team | null = (teams || []).find(
     (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
-  ) || (teams && teams.length > 0 ? teams[0] : null);
+  ) || null;
 
   const handleScanSuccess = async (scannedData: string) => {
     setShowCameraScanner(false);
