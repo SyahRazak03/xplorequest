@@ -49,10 +49,10 @@ export default function ParticipantDashboardScreen() {
   const rawCheckpoints: Checkpoint[] = (checkpoints && checkpoints.length > 0)
     ? checkpoints
     : [
-        { id: 'CP-START', name: 'GATE 3', latitude: 3.172, longitude: 101.7, clueText: 'Pos Mula Attendance', taskDescription: 'Imbas QR Attendance', scorePoints: 0, statusPerTeam: {}, isStart: true },
-        { id: 'CP-001', name: '255', latitude: 3.173, longitude: 101.71, clueText: 'Checkpoint 255', taskDescription: 'Selesaikan cabaran 255', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
-        { id: 'CP-002', name: '256', latitude: 3.174, longitude: 101.72, clueText: 'Checkpoint 256', taskDescription: 'Selesaikan cabaran 256', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
-        { id: 'CP-END', name: 'GATE 2', latitude: 3.175, longitude: 101.73, clueText: 'Garisan Penamat', taskDescription: 'Pelepasan Tamat', scorePoints: 20, statusPerTeam: {}, isFinish: true },
+        { id: 'CP-START', name: 'Garisan Mula (Pos Attendance)', latitude: 3.172, longitude: 101.7, clueText: 'Pos Mula Attendance', taskDescription: 'Imbas QR Attendance', scorePoints: 0, statusPerTeam: {}, isStart: true },
+        { id: 'CP-001', name: 'Pos Kawalan 1', latitude: 3.173, longitude: 101.71, clueText: 'Selesaikan tugasan pos 1', taskDescription: 'Tugasan Pos 1', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-002', name: 'Pos Kawalan 2', latitude: 3.174, longitude: 101.72, clueText: 'Selesaikan tugasan pos 2', taskDescription: 'Tugasan Pos 2', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-END', name: 'Garisan Penamat', latitude: 3.175, longitude: 101.73, clueText: 'Pelepasan Tamat', taskDescription: 'Daftar Masuk Penamat', scorePoints: 20, statusPerTeam: {}, isFinish: true },
       ];
 
   const startCP = rawCheckpoints.find((cp: Checkpoint) => cp.isStart || (cp as any).type === 'start') || rawCheckpoints[0];
@@ -400,7 +400,7 @@ export default function ParticipantDashboardScreen() {
           headerRight={<Badge label="Pintu TAMAT" state="info" />}
         >
           <Text style={{ fontSize: 13, color: activeTheme.colors.textMuted, marginBottom: 12, lineHeight: 18 }}>
-            Sedia untuk menamatkan acara? Pendaftaran garisan penamat memerlukan semua checkpoint CP 1 hingga CP 6 diselesaikan terlebih dahulu.
+            Sedia untuk menamatkan acara? Pendaftaran garisan penamat memerlukan semua pos kawalan diselesaikan terlebih dahulu.
           </Text>
           <TouchableOpacity
             style={{
@@ -417,7 +417,7 @@ export default function ParticipantDashboardScreen() {
               if (!canFinish) {
                 Alert.alert(
                   'Akses Dihalang',
-                  'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos CP 1 hingga CP 6 sebelum mendaftar masuk di Garisan Penamat.'
+                  'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos kawalan sebelum mendaftar masuk di Garisan Penamat.'
                 );
                 return;
               }

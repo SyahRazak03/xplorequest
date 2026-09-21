@@ -59,10 +59,10 @@ export default function StaggeredStartScreen() {
   const rawCheckpoints = (checkpoints && checkpoints.length > 0)
     ? checkpoints
     : [
-        { id: 'CP-START', name: 'GATE 3', isStart: true, type: 'start' },
-        { id: 'CP-001', name: '255', isStart: false, isFinish: false, type: 'normal' },
-        { id: 'CP-002', name: '256', isStart: false, isFinish: false, type: 'normal' },
-        { id: 'CP-END', name: 'GATE 2', isFinish: true, type: 'finish' },
+        { id: 'CP-START', name: 'Garisan Mula (Pos Attendance)', isStart: true, type: 'start' },
+        { id: 'CP-001', name: 'Pos Kawalan 1', isStart: false, isFinish: false, type: 'normal' },
+        { id: 'CP-002', name: 'Pos Kawalan 2', isStart: false, isFinish: false, type: 'normal' },
+        { id: 'CP-END', name: 'Garisan Penamat', isFinish: true, type: 'finish' },
       ];
 
   // 1. Separate start, finish, and intermediate normal checkpoints
@@ -80,10 +80,10 @@ export default function StaggeredStartScreen() {
   const assignedCheckpoint = safeNormalCPs[assignedNormalIndex];
 
   const checkpointTitleText = `Checkpoint Mula: CP ${assignedNormalIndex + 1}`;
-  const checkpointNameText = assignedCheckpoint.name || `Dataran Kereta Kuda`;
+  const checkpointNameText = assignedCheckpoint.name || `Pos Kawalan ${assignedNormalIndex + 1}`;
 
   // Sourced directly from AdminEventDetailScreen via AppContext `activeEvent`
-  const eventNameText = activeEvent?.name || 'Casaria Race 2026';
+  const eventNameText = activeEvent?.name || 'Acara XploreQuest';
 
   // Derive other teams dynamically from live teams in AppContext
   const otherTeams = (teams && teams.length > 0 ? teams : [

@@ -111,8 +111,15 @@ export default function MapScreen({
   setPoints,
 }: MapScreenProps) {
   const theme = getThemeForRole('participant');
-  const { checkpoints } = useApp();
+  const { checkpoints, activeEvent } = useApp();
   const activeCheckpointsList = checkpoints;
+
+  const defaultEventLat = activeEvent?.latitude || checkpoints?.[0]?.latitude || 3.1764;
+  const defaultEventLng = activeEvent?.longitude || checkpoints?.[0]?.longitude || 101.7061;
+
+  const boundaryPolygon: LatLng[] = (activeEvent?.geofenceBoundary && activeEvent.geofenceBoundary.length >= 3)
+    ? activeEvent.geofenceBoundary
+    : DEFAULT_BOUNDARY_POLYGON;
 
   const mapRef = useRef<MapView>(null);
 
@@ -162,8 +169,8 @@ export default function MapScreen({
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           setLocationPermission('denied');
-          // Fallback location near Lake Titiwangsa
-          setUserLocation({ latitude: 3.1764, longitude: 101.7061 });
+          // Fallback location centered on active event location/first checkpoint
+          setUserLocation({ latitude: defaultEventLat, longitude: defaultEventLng });
           return;
         }
 
@@ -193,7 +200,7 @@ export default function MapScreen({
         );
       } catch {
         setLocationPermission('denied');
-        setUserLocation({ latitude: 3.1764, longitude: 101.7061 });
+        setUserLocation({ latitude: defaultEventLat, longitude: defaultEventLng });
       }
     }
 
@@ -211,7 +218,7 @@ export default function MapScreen({
     if (!userLocation) return;
 
     // Check geofence boundary containment
-    const inside = isCoordInsidePolygon(userLocation, DEFAULT_BOUNDARY_POLYGON);
+    const inside = isCoordInsidePolygon(userLocation, boundaryPolygon);
     setIsInsideGeofence(inside);
 
     // Find current active checkpoint
@@ -297,7 +304,12 @@ export default function MapScreen({
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={StyleSheet.absoluteFillObject}
-          initialRegion={INITIAL_REGION}
+          initialRegion={{
+            latitude: defaultEventLat,
+            longitude: defaultEventLng,
+            latitudeDelta: 0.008,
+            longitudeDelta: 0.008,
+          }}
           showsUserLocation={true}
           showsMyLocationButton={false}
           showsCompass={true}
@@ -305,7 +317,7 @@ export default function MapScreen({
         >
           {/* Event Geofence Boundary Polygon Overlay */}
           <Polygon
-            coordinates={DEFAULT_BOUNDARY_POLYGON}
+            coordinates={boundaryPolygon}
             fillColor="rgba(224, 106, 36, 0.12)"
             strokeColor={isInsideGeofence ? theme.colors.accent : COLORS.danger}
             strokeWidth={2.5}

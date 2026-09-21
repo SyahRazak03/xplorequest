@@ -132,13 +132,16 @@ export default function FinishLineScreen() {
     return COLORS.textMuted;
   };
 
+  const defaultEventLat = activeEvent?.latitude || 3.178;
+  const defaultEventLng = activeEvent?.longitude || 101.7068;
+
   const finishCp: Checkpoint = appCheckpoints.find(cp => cp.isFinish) || {
     id: 'CP-TAMAT',
-    name: 'Astaka Garisan Penamat',
-    latitude: 3.178,
-    longitude: 101.7068,
-    clueText: '',
-    taskDescription: '',
+    name: 'Garisan Penamat',
+    latitude: defaultEventLat,
+    longitude: defaultEventLng,
+    clueText: 'Garisan Penamat',
+    taskDescription: 'Daftar Masuk Garisan Penamat',
     scorePoints: 300,
     statusPerTeam: {},
     isFinish: true,
