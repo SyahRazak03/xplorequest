@@ -25,13 +25,30 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Participant
 
 export default function ParticipantAttendanceScanScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { user, activeEvent, teams, logout } = useApp();
+  const { user, activeEvent, teams, isRaceStarted, logout } = useApp();
   const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   // Derive authenticated team account details from AppContext / Firestore
   const currentTeam: Team | null = (teams || []).find(
     (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
   ) || null;
+
+  // Auto-redirect already checked-in teams to StaggeredStart or Dashboard
+  React.useEffect(() => {
+    if (currentTeam && (currentTeam.isPresent === true || currentTeam.attendanceStatus === 'present')) {
+      if (isRaceStarted) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Dashboard' }],
+        });
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'StaggeredStart' }],
+        });
+      }
+    }
+  }, [currentTeam, isRaceStarted, navigation]);
 
   const handleScanSuccess = async (scannedData: string) => {
     setShowCameraScanner(false);

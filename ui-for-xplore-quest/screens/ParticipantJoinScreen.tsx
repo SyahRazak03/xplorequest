@@ -27,7 +27,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Participant
 
 export default function ParticipantJoinScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { events, teams, setTeams, activeEvent, setSelectedEventId, login } = useApp();
+  const { events, teams, setTeams, activeEvent, setSelectedEventId, isRaceStarted, login } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -117,8 +117,24 @@ export default function ParticipantJoinScreen() {
         eventId: targetEvent?.id || activeEvent?.id || 'EV-001',
       });
 
-      // 4. Automatically navigate to dedicated ParticipantAttendanceScanScreen
-      navigation.navigate('ParticipantAttendanceScan');
+      // 4. Smart Navigation: Check if team has already checked in attendance
+      const isAlreadyCheckedIn = matchedTeam.isPresent === true || matchedTeam.attendanceStatus === 'present';
+
+      if (isAlreadyCheckedIn) {
+        if (isRaceStarted) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Dashboard' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'StaggeredStart' }],
+          });
+        }
+      } else {
+        navigation.navigate('ParticipantAttendanceScan');
+      }
     } catch (_err: unknown) {
       const errorMsg = `Gagal menyemak permohonan untuk pasukan "${cleanTeamName}". Sila semak semula maklumat.`;
       setAuthError(errorMsg);
