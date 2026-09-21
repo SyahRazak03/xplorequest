@@ -82,6 +82,35 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const [isRaceStarted, setIsRaceStarted] = useState(false);
   const [raceStartTime, setRaceStartTime] = useState<number | null>(null);
 
+  // Initialize SQLite database queue (Objective 1.4.3) and poll sync queue count
+  React.useEffect(() => {
+    let isMounted = true;
+    import('./services/sqliteQueueService').then(({ initQueueDatabase, getPendingTelemetryScans, syncPendingQueue }) => {
+      initQueueDatabase().then(() => {
+        if (!isMounted) return;
+        getPendingTelemetryScans().then(pending => {
+          if (isMounted) setSyncQueueCount(pending.length);
+        });
+      });
+
+      // Auto drain SQLite queue when online
+      if (!isOffline && selectedEventId) {
+        syncPendingQueue(selectedEventId, user?.idToken).then(({ syncedCount }) => {
+          if (!isMounted) return;
+          if (syncedCount > 0) {
+            getPendingTelemetryScans().then(pending => {
+              if (isMounted) setSyncQueueCount(pending.length);
+            });
+          }
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOffline, selectedEventId, user?.idToken]);
+
   // Fetch real live events from Firestore on app startup
   React.useEffect(() => {
     let isMounted = true;

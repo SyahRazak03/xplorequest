@@ -13,6 +13,7 @@ import MapView, {
   Polygon,
   Marker,
   Circle,
+  UrlTile,
   type Region,
   type LatLng,
 } from 'react-native-maps';
@@ -315,6 +316,13 @@ export default function MapScreen({
           showsCompass={true}
           showsScale={true}
         >
+          {/* Offline Map Tile Caching Layer (Objective 1.4.3) */}
+          <UrlTile
+            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maximumZ={19}
+            flipY={false}
+          />
+
           {/* Event Geofence Boundary Polygon Overlay */}
           <Polygon
             coordinates={boundaryPolygon}
