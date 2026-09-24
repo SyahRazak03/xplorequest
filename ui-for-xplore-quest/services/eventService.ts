@@ -346,3 +346,45 @@ export function subscribeToEventState(
     return () => {};
   }
 }
+
+/**
+ * Permanently deletes an event and all its associated data from the backend / Firestore.
+ */
+export async function deleteEventService(eventId: string, token?: string): Promise<void> {
+  let apiSuccess = false;
+  if (token && API_BASE) {
+    try {
+      const resp = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await resp.json();
+      if (resp.ok && json.success) {
+        apiSuccess = true;
+      } else if (json.error?.message) {
+        throw new Error(json.error.message);
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+      console.warn('Backend API deleteEvent network warning:', err);
+    }
+  }
+
+  if (!apiSuccess) {
+    try {
+      const db = getFirebaseFirestore();
+      const { doc, deleteDoc } = require('firebase/firestore');
+      const docRef = doc(db, 'events', eventId);
+      await deleteDoc(docRef);
+    } catch (err: any) {
+      console.warn('Direct Firestore deleteDoc notice:', err);
+      if (!apiSuccess && err.message) {
+        throw new Error(err.message || 'Failed to delete event from Firestore.');
+      }
+    }
+  }
+}

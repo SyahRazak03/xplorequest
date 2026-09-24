@@ -18,17 +18,29 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { Card, PrimaryButton, Badge, OfflineStatusChip } from '../components';
+import { Card, PrimaryButton, Badge, OfflineStatusChip, CustomModalDialog } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import { updatePaymentDetailsService } from '../services/eventService';
+import { updatePaymentDetailsService, deleteEventService } from '../services/eventService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AdminEventDetail'>;
 
 export default function AdminEventDetailScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { activeEvent, setActiveEvent, crewPinCode, attendanceMarshalId, setAttendanceMarshalId, theme } = useApp();
+  const {
+    user,
+    activeEvent,
+    setActiveEvent,
+    setEvents,
+    selectedEventId,
+    setSelectedEventId,
+    crewPinCode,
+    attendanceMarshalId,
+    setAttendanceMarshalId,
+  } = useApp();
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Auto-generate Marshal ID if not present
   React.useEffect(() => {
@@ -80,6 +92,35 @@ export default function AdminEventDetailScreen() {
       Alert.alert('Updated', 'Payment details updated for this session.');
     } finally {
       setIsSavingPayment(false);
+    }
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!activeEvent) return;
+    setIsDeletingEvent(true);
+    try {
+      await deleteEventService(activeEvent.id, user?.idToken);
+      const targetId = activeEvent.id;
+      setEvents((prev) => prev.filter((e) => e.id !== targetId));
+      if (selectedEventId === targetId) {
+        setSelectedEventId(null);
+      }
+      setDeleteModalVisible(false);
+      Alert.alert(
+        'Event Deleted',
+        `"${activeEvent.name}" and all associated data have been permanently deleted.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } catch (err: any) {
+      console.error('Delete event error:', err);
+      Alert.alert('Delete Failed', err?.message || 'Unable to delete event. Please try again.');
+    } finally {
+      setIsDeletingEvent(false);
     }
   };
 
@@ -411,9 +452,60 @@ export default function AdminEventDetailScreen() {
             <Text style={styles.actionButtonText}>Leaderboard & Live Results</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
+        </View>
 
+        {/* Danger Zone: Delete Event Card */}
+        <View style={styles.dangerZoneCard}>
+          <View style={styles.dangerHeaderRow}>
+            <Ionicons name="warning-outline" size={20} color={COLORS.danger} />
+            <Text style={styles.dangerTitle}>Danger Zone</Text>
+          </View>
+          <Text style={styles.dangerDescription}>
+            Permanently delete this event and purge all associated checkpoints, participant teams, pre-registrations, leaderboards, and crew credentials.
+          </Text>
+          <TouchableOpacity
+            style={styles.deleteEventBtn}
+            activeOpacity={0.8}
+            onPress={() => setDeleteModalVisible(true)}
+            disabled={isDeletingEvent}
+          >
+            {isDeletingEvent ? (
+              <ActivityIndicator color={COLORS.textLight} size="small" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={18} color={COLORS.textLight} />
+                <Text style={styles.deleteEventBtnText}>Delete Event</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Delete Event Confirmation Modal */}
+      <CustomModalDialog
+        visible={deleteModalVisible}
+        title="Delete Event?"
+        message={
+          activeEvent
+            ? `Are you sure you want to permanently delete "${activeEvent.name}"?\n\nThis will purge all event details, checkpoints, participant teams, crew access codes, and associated records. This action cannot be undone.`
+            : ''
+        }
+        variant="danger"
+        icon="trash-bin-outline"
+        buttons={[
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setDeleteModalVisible(false),
+          },
+          {
+            text: isDeletingEvent ? 'Deleting...' : 'Delete Event',
+            style: 'destructive',
+            onPress: confirmDeleteEvent,
+          },
+        ]}
+        onDismiss={() => setDeleteModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -628,5 +720,48 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     textAlign: 'center',
     marginTop: SPACING.xxl,
+  },
+  dangerZoneCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 80, 107, 0.3)',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+    ...SHADOWS.sm,
+  },
+  dangerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  dangerTitle: {
+    fontSize: 14,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: COLORS.danger,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dangerDescription: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    lineHeight: 18,
+    marginBottom: SPACING.xs,
+  },
+  deleteEventBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.danger,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm + 2,
+    gap: SPACING.xs,
+    ...SHADOWS.sm,
+  },
+  deleteEventBtnText: {
+    color: COLORS.textLight,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontSize: 13,
   },
 });

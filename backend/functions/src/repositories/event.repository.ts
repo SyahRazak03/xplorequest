@@ -352,3 +352,31 @@ export async function eventHasTeams(eventId: string): Promise<boolean> {
 
   return !snap.empty;
 }
+
+/**
+ * Completely hard-deletes an event, its associated non-admin user documents,
+ * and recursively deletes the event document and all its subcollections.
+ */
+export async function hardDeleteEvent(eventId: string): Promise<void> {
+  const db = getFirestore();
+  const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+
+  // 1. Delete associated non-admin user documents for this event
+  try {
+    const usersSnap = await db
+      .collection('users')
+      .where('eventId', '==', eventId)
+      .get();
+
+    if (!usersSnap.empty) {
+      const batch = db.batch();
+      usersSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn(`[hardDeleteEvent] Error cleaning up users for event ${eventId}:`, err);
+  }
+
+  // 2. Recursively delete the event document and all subcollections (checkpoints, teams, preRegistrations, secrets, etc.)
+  await db.recursiveDelete(eventRef);
+}

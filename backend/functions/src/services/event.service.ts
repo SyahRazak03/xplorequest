@@ -24,9 +24,7 @@ import type {
   PublicEventView,
 } from '../repositories/event.repository';
 import {
-  archiveEvent,
   createEvent,
-  eventHasTeams,
   findActiveEvents,
   findAllEvents,
   findEventById,
@@ -34,6 +32,7 @@ import {
   findEventsByOwner,
   findEventBySlug,
   getEventSecrets,
+  hardDeleteEvent,
   setEventSecrets,
   updateEvent,
 } from '../repositories/event.repository';
@@ -570,16 +569,11 @@ export async function uploadEventAssetService(
   };
 }
 
-// ── Delete (Archive) Event ────────────────────────────────────────────────────
+// ── Delete Event ─────────────────────────────────────────────────────────────
 
 /**
- * Soft-deletes (archives) an event.
- *
- * Guard: if any team documents exist under events/{id}/teams, the
- * operation is rejected with CONFLICT (409) — data must be preserved.
- *
- * Never hard-deletes: the document and all subcollections are retained
- * for audit/leaderboard history.
+ * Permanently hard-deletes an event, its associated user records,
+ * and recursively purges all subcollections (checkpoints, teams, preRegistrations, etc.).
  */
 export async function deleteEventService(
   eventId: string,
@@ -587,7 +581,7 @@ export async function deleteEventService(
   callerRole?: UserRole,
   callerEventId?: string
 ): Promise<void> {
-  const event = await findEventById(eventId);
+  const event = await findEventById(eventId, true);
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
@@ -597,15 +591,7 @@ export async function deleteEventService(
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
-  const hasTeams = await eventHasTeams(eventId);
-  if (hasTeams) {
-    throw new AppError(
-      ErrorCode.CONFLICT,
-      'This event has registered teams. Archiving is not allowed — data must be preserved.'
-    );
-  }
-
-  await archiveEvent(eventId, callerUid);
+  await hardDeleteEvent(eventId);
 }
 
 // ── Rotate HMAC Secret (Stage 16 Security Hardening) ──────────────────────────

@@ -200,7 +200,7 @@ eventsRouter.patch(
   })
 );
 
-// ── DELETE /events/:id — Archive Event ───────────────────────────────────────
+// ── DELETE /events/:id — Delete Event ────────────────────────────────────────
 
 eventsRouter.delete(
   '/:id',
@@ -208,12 +208,12 @@ eventsRouter.delete(
   asyncHandler(async (req, res) => {
     const eventId = String(req.params['id'] ?? '');
     if (!eventId) {
-      throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID diperlukan.');
+      throw new AppError(ErrorCode.BAD_REQUEST, 'Event ID is required.');
     }
 
     const uid = requireUid(req);
     await deleteEventService(eventId, uid);
-    sendSuccess(res, { archived: true, eventId });
+    sendSuccess(res, { deleted: true, archived: true, eventId });
   })
 );
 
