@@ -33,7 +33,6 @@ interface AppContextType {
   isRaceStarted: boolean;
   raceStartTime: number | null;
   startRace: () => void;
-  resetDemoState: () => void;
   login: (role: UserRole, userProfile: UserProfile | null) => void;
   logout: () => void;
   setTemporaryRole: (role: UserRole) => void;
@@ -80,7 +79,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const [isOffline, setIsOffline] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
-  const [crewPinCode, setCrewPinCode] = useState('1234');
+  const [crewPinCode, setCrewPinCode] = useState('');
   const [attendanceMarshalId, setAttendanceMarshalId] = useState<string | null>(null);
   const [isRaceStarted, setIsRaceStarted] = useState(false);
   const [raceStartTime, setRaceStartTime] = useState<number | null>(null);
@@ -138,7 +137,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     if (!selectedEventId) return;
     let isMounted = true;
     import('./services/checkpointService').then(({ getCheckpoints }) => {
-      getCheckpoints(selectedEventId, user?.idToken || 'token-admin-casaria')
+      if (!user?.idToken) return;
+      getCheckpoints(selectedEventId, user.idToken)
         .then((liveCPs) => {
           if (!isMounted) return;
           if (liveCPs && Array.isArray(liveCPs)) {
@@ -156,7 +156,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // Real-time Firestore listener for event race start status (isStarted / status)
   React.useEffect(() => {
-    const eventId = activeEvent?.id || selectedEventId || 'EV-001';
+    const eventId = activeEvent?.id || selectedEventId;
+    if (!eventId) return;
     let isMounted = true;
     let unsub: (() => void) | null = null;
 
@@ -182,7 +183,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const startRace = () => {
     setIsRaceStarted(true);
     setRaceStartTime(Date.now());
-    const eventId = activeEvent?.id || selectedEventId || 'EV-001';
+    const eventId = activeEvent?.id || selectedEventId;
+    if (!eventId) return;
     import('./services/eventService').then(({ startRaceService }) => {
       startRaceService(eventId, user?.idToken).catch((err) => {
         console.warn('Failed to broadcast race start to Firestore:', err);
@@ -190,32 +192,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     });
   };
 
-  const resetDemoState = () => {
-    setIsRaceStarted(false);
-    setRaceStartTime(null);
-    setEvents([]);
-    setSelectedEventId(null);
-    setTeams([]);
-    setCheckpoints([]);
-    setRules({
-      maxRaceTime: 240,
-      taskTimeLimit: 15,
-      latePenaltyMin: 10,
-      pointPenaltyPts: 50,
-      bonusPoints: 100,
-      pointsSystemEnabled: true,
-      latePenaltyEnabled: true,
-      taskTimeLimitEnabled: true,
-      pointPenaltyEnabled: true,
-      bonusPointsEnabled: true,
-    });
-    setSyncQueueCount(0);
-    setIsOffline(false);
-    setCrewPinCode('1234');
-    setAttendanceMarshalId(null);
-    setRole(null);
-    setUser(null);
-  };
+
 
   // Derive theme from active role; fallback to 'participant' if not logged in/set
   const activeTheme = getThemeForRole(role || 'participant');
@@ -290,7 +267,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         isRaceStarted,
         raceStartTime,
         startRace,
-        resetDemoState,
         login,
         logout,
         setTemporaryRole,

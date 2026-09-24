@@ -12,7 +12,7 @@ export * from './DynamicQRDisplay';
 export * from './CheckpointFormModal';
 export * from './AdminDNFWatchPanel';
 export * from './OfflineStatusChip';
-export * from './DemoMenu';
+export * from './navigationRef';
 export * from './EmptyState';
 export * from './SkeletonLoader';
 export * from './Toast';
@@ -20,5 +20,6 @@ export * from './StarBurst';
 export * from './DashedRoutePath';
 export * from './CustomModalDialog';
 export { default as VerificationSuccessModal } from './VerificationSuccessModal';
+export * from './LiveCameraScanner';
 
 

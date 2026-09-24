@@ -5,7 +5,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppContextProvider } from './AppContext';
 import { useFonts, Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { COLORS } from './theme';
-import { DesignSystemDemo } from './components/DesignSystemDemo.demo';
 import DashboardScreen from './screens/DashboardScreen';
 import LoginScreen from './screens/LoginScreen';
 import RoleSelectScreen from './screens/RoleSelectScreen';
@@ -32,7 +31,7 @@ import ParticipantJoinScreen from './screens/ParticipantJoinScreen';
 import ParticipantAttendanceScanScreen from './screens/ParticipantAttendanceScanScreen';
 import CrewSelectCheckpointScreen from './screens/CrewSelectCheckpointScreen';
 import PersonalResultsScreen from './screens/PersonalResultsScreen';
-import { DemoMenu, navigationRef } from './components';
+import { navigationRef } from './components';
 
 
 export type RootStackParamList = {
@@ -57,7 +56,6 @@ export type RootStackParamList = {
 
 
   AntiCheatExplainer: undefined;
-  DesignSystemShowcase: undefined;
 
 
 
@@ -128,21 +126,6 @@ export default function App() {
 
 
           <Stack.Screen name="PersonalResults" component={PersonalResultsScreen} />
-          <Stack.Screen
-            name="DesignSystemShowcase"
-            component={DesignSystemDemo}
-            options={{
-              headerShown: true,
-              title: 'Sistem Reka Bentuk',
-              headerStyle: {
-                backgroundColor: '#FFFFFF',
-              },
-              headerTintColor: '#1E293B',
-              headerTitleStyle: {
-                fontWeight: '700',
-              },
-            }}
-          />
         </Stack.Navigator>
       </NavigationContainer>
     </AppContextProvider>
