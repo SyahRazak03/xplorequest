@@ -77,7 +77,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('Kebenaran Diperlukan', 'Sila benarkan aplikasi mengakses galeri gambar anda untuk memuat naik klu.');
+      Alert.alert('Permission Required', 'Please grant photo gallery permissions to upload clue images.');
       return;
     }
 
@@ -96,31 +96,30 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
     const isSpecial = cpType === 'start' || cpType === 'finish';
 
     if (!isSpecial && (!cpNumber.trim() || isNaN(Number(cpNumber)))) {
-      Alert.alert('Ralat', 'Sila masukkan nombor pos kawalan yang sah.');
+      Alert.alert('Error', 'Please enter a valid checkpoint number.');
       return;
     }
     if (!name.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan nama pos kawalan.');
+      Alert.alert('Error', 'Please enter checkpoint name.');
       return;
     }
     if (!clueText.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan klu pos kawalan.');
+      Alert.alert('Error', 'Please enter clue text.');
       return;
     }
     if (!taskDescription.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan penerangan tugasan.');
+      Alert.alert('Error', 'Please enter task description.');
       return;
     }
     if (rules.pointsSystemEnabled && (!scorePoints.trim() || isNaN(Number(scorePoints)))) {
-      Alert.alert('Ralat', 'Sila masukkan jumlah mata yang sah.');
+      Alert.alert('Error', 'Please enter valid score points.');
       return;
     }
 
     // Format ID: special or numeric padding
     const formattedId = isSpecial
-      ? (cpType === 'start' ? 'CP-START' : 'CP-TAMAT')
+      ? (cpType === 'start' ? 'CP-START' : 'CP-FINISH')
       : `CP-${cpNumber.trim().padStart(3, '0')}`;
-
 
     // Call save callback
     onSave({
@@ -137,7 +136,6 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
       isAttendanceStation,
       isHiddenInMap,
     });
-
   };
 
   return (
@@ -152,7 +150,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
           {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
-              {checkpoint ? 'Kemaskini Pos Kawalan' : 'Tambah Pos Kawalan Baru'}
+              {checkpoint ? 'Update Checkpoint' : 'Add New Checkpoint'}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Ionicons name="close" size={24} color={COLORS.text} />
@@ -166,7 +164,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
           >
             {/* Checkpoint Type Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Jenis Pos Kawalan (Type)</Text>
+              <Text style={styles.label}>Checkpoint Type</Text>
               <View style={styles.typeSelectorRow}>
                 <TouchableOpacity
                   style={[
@@ -176,7 +174,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                   onPress={() => setCpType('standard')}
                 >
                   <Text style={[styles.typeText, cpType === 'standard' && styles.typeTextSelected]}>
-                    Biasa
+                    Standard
                   </Text>
                 </TouchableOpacity>
 
@@ -188,7 +186,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                   onPress={() => setCpType('start')}
                 >
                   <Text style={[styles.typeText, cpType === 'start' && styles.typeTextSelectedStart]}>
-                    MULA (Start)
+                    START
                   </Text>
                 </TouchableOpacity>
 
@@ -200,7 +198,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                   onPress={() => setCpType('finish')}
                 >
                   <Text style={[styles.typeText, cpType === 'finish' && styles.typeTextSelectedFinish]}>
-                    TAMAT (Finish)
+                    FINISH
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -208,35 +206,35 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
 
             {/* Checkpoint Number */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nombor Pos Kawalan (Contoh: 1, 2, 3)</Text>
+              <Text style={styles.label}>Checkpoint Number (e.g., 1, 2, 3)</Text>
               <TextInput
                 style={styles.textInput}
                 value={cpNumber}
                 onChangeText={setCpNumber}
-                placeholder="cth: 1"
+                placeholder="e.g., 1"
                 keyboardType="numeric"
               />
             </View>
 
             {/* Checkpoint Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nama Pos Kawalan (Checkpoint)</Text>
+              <Text style={styles.label}>Checkpoint Name</Text>
               <TextInput
                 style={styles.textInput}
                 value={name}
                 onChangeText={setName}
-                placeholder="cth: Jambatan Gantung Titiwangsa"
+                placeholder="e.g., Titiwangsa Suspension Bridge"
               />
             </View>
 
             {/* Clue Text */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Klu Bertulis Pos Kawalan</Text>
+              <Text style={styles.label}>Written Clue Text</Text>
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 value={clueText}
                 onChangeText={setClueText}
-                placeholder="Masukkan petunjuk untuk mencari pos kawalan ini..."
+                placeholder="Enter hint or clue to locate this checkpoint..."
                 multiline={true}
                 numberOfLines={3}
               />
@@ -244,12 +242,12 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
 
             {/* Task Description */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Deskripsi Tugasan di Pos Kawalan</Text>
+              <Text style={styles.label}>Checkpoint Task Description</Text>
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 value={taskDescription}
                 onChangeText={setTaskDescription}
-                placeholder="Apakah cabaran fizikal yang mesti diselesaikan oleh pasukan?"
+                placeholder="What physical challenge must be completed by teams?"
                 multiline={true}
                 numberOfLines={3}
               />
@@ -271,11 +269,11 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                   <Ionicons name="clipboard-outline" size={18} color={isAttendanceStation ? COLORS.warning : COLORS.admin.primary} />
                   <Text style={{ fontSize: 13, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text }}>
-                    Stesen Kehadiran (Attendance Station)
+                    Attendance Station
                   </Text>
                 </View>
                 <Text style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 15 }}>
-                  Pos utama untuk pendaftaran pendaftaran dan kebenaran &apos;Mula Perlumbaan&apos;. Hadkan 1 stesen setiap acara.
+                  Primary station for team check-in and &apos;Start Race&apos; authorization. Limit 1 station per event.
                 </Text>
               </View>
               <Switch
@@ -302,11 +300,11 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                   <Ionicons name={isHiddenInMap ? "eye-off-outline" : "eye-outline"} size={18} color={isHiddenInMap ? COLORS.danger : COLORS.admin.primary} />
                   <Text style={{ fontSize: 13, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text }}>
-                    Sembunyi Pos di Peta (Hide in Map)
+                    Hide Checkpoint in Map
                   </Text>
                 </View>
                 <Text style={{ fontSize: 11, color: COLORS.textMuted, lineHeight: 15 }}>
-                  Jika diaktifkan, peserta hanya boleh melihat lokasi pos ini selepas mereka menyelesaikan pos sebelumnya.
+                  If enabled, participants can only see this checkpoint location after completing previous checkpoints.
                 </Text>
               </View>
               <Switch
@@ -320,12 +318,12 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
             {/* Checkpoint Score Points (Only render if point system enabled!) */}
             {rules.pointsSystemEnabled && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Jumlah Mata Ganjaran (Score Points)</Text>
+                <Text style={styles.label}>Score Points</Text>
                 <TextInput
                   style={styles.textInput}
                   value={scorePoints}
                   onChangeText={setScorePoints}
-                  placeholder="cth: 150"
+                  placeholder="e.g., 150"
                   keyboardType="numeric"
                 />
               </View>
@@ -333,8 +331,7 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
 
             {/* Image Picker */}
             <View style={styles.inputGroup}>
-
-              <Text style={styles.label}>Gambar Klu Pos Kawalan</Text>
+              <Text style={styles.label}>Checkpoint Clue Image</Text>
               <View style={styles.imagePickerWrapper}>
                 {imageUri ? (
                   <View style={styles.previewImageContainer}>
@@ -353,8 +350,8 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
                     activeOpacity={0.8}
                   >
                     <Ionicons name="image-outline" size={24} color={COLORS.admin.primary} />
-                    <Text style={styles.imagePickerBtnText}>Muat Naik Gambar Klu</Text>
-                    <Text style={styles.imagePickerBtnSubtext}>Pilih dari galeri peranti</Text>
+                    <Text style={styles.imagePickerBtnText}>Upload Clue Image</Text>
+                    <Text style={styles.imagePickerBtnSubtext}>Choose from device gallery</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -364,14 +361,14 @@ export const CheckpointFormModal: React.FC<CheckpointFormModalProps> = ({
           {/* Action Buttons */}
           <View style={styles.modalFooter}>
             <SecondaryButton
-              label="Batal"
+              label="Cancel"
               onPress={onClose}
               variant="outline"
               role="admin"
               style={{ flex: 1 }}
             />
             <PrimaryButton
-              label="Simpan Pos Kawalan"
+              label="Save Checkpoint"
               onPress={handleSave}
               role="admin"
               style={{ flex: 1.5 }}

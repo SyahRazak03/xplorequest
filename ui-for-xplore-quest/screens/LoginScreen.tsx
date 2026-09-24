@@ -17,7 +17,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { PrimaryButton, SecondaryButton } from '../components';
+import { PrimaryButton } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { adminLogin } from '../services/authService';
 
@@ -28,7 +28,7 @@ export default function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<LoginScreenRouteProp>();
   const { role } = route.params || { role: 'participant' };
-  const { login, theme, activeEvent } = useApp();
+  const { login, theme } = useApp();
 
   // Inputs state
   const [eventCode, setEventCode] = useState('');
@@ -40,36 +40,30 @@ export default function LoginScreen() {
   const [isFocused, setIsFocused] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Set default theme for route role if user directly navigated
   useEffect(() => {
-    // Already set in setTemporaryRole during role selection card tap,
-    // but ensures syncd state.
+    // Synchronize role state
   }, [role]);
 
   const handleLogin = async () => {
     if (role === 'participant') {
       if (!eventCode.trim()) {
-        Alert.alert('Ralat', 'Sila masukkan Kod Acara.');
+        Alert.alert('Error', 'Please enter Event Join Code.');
         return;
       }
       if (!teamName.trim()) {
-        Alert.alert('Ralat', 'Sila masukkan Nama Kumpulan.');
+        Alert.alert('Error', 'Please enter Team Name.');
         return;
       }
-      // Participant join is handled by CrewSelectCheckpoint-equivalent flow
-      // in ParticipantJoinScreen (QR scan → StaggeredStart). LoginScreen for
-      // participants is kept for the direct event-code entry path only.
-      // Navigate to ParticipantJoin which performs the real auth via QR.
       navigation.navigate('ParticipantJoin');
     } else if (role === 'crew') {
       navigation.navigate('CrewSelectCheckpoint');
     } else if (role === 'admin') {
       if (!adminEmail.trim()) {
-        Alert.alert('Ralat', 'Sila masukkan E-mel Admin.');
+        Alert.alert('Error', 'Please enter Admin Email.');
         return;
       }
       if (!adminPassword.trim()) {
-        Alert.alert('Ralat', 'Sila masukkan Kata Laluan.');
+        Alert.alert('Error', 'Please enter Password.');
         return;
       }
       setLoading(true);
@@ -83,41 +77,40 @@ export default function LoginScreen() {
         });
         navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Log masuk gagal.';
-        Alert.alert('Log Masuk Gagal', msg);
+        const msg = err instanceof Error ? err.message : 'Sign in failed.';
+        Alert.alert('Sign In Failed', msg);
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // Helper values for dynamic content based on role
   const getHeaderDetails = () => {
     switch (role) {
       case 'participant':
         return {
-          title: 'Daftar Kumpulan',
-          subtitle: 'Sertai cabaran explorace di lokasi dengan kod jemputan khas.',
+          title: 'Team Registration',
+          subtitle: 'Join on-site explorace challenges with your event invitation code.',
           icon: 'people',
         };
       case 'crew':
         return {
-          title: 'Krew Log Masuk',
-          subtitle: 'Pilih pos kawalan bertugas hari ini untuk memulakan tugasan krew.',
+          title: 'Crew Sign In',
+          subtitle: 'Select your assigned checkpoint station for today to start duties.',
           icon: 'qr-code',
         };
       case 'admin':
         return {
-          title: 'Organisasi Log Masuk',
-          subtitle: 'Panel pengurusan penganjur acara untuk penyelarasan & pengauditan.',
+          title: 'Organizer Sign In',
+          subtitle: 'Organizer management portal for race coordination and auditing.',
           icon: 'settings',
         };
     }
   };
 
   const header = getHeaderDetails() || {
-    title: 'Log Masuk',
-    subtitle: 'Sila masukkan butiran log masuk anda.',
+    title: 'Sign In',
+    subtitle: 'Please enter your login details.',
     icon: 'log-in',
   };
 
@@ -135,7 +128,7 @@ export default function LoginScreen() {
             onPress={() => navigation.navigate('RoleSelect')}
           >
             <Ionicons name="arrow-back-outline" size={24} color={COLORS.text} />
-            <Text style={styles.backText}>Kembali</Text>
+            <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
 
           {/* Role Header Banner */}
@@ -152,13 +145,13 @@ export default function LoginScreen() {
             {role === 'participant' && (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Kod Penyertaan Acara</Text>
+                  <Text style={styles.label}>Event Join Code</Text>
                   <TextInput
                     style={[
                       styles.input,
                       isFocused === 'eventCode' && { borderColor: theme.colors.primary, borderWidth: 1.5 },
                     ]}
-                    placeholder="Contoh: XT2026"
+                    placeholder="e.g., XT2026"
                     placeholderTextColor="rgba(28, 46, 36, 0.4)"
                     autoCapitalize="characters"
                     value={eventCode}
@@ -166,17 +159,17 @@ export default function LoginScreen() {
                     onFocus={() => setIsFocused('eventCode')}
                     onBlur={() => setIsFocused(null)}
                   />
-                  <Text style={styles.inputHint}>Kod penyertaan 6-aksara yang diberikan oleh pihak urus setia.</Text>
+                  <Text style={styles.inputHint}>6-character event code provided by the organizer.</Text>
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Nama Kumpulan (Team Name)</Text>
+                  <Text style={styles.label}>Team Name</Text>
                   <TextInput
                     style={[
                       styles.input,
                       isFocused === 'teamName' && { borderColor: theme.colors.primary, borderWidth: 1.5 },
                     ]}
-                    placeholder="Contoh: Pasukan Harimau"
+                    placeholder="e.g., Tiger Squad"
                     placeholderTextColor="rgba(28, 46, 36, 0.4)"
                     value={teamName}
                     onChangeText={setTeamName}
@@ -189,9 +182,9 @@ export default function LoginScreen() {
 
             {role === 'crew' && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Akses Tugasan Krew Pos Kawalan</Text>
+                <Text style={styles.label}>Checkpoint Crew Access</Text>
                 <Text style={styles.inputHint}>
-                  Pilihan pos kawalan dan pengesahan PIN/Marshal ID akan dilengkapkan di skrin seterusnya.
+                  Checkpoint station selection and PIN/Marshal ID verification will be completed on the next screen.
                 </Text>
               </View>
             )}
@@ -199,13 +192,13 @@ export default function LoginScreen() {
             {role === 'admin' && (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>E-mel Admin</Text>
+                  <Text style={styles.label}>Admin Email</Text>
                   <TextInput
                     style={[
                       styles.input,
                       isFocused === 'adminEmail' && { borderColor: theme.colors.primary, borderWidth: 1.5 },
                     ]}
-                    placeholder="Contoh: azman@xplorequest.com"
+                    placeholder="e.g., organizer@xplorequest.com"
                     placeholderTextColor="rgba(28, 46, 36, 0.4)"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -217,13 +210,13 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Kata Laluan</Text>
+                  <Text style={styles.label}>Password</Text>
                   <TextInput
                     style={[
                       styles.input,
                       isFocused === 'adminPassword' && { borderColor: theme.colors.primary, borderWidth: 1.5 },
                     ]}
-                    placeholder="Masukkan kata laluan"
+                    placeholder="Enter password"
                     placeholderTextColor="rgba(28, 46, 36, 0.4)"
                     secureTextEntry
                     autoCapitalize="none"
@@ -239,7 +232,7 @@ export default function LoginScreen() {
             {/* Login Action Buttons */}
             <View style={styles.buttonSpacing}>
               <PrimaryButton
-                label={loading ? 'Memproses...' : (role === 'crew' ? 'Pilih Pos Kawalan' : 'Masuk Dashboard')}
+                label={loading ? 'Processing...' : (role === 'crew' ? 'Select Checkpoint Station' : 'Enter Dashboard')}
                 onPress={handleLogin}
                 role={role}
                 loading={loading}
@@ -306,56 +299,37 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.card,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     padding: SPACING.lg,
     ...SHADOWS.sm,
-    marginBottom: SPACING.lg,
   },
   inputGroup: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   label: {
-    fontSize: 13,
-    fontWeight: TYPOGRAPHY.fontWeight.semiBold,
+    fontSize: TYPOGRAPHY.fontSize.caption,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
     color: COLORS.text,
     marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   input: {
     backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
     borderWidth: 1,
+    borderColor: COLORS.border,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.md,
-    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+    paddingVertical: SPACING.sm + 2,
     fontSize: TYPOGRAPHY.fontSize.body,
     color: COLORS.text,
   },
   inputHint: {
-    fontSize: 11,
+    fontSize: 12,
     color: COLORS.textMuted,
-    marginTop: 4,
-    paddingHorizontal: 2,
+    marginTop: SPACING.xs,
+    lineHeight: 16,
   },
   buttonSpacing: {
     marginTop: SPACING.sm,
-    marginBottom: SPACING.md,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(92, 110, 100, 0.08)',
-    borderRadius: RADIUS.sm,
-    padding: SPACING.md,
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: COLORS.textMuted,
-    lineHeight: 16,
-  },
-  boldText: {
-    fontWeight: '700',
   },
 });

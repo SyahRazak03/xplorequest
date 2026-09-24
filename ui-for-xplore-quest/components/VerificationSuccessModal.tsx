@@ -101,31 +101,31 @@ export default function VerificationSuccessModal({
               <View style={styles.stampDashedRing} pointerEvents="none" />
             </View>
 
-            {/* DISAHKAN! Header */}
-            <Text style={styles.successTitle}>DISAHKAN!</Text>
+            {/* VERIFIED! Header */}
+            <Text style={styles.successTitle}>VERIFIED!</Text>
 
             {/* Checkpoint Location Chip */}
             <View style={styles.cpNamePill}>
               <Ionicons name="location" size={14} color={COLORS.participant.primary} />
               <Text style={styles.successCpName} numberOfLines={1}>
-                {checkpointName || 'Pos Kawalan'}
+                {checkpointName || 'Checkpoint'}
               </Text>
             </View>
 
             {/* Dynamic Points Pill Badge */}
             <View style={styles.pointsBadge}>
-              <Text style={styles.pointsBadgeText}>+{pointsEarned} Mata</Text>
-              <Text style={styles.pointsBadgeSub}>Diperolehi!</Text>
+              <Text style={styles.pointsBadgeText}>+{pointsEarned} Pts</Text>
+              <Text style={styles.pointsBadgeSub}>Earned!</Text>
             </View>
 
             {/* Divider rule */}
             <View style={styles.divider} />
 
-            {/* Progress bar section: "Menyimpan rekod..." */}
+            {/* Progress bar section */}
             <View style={styles.progressBarWrapper}>
               <View style={styles.progressLabelRow}>
                 <Ionicons name="shield-checkmark-outline" size={13} color={COLORS.textMuted} />
-                <Text style={styles.progressText}>Menyimpan rekod...</Text>
+                <Text style={styles.progressText}>Saving record...</Text>
               </View>
               <View style={styles.progressBarBg}>
                 <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />

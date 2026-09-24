@@ -61,14 +61,14 @@ export async function submitPreRegistrationService(
   if (!event || event.isArchived) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan slug '${slug}' tidak ditemui.`
+      `Event with slug '${slug}' not found.`
     );
   }
 
   if (event.isStarted || event.isFinished) {
     throw new AppError(
       ErrorCode.BAD_REQUEST,
-      'Pendaftaran dalam talian untuk acara ini telah ditutup kerana acara telah bermula atau tamat.'
+      'Online registration for this event is closed because the event has started or ended.'
     );
   }
 
@@ -77,7 +77,7 @@ export async function submitPreRegistrationService(
   if (totalMembers > maxTeamSize) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      `Jumlah ahli kumpulan (${totalMembers} orang) melebihi had maksimum acara (${maxTeamSize} orang).`
+      `Team member count (${totalMembers} members) exceeds event maximum limit (${maxTeamSize} members).`
     );
   }
 
@@ -87,14 +87,14 @@ export async function submitPreRegistrationService(
   if (imageBuffer.length > MAX_IMAGE_SIZE_BYTES) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      'Saiz fail resit pembayaran tidak boleh melebihi 5MB.'
+      'Payment receipt file size cannot exceed 5MB.'
     );
   }
 
   if (!validateImageMagicBytes(imageBuffer, input.contentType)) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      'Kandungan fail resit pembayaran tidak sepadan dengan jenis MIME yang dinyatakan.'
+      'Payment receipt file content does not match declared MIME type.'
     );
   }
 
@@ -181,7 +181,7 @@ export async function listPreRegistrationsService(
 ): Promise<PreRegistrationDocument[]> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
@@ -201,14 +201,14 @@ export async function getPreRegistrationDetailService(
 ): Promise<PreRegistrationDocument> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const preReg = await findPreRegistrationById(eventId, id);
   if (!preReg) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Permohonan pendaftaran tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Pre-registration application not found.');
   }
 
   // Generate fresh signed URL if storage path is available
@@ -241,14 +241,14 @@ export async function approvePreRegistrationService(
 ): Promise<ApprovePreRegistrationResult> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const preReg = await findPreRegistrationById(eventId, id);
   if (!preReg) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Permohonan pendaftaran tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Pre-registration application not found.');
   }
 
   // Idempotence check: if already approved and teamId exists, return existing team
@@ -268,7 +268,7 @@ export async function approvePreRegistrationService(
   if (existingTeamName && existingTeamName.id !== preReg.teamId) {
     throw new AppError(
       ErrorCode.CONFLICT,
-      `Nama kumpulan '${preReg.teamName}' sudah didaftarkan untuk acara ini. Sila tukar nama kumpulan sedia ada sebelum meluluskan pendaftaran ini.`
+      `Team name '${preReg.teamName}' is already registered for this event. Please change the existing team name before approving this registration.`
     );
   }
 
@@ -322,20 +322,20 @@ export async function rejectPreRegistrationService(
 ): Promise<PreRegistrationDocument> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const preReg = await findPreRegistrationById(eventId, id);
   if (!preReg) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Permohonan pendaftaran tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Pre-registration application not found.');
   }
 
   if (preReg.status === 'approved') {
     throw new AppError(
       ErrorCode.CONFLICT,
-      'Pendaftaran ini telah diluluskan dan kumpulan telah dicipta. Sila uruskan kumpulan di bahagian pengurusan kumpulan.'
+      'This registration has already been approved and a team created. Please manage the team in the Teams Manager.'
     );
   }
 

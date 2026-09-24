@@ -69,7 +69,7 @@ export function assertEventOwner(
     if (!callerEventId || callerEventId !== event.id) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Anda tidak mempunyai kebenaran untuk menguruskan acara ini.'
+        'You do not have permission to manage this event.'
       );
     }
     return;
@@ -87,7 +87,7 @@ export function assertEventOwner(
     if (event.createdBy !== callerUid) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Anda tidak mempunyai kebenaran untuk menguruskan acara ini.'
+        'You do not have permission to manage this event.'
       );
     }
   }
@@ -141,7 +141,7 @@ export async function createEventService(
     if (existing) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        `Kod penyertaan '${input.joinCode}' sudah digunakan. Sila pilih kod lain.`
+        `Join code '${input.joinCode}' is already in use. Please choose another code.`
       );
     }
     joinCode = input.joinCode.toUpperCase();
@@ -157,7 +157,7 @@ export async function createEventService(
     if (existingSlug) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        `Slug URL '${input.urlSlug}' sudah digunakan. Sila pilih slug lain.`
+        `URL slug '${input.urlSlug}' is already in use. Please choose another slug.`
       );
     }
     urlSlug = input.urlSlug.toLowerCase();
@@ -246,7 +246,7 @@ export async function getEventService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -291,7 +291,7 @@ export async function getCrewPinService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -303,7 +303,7 @@ export async function getCrewPinService(
   if (!secrets) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      'Rahsia acara belum dikonfigurasi. Sila cipta semula acara ini.'
+      'Event secrets not configured. Please recreate this event.'
     );
   }
 
@@ -369,7 +369,7 @@ export async function updateEventService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -386,7 +386,7 @@ export async function updateEventService(
     if (attempted.length > 0) {
       throw new AppError(
         ErrorCode.RACE_ALREADY_STARTED,
-        `Medan ${attempted.join(', ')} tidak boleh diubah selepas lumba bermula.`
+        `Fields ${attempted.join(', ')} cannot be modified after race has started.`
       );
     }
   }
@@ -397,7 +397,7 @@ export async function updateEventService(
     if (existing && existing.id !== eventId) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        `Kod penyertaan '${input.joinCode}' sudah digunakan.`
+        `Join code '${input.joinCode}' is already in use.`
       );
     }
   }
@@ -408,7 +408,7 @@ export async function updateEventService(
     if (existing && existing.id !== eventId) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        `Slug URL '${input.urlSlug}' sudah digunakan.`
+        `URL slug '${input.urlSlug}' is already in use.`
       );
     }
   }
@@ -428,7 +428,7 @@ export async function getPublicEventBySlugService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan slug '${slug}' tidak ditemui.`
+      `Event with slug '${slug}' not found.`
     );
   }
 
@@ -461,7 +461,7 @@ export async function updatePaymentDetailsService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -491,7 +491,7 @@ export async function uploadEventAssetService(
   if (caller.role !== 'admin') {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Akses ditolak: Hanya admin dibenarkan memuat naik aset acara.'
+      'Access denied: Only admins are allowed to upload event assets.'
     );
   }
 
@@ -499,7 +499,7 @@ export async function uploadEventAssetService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -509,12 +509,12 @@ export async function uploadEventAssetService(
   const imageBuffer = Buffer.from(base64Data, 'base64');
 
   if (imageBuffer.length === 0) {
-    throw new AppError(ErrorCode.BAD_REQUEST, 'Data imej tidak sah atau kosong.');
+    throw new AppError(ErrorCode.BAD_REQUEST, 'Invalid or empty image data.');
   }
   if (imageBuffer.length > MAX_IMAGE_SIZE_BYTES) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      `Saiz fail imej melebihi had maksimum yang dibenarkan (5MB). Saiz dikesan: ${(
+      `Image file size exceeds maximum allowed limit (5MB). Detected size: ${(
         imageBuffer.length / (1024 * 1024)
       ).toFixed(2)}MB.`
     );
@@ -524,7 +524,7 @@ export async function uploadEventAssetService(
   if (!isMagicValid) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      'Struktur binari fail imej rosak atau tidak sepadan dengan jenis MIME yang diisytiharkan.'
+      'Image binary structure is corrupt or does not match declared MIME type.'
     );
   }
 
@@ -591,7 +591,7 @@ export async function deleteEventService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -601,7 +601,7 @@ export async function deleteEventService(
   if (hasTeams) {
     throw new AppError(
       ErrorCode.CONFLICT,
-      'Acara ini mempunyai kumpulan berdaftar. Arkib tidak dibenarkan — data harus dikekalkan.'
+      'This event has registered teams. Archiving is not allowed — data must be preserved.'
     );
   }
 
@@ -632,7 +632,7 @@ export async function rotateHmacSecretService(
   if (!event) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Acara dengan ID '${eventId}' tidak ditemui.`
+      `Event with ID '${eventId}' not found.`
     );
   }
 
@@ -642,7 +642,7 @@ export async function rotateHmacSecretService(
   if (!currentSecrets) {
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      `Rahsia acara untuk '${eventId}' tidak ditemui.`
+      `Event secrets for '${eventId}' not found.`
     );
   }
 
@@ -691,7 +691,7 @@ async function generateUniqueJoinCode(): Promise<string> {
 
   throw new AppError(
     ErrorCode.INTERNAL_SERVER_ERROR,
-    'Gagal menjana kod penyertaan unik. Sila cuba lagi.',
+    'Failed to generate a unique join code. Please try again.',
     false // programmer error — alert on-call
   );
 }

@@ -50,17 +50,17 @@ export default function CheckpointDetailScreen({
   const isLocked = status === 'locked';
 
   // State mapping for badges
-  let statusBadgeLabel = 'Terkunci 🔒';
+  let statusBadgeLabel = 'Locked 🔒';
   let statusBadgeState: 'success' | 'warning' | 'danger' | 'info' = 'danger';
 
   if (isCompleted) {
-    statusBadgeLabel = 'Selesai ✅';
+    statusBadgeLabel = 'Completed ✅';
     statusBadgeState = 'success';
   } else if (isSkipped) {
-    statusBadgeLabel = 'Tertunda ⚠️';
+    statusBadgeLabel = 'Pending ⚠️';
     statusBadgeState = 'warning';
   } else if (isActive) {
-    statusBadgeLabel = 'Sedang Aktif ▶️';
+    statusBadgeLabel = 'Active Now ▶️';
     statusBadgeState = 'info';
   }
 
@@ -82,7 +82,7 @@ export default function CheckpointDetailScreen({
             <Ionicons name="close" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-            Informasi Checkpoint
+            Checkpoint Details
           </Text>
           <View style={styles.headerRightPlaceholder} />
         </View>
@@ -109,7 +109,7 @@ export default function CheckpointDetailScreen({
             <View style={styles.badgeContainer}>
               <Badge label={statusBadgeLabel} state={statusBadgeState} />
               {rules.pointsSystemEnabled && (
-                <Badge label={`+${checkpoint.scorePoints} Mata`} state={isCompleted ? 'success' : 'info'} />
+                <Badge label={`+${checkpoint.scorePoints} Points`} state={isCompleted ? 'success' : 'info'} />
               )}
             </View>
           </View>
@@ -117,17 +117,17 @@ export default function CheckpointDetailScreen({
 
           {/* Clue Visual Landmark Frame */}
           <Text style={[styles.sectionHeading, { color: theme.colors.text }]}>
-            Landmark Lokasi
+            Location Landmark
           </Text>
           <View style={[styles.imageFrame, { borderRadius: theme.radius.md, borderColor: theme.colors.border }]}>
             {isLocked ? (
               <View style={styles.lockedVisualOverlay}>
                 <Ionicons name="lock-closed" size={54} color={theme.colors.textMuted} />
                 <Text style={[styles.lockedText, { color: theme.colors.textMuted }]}>
-                  Peta Clue Terkunci
+                  Clue Map Locked
                 </Text>
                 <Text style={[styles.lockedDesc, { color: theme.colors.textMuted }]}>
-                  Selesaikan checkpoint aktif terlebih dahulu untuk mendedahkan foto landmark.
+                  Complete active checkpoint first to reveal landmark photo.
                 </Text>
               </View>
             ) : checkpoint.imageUrl && checkpoint.imageUrl.trim() !== '' ? (
@@ -140,10 +140,10 @@ export default function CheckpointDetailScreen({
               <View style={[styles.lockedVisualOverlay, { backgroundColor: '#F8FAFC' }]}>
                 <Ionicons name="image-outline" size={48} color={theme.colors.textMuted} />
                 <Text style={[styles.lockedText, { color: theme.colors.textMuted, fontSize: 13, marginTop: 6 }]}>
-                  Tiada Foto Landmark
+                  No Landmark Photo
                 </Text>
                 <Text style={[styles.lockedDesc, { color: theme.colors.textMuted, fontSize: 11 }]}>
-                  Penganjur tidak memuat naik foto khusus untuk pos ini. Sila rujuk petunjuk di bawah.
+                  Organizer has not uploaded a photo for this checkpoint. Please refer to clues below.
                 </Text>
               </View>
             )}
@@ -156,7 +156,7 @@ export default function CheckpointDetailScreen({
                 <View style={styles.detailItemHeader}>
                   <Ionicons name="bulb" size={20} color={theme.colors.accent} />
                   <Text style={[styles.detailItemTitle, { color: theme.colors.accent }]}>
-                    Petunjuk Lokasi (Clue)
+                    Location Clue
                   </Text>
                 </View>
                 <Text style={[styles.detailItemDesc, { color: theme.colors.text }]}>
@@ -170,7 +170,7 @@ export default function CheckpointDetailScreen({
                 <View style={styles.detailItemHeader}>
                   <Ionicons name="clipboard" size={20} color={theme.colors.primary} />
                   <Text style={[styles.detailItemTitle, { color: theme.colors.primary }]}>
-                    Tugasan Checkpoint
+                    Checkpoint Task
                   </Text>
                 </View>
                 <Text style={[styles.detailItemDesc, { color: theme.colors.text }]}>
@@ -185,7 +185,7 @@ export default function CheckpointDetailScreen({
             <View style={[styles.lockedBanner, { backgroundColor: '#F1F5F9', borderRadius: theme.radius.sm }]}>
               <Ionicons name="information-circle-outline" size={20} color={theme.colors.textMuted} />
               <Text style={[styles.lockedBannerText, { color: theme.colors.textMuted }]}>
-                Acara ini dijalankan secara berperingkat (sequential). Sila ikuti laluan peta dan seret pasukan anda ke pos kawalan semasa.
+                This event operates sequentially. Please follow your assigned route map to active checkpoints.
               </Text>
             </View>
           )}
@@ -195,7 +195,7 @@ export default function CheckpointDetailScreen({
             <View style={[styles.successBanner, { backgroundColor: '#ECFDF5', borderColor: '#10B981', borderRadius: theme.radius.sm }]}>
               <Ionicons name="checkmark-circle" size={22} color="#10B981" />
               <Text style={styles.successBannerText}>
-                Tahniah! Pasukan anda telah menyelesaikan pos kawalan ini dan memperolehi mata!
+                Congratulations! Your team completed this checkpoint and earned points!
               </Text>
             </View>
           )}
@@ -217,7 +217,7 @@ export default function CheckpointDetailScreen({
             >
               <Ionicons name="qr-code-outline" size={20} color="#FFFFFF" />
               <Text style={styles.primaryButtonText}>
-                {isSkipped ? 'Kembali & Imbas QR Marshal' : 'Imbas QR Marshal Bertugas'}
+                {isSkipped ? 'Return & Scan Marshal QR' : 'Scan Marshal QR Code'}
               </Text>
             </TouchableOpacity>
           )}
@@ -240,7 +240,7 @@ export default function CheckpointDetailScreen({
             >
               <Ionicons name="arrow-redo-outline" size={18} color={COLORS.danger} />
               <Text style={[styles.secondaryButtonText, { color: COLORS.danger }]}>
-                Langkau Checkpoint (Marshal Sesak)
+                Skip Checkpoint (Congested)
               </Text>
             </TouchableOpacity>
           )}
@@ -252,7 +252,7 @@ export default function CheckpointDetailScreen({
               activeOpacity={0.7}
             >
               <Text style={[styles.closeButtonActionText, { color: theme.colors.text }]}>
-                Kembali Ke Dashboard
+                Return to Dashboard
               </Text>
             </TouchableOpacity>
           )}

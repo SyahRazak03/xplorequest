@@ -67,7 +67,7 @@ export async function saveBoundaryService(
 ): Promise<{ eventId: string; boundary: GeoPoint[] }> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
@@ -75,7 +75,7 @@ export async function saveBoundaryService(
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Sempadan geofence tidak boleh diubah selepas perlumbaan bermula.'
+      'Geofence boundary cannot be modified after race has started.'
     );
   }
 
@@ -83,7 +83,7 @@ export async function saveBoundaryService(
   if (!geomCheck.valid) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      geomCheck.reason || 'Geometri poligon sempadan tidak sah.'
+      geomCheck.reason || 'Invalid boundary polygon geometry.'
     );
   }
 
@@ -107,7 +107,7 @@ export async function createCheckpointService(
 ): Promise<{ checkpoint: CheckpointDocument; warning?: string }> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid) {
@@ -117,7 +117,7 @@ export async function createCheckpointService(
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Pos kawalan tidak boleh ditambah selepas perlumbaan bermula.'
+      'Checkpoints cannot be added after race has started.'
     );
   }
 
@@ -157,7 +157,7 @@ export async function createCheckpointService(
       event.geofenceBoundary
     );
     if (!isInside) {
-      warning = 'Koordinat pos kawalan terletak di luar sempadan geofence acara.';
+      warning = 'Checkpoint coordinates lie outside event geofence boundary.';
     }
   }
 
@@ -194,7 +194,7 @@ export async function listCheckpointsService(
 ): Promise<CheckpointDocument[] | ParticipantCheckpointView[]> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
@@ -258,7 +258,7 @@ export async function getCheckpointService(
 ): Promise<CheckpointDocument | ParticipantCheckpointView> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
@@ -267,7 +267,7 @@ export async function getCheckpointService(
 
   const checkpoint = await findCheckpointById(eventId, checkpointId);
   if (!checkpoint) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Checkpoint not found.');
   }
 
   if (callerRole === 'admin' || callerRole === 'crew') {
@@ -312,7 +312,7 @@ export async function updateCheckpointService(
 ): Promise<{ checkpoint: CheckpointDocument; warning?: string }> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
@@ -320,13 +320,13 @@ export async function updateCheckpointService(
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Pos kawalan tidak boleh diubah selepas perlumbaan bermula.'
+      'Checkpoints cannot be modified after race has started.'
     );
   }
 
   const existing = await findCheckpointById(eventId, checkpointId);
   if (!existing) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Checkpoint not found.');
   }
 
   // Enforce singular isFinish flag (all teams converge on one finish line)
@@ -357,7 +357,7 @@ export async function updateCheckpointService(
       event.geofenceBoundary
     );
     if (!isInside) {
-      warning = 'Koordinat pos kawalan terletak di luar sempadan geofence acara.';
+      warning = 'Checkpoint coordinates lie outside event geofence boundary.';
     }
   }
 
@@ -377,7 +377,7 @@ export async function reorderCheckpointsService(
 ): Promise<CheckpointDocument[]> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
@@ -385,7 +385,7 @@ export async function reorderCheckpointsService(
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Susunan pos kawalan tidak boleh diubah selepas perlumbaan bermula.'
+      'Checkpoint sequence cannot be modified after race has started.'
     );
   }
 
@@ -411,7 +411,7 @@ export async function deleteCheckpointService(
 ): Promise<void> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid) {
@@ -421,13 +421,13 @@ export async function deleteCheckpointService(
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Pos kawalan tidak boleh dipadam selepas perlumbaan bermula.'
+      'Checkpoints cannot be deleted after race has started.'
     );
   }
 
   const checkpoint = await findCheckpointById(eventId, checkpointId);
   if (!checkpoint) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Checkpoint not found.');
   }
 
   if (!force) {
@@ -441,7 +441,7 @@ export async function deleteCheckpointService(
     if (hasProgress) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        'Terdapat kumpulan peserta yang mempunyai rekod pada pos kawalan ini. Sila tetapkan semula kedudukan peserta sebelum memadam.'
+        'Participant teams have existing records for this checkpoint. Please reset team positions before deleting.'
       );
     }
   }

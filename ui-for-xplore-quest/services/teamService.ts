@@ -36,7 +36,7 @@ export async function fetchEventTeams(eventId: string, token?: string): Promise<
     if (json.success && Array.isArray(json.data)) {
       return json.data.map((d: any) => ({
         id: d.id,
-        name: d.name || 'Pasukan',
+        name: d.name || 'Team',
         status: d.status || 'approved',
         memberCount: d.memberCount || 1,
         startCheckpointId: d.startCheckpointId || 'CP-START',
@@ -87,7 +87,7 @@ export function subscribeToEventTeams(
         if (json.success && Array.isArray(json.data)) {
           const apiTeams: Team[] = json.data.map((d: any) => ({
             id: d.id,
-            name: d.name || 'Pasukan',
+            name: d.name || 'Team',
             status: d.status || 'approved',
             memberCount: d.memberCount || 1,
             startCheckpointId: d.startCheckpointId || 'CP-START',

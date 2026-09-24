@@ -163,7 +163,7 @@ describe('Krew & Marshal Credentials Unit Tests', () => {
       );
 
       await expect(wrongPinCall).rejects.toThrow(
-        new AppError(ErrorCode.UNAUTHORIZED, 'ID atau kelayakan tidak sah.')
+        new AppError(ErrorCode.UNAUTHORIZED, 'Invalid credentials or ID.')
       );
 
       // Verify no user document was written/auto-provisioned in Firestore

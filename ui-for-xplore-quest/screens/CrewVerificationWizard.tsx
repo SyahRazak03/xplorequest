@@ -38,7 +38,7 @@ export default function CrewVerificationWizard() {
   // Retrieve team and checkpoint details
   const team = (appTeams && appTeams.find(t => t.id === teamId)) || {
     id: teamId || 'TEAM-UNKNOWN',
-    name: 'Pasukan Peserta',
+    name: 'Participant Team',
     status: 'approved' as const,
     memberCount: 1,
     startCheckpointId: '',
@@ -49,11 +49,11 @@ export default function CrewVerificationWizard() {
 
   const defaultCheckpoint: Checkpoint = {
     id: 'CP-001',
-    name: 'Pos Kawalan Krew',
+    name: 'Crew Checkpoint',
     latitude: activeEvent?.latitude || 3.1764,
     longitude: activeEvent?.longitude || 101.7061,
     clueText: '',
-    taskDescription: 'Sahkan tugasan fizikal di pos kawalan.',
+    taskDescription: 'Verify physical task completion at checkpoint.',
     scorePoints: 100,
     statusPerTeam: {},
   };
@@ -95,7 +95,7 @@ export default function CrewVerificationWizard() {
     try {
       const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
       if (permissionResult.granted === false) {
-        Alert.alert('Kebenaran Diperlukan', 'Aplikasi memerlukan kebenaran mengakses kamera untuk merakam foto bukti.');
+        Alert.alert('Permission Required', 'The app requires camera access to capture photo proof.');
         return;
       }
 
@@ -120,7 +120,7 @@ export default function CrewVerificationWizard() {
       }
     } catch (err: any) {
       console.warn('ImagePicker launchCamera error:', err);
-      Alert.alert('Ralat Kamera', 'Gagal merakam foto daripada kamera peranti.');
+      Alert.alert('Camera Error', 'Failed to capture photo from device camera.');
     }
   };
 
@@ -184,7 +184,7 @@ export default function CrewVerificationWizard() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Verifikasi Kumpulan</Text>
+          <Text style={styles.headerTitle}>Team Verification</Text>
           <Text style={styles.headerSubtitle} numberOfLines={1}>
             {team.name} • {checkpoint.name}
           </Text>
@@ -221,9 +221,9 @@ export default function CrewVerificationWizard() {
                 currentStep === step && styles.activeStepLabel,
               ]}
             >
-              {step === 1 && 'Sahkan Fizikal'}
-              {step === 2 && 'Bukti Foto'}
-              {step === 3 && 'Jana QR'}
+              {step === 1 && 'Physical Verification'}
+              {step === 2 && 'Photo Proof'}
+              {step === 3 && 'Generate QR'}
             </Text>
           </View>
         ))}
@@ -232,17 +232,17 @@ export default function CrewVerificationWizard() {
       {/* Wizard Step Content */}
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {currentStep === 1 && (
-          <Card role="crew" borderAccent="top" title="Langkah 1: Pengesahan Fizikal">
+          <Card role="crew" borderAccent="top" title="Step 1: Physical Verification">
             <Text style={styles.instructionText}>
-              Sila pastikan ahli kumpulan berada di hadapan anda dan telah menyelesaikan tugasan pos kawalan:
+              Please ensure team members are physically present and have completed the checkpoint task:
             </Text>
 
             <View style={styles.taskCard}>
-              <Text style={styles.taskLabel}>Tugasan Semasa:</Text>
+              <Text style={styles.taskLabel}>Current Task:</Text>
               <Text style={styles.taskDescription}>{checkpoint.taskDescription}</Text>
               <View style={styles.pointsBadge}>
                 <Ionicons name="star" size={12} color="#D97706" />
-                <Text style={styles.pointsText}>+{checkpoint.scorePoints} Mata</Text>
+                <Text style={styles.pointsText}>+{checkpoint.scorePoints} Points</Text>
               </View>
             </View>
 
@@ -261,16 +261,16 @@ export default function CrewVerificationWizard() {
                 color={isPhysicallyVerified ? COLORS.crew.primary : COLORS.textMuted}
               />
               <Text style={styles.checkboxText}>
-                Saya sahkan pasukan ini telah menyelesaikan tugasan secara fizikal di hadapan saya.
+                I verify that this team has physically completed the task in front of me.
               </Text>
             </TouchableOpacity>
           </Card>
         )}
 
         {currentStep === 2 && (
-          <Card role="crew" borderAccent="top" title="Langkah 2: Tangkap Gambar Bukti">
+          <Card role="crew" borderAccent="top" title="Step 2: Capture Photo Proof">
             <Text style={styles.instructionText}>
-              Tangkap sekurang-kurangnya satu gambar bukti tugasan atau foto berkumpulan untuk audit penganjur.
+              Capture at least one photo proof of task completion or team photo for organizer audit.
             </Text>
 
             {!photoProof ? (
@@ -282,8 +282,8 @@ export default function CrewVerificationWizard() {
                 <View style={styles.cameraIconCircle}>
                   <Ionicons name="camera" size={32} color={COLORS.crew.primary} />
                 </View>
-                <Text style={styles.cameraButtonText}>Ambil Gambar Bukti</Text>
-                <Text style={styles.cameraButtonSubtext}>Tekan untuk merakam bukti lokasi</Text>
+                <Text style={styles.cameraButtonText}>Take Photo Proof</Text>
+                <Text style={styles.cameraButtonSubtext}>Tap to capture location proof</Text>
               </TouchableOpacity>
             ) : (
               <Animated.View
@@ -300,32 +300,32 @@ export default function CrewVerificationWizard() {
 
                 {!photoConfirmed ? (
                   <View style={styles.photoActionOverlay}>
-                    <Text style={styles.confirmPromptText}>Adakah foto ini jelas?</Text>
+                    <Text style={styles.confirmPromptText}>Is this photo clear?</Text>
                     <View style={styles.overlayButtonsRow}>
                       <TouchableOpacity
                         style={[styles.overlayBtn, styles.overlayBtnRetake]}
                         onPress={handleRetakePhoto}
                       >
                         <Ionicons name="close" size={16} color={COLORS.danger} />
-                        <Text style={styles.overlayBtnRetakeText}>Ambil Semula</Text>
+                        <Text style={styles.overlayBtnRetakeText}>Retake Photo</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.overlayBtn, styles.overlayBtnConfirm]}
                         onPress={handleConfirmPhoto}
                       >
                         <Ionicons name="checkmark" size={16} color={COLORS.textLight} />
-                        <Text style={styles.overlayBtnConfirmText}>Sahkan Foto</Text>
+                        <Text style={styles.overlayBtnConfirmText}>Confirm Photo</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 ) : (
                   <View style={styles.photoConfirmedOverlay}>
-                    <Badge label="FOTO DISAHKAN" state="success" />
+                    <Badge label="PHOTO CONFIRMED" state="success" />
                     <TouchableOpacity
                       style={styles.changePhotoTextButton}
                       onPress={handleRetakePhoto}
                     >
-                      <Text style={styles.changePhotoText}>Tukar Foto</Text>
+                      <Text style={styles.changePhotoText}>Change Photo</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -335,9 +335,9 @@ export default function CrewVerificationWizard() {
         )}
 
         {currentStep === 3 && (
-          <Card role="crew" borderAccent="top" title="Langkah 3: Pelepasan Kod QR">
+          <Card role="crew" borderAccent="top" title="Step 3: QR Code Release">
             <Text style={styles.instructionText}>
-              Jana kod QR pelepasan untuk diimbas oleh pasukan. Kod QR ini dinamik dan akan tamat tempoh dalam masa 30 saat untuk keselamatan.
+              Generate a release QR code for the team to scan. This dynamic QR code expires in 30 seconds for security.
             </Text>
 
             {!qrGenerated ? (
@@ -349,8 +349,8 @@ export default function CrewVerificationWizard() {
                 <View style={styles.qrIconCircle}>
                   <Ionicons name="qr-code-outline" size={36} color={COLORS.crew.primary} />
                 </View>
-                <Text style={styles.qrButtonText}>Jana QR Kod Pelepasan</Text>
-                <Text style={styles.qrButtonSubtext}>Kod tamat tempoh dalam 30 saat</Text>
+                <Text style={styles.qrButtonText}>Generate Release QR Code</Text>
+                <Text style={styles.qrButtonSubtext}>Code expires in 30 seconds</Text>
               </TouchableOpacity>
             ) : (
               <DynamicQRDisplay
@@ -367,7 +367,7 @@ export default function CrewVerificationWizard() {
       <View style={styles.footer}>
         {currentStep === 3 ? (
           <PrimaryButton
-            label="Selesai & Hantar (Finish)"
+            label="Finish & Submit"
             onPress={handleFinishWizard}
             role="crew"
             disabled={!qrGenerated}
@@ -376,7 +376,7 @@ export default function CrewVerificationWizard() {
           />
         ) : (
           <PrimaryButton
-            label="Seterusnya"
+            label="Next Step"
             onPress={handleNextStep}
             role="crew"
             disabled={
@@ -394,11 +394,11 @@ export default function CrewVerificationWizard() {
         visible={offlineModalVisible}
         variant="warning"
         icon="cloud-offline-outline"
-        title="Mod Offline Aktif 📡"
-        message="Imbasan berjaya disimpan secara tempatan di SQLite Queue. Data akan dihantar secara automatik sebaik sahaja rangkaian internet pulih."
+        title="Offline Mode Active 📡"
+        message="Scan saved locally to SQLite Queue. Data will sync automatically when network connectivity is restored."
         buttons={[
           {
-            text: 'SELESAI',
+            text: 'FINISH',
             style: 'default',
             onPress: () => {
               navigation.navigate('Dashboard', { completedTeamId: team.id });

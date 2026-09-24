@@ -167,14 +167,14 @@ export default function CelebrationModal({
 
             {/* Message Block */}
             <Animated.View style={[styles.textBlock, { opacity: contentOpacity }]}>
-              <Text style={styles.congratsTitle}>TAHNIAH!</Text>
+              <Text style={styles.congratsTitle}>CONGRATULATIONS!</Text>
               
               <View style={styles.pillContainer}>
-                <Text style={styles.pillText}>Semua Checkpoint Selesai</Text>
+                <Text style={styles.pillText}>All Checkpoints Completed</Text>
               </View>
 
               <Text style={styles.malayMessage}>
-                TAHNIAH, ANDA BOLEH TERUS KE GARISAN PENAMAT 🥳🥳🥳
+                CONGRATULATIONS! YOU MAY NOW PROCEED TO THE FINISH LINE 🥳🥳🥳
               </Text>
 
               <Text style={styles.englishMessage}>
@@ -192,7 +192,7 @@ export default function CelebrationModal({
                 onPress={onViewResults}
                 activeOpacity={0.9}
               >
-                <Text style={styles.actionButtonText}>Lihat Keputusan Penamat</Text>
+                <Text style={styles.actionButtonText}>View Finish Results</Text>
                 <Ionicons name="arrow-forward-outline" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </Animated.View>

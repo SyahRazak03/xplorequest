@@ -26,8 +26,8 @@ interface RealCameraQRScannerProps {
 
 export default function RealCameraQRScanner({
   visible,
-  title = 'Imbas Kod QR',
-  subtitle = 'Halakan kamera peranti pada kod QR',
+  title = 'Scan QR Code',
+  subtitle = 'Point your device camera at the QR code',
   onClose,
   onScanSuccess,
 }: RealCameraQRScannerProps) {
@@ -54,20 +54,20 @@ export default function RealCameraQRScanner({
         {!permission ? (
           <View style={styles.permissionContainer}>
             <ActivityIndicator size="large" color={COLORS.participant.primary} />
-            <Text style={styles.permissionText}>Memuatkan kebenaran kamera...</Text>
+            <Text style={styles.permissionText}>Loading camera permissions...</Text>
           </View>
         ) : !permission.granted ? (
           <SafeAreaView style={styles.permissionContainer}>
             <Ionicons name="camera-outline" size={64} color={COLORS.textMuted} />
-            <Text style={styles.permissionTitle}>Akses Kamera Diperlukan</Text>
+            <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionSub}>
-              Aplikasi memerlukan kebenaran kamera untuk mengimbas kod QR pelepasan mula.
+              Camera access is required to scan QR codes for checkpoint verification.
             </Text>
             <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-              <Text style={styles.permissionButtonText}>Benarkan Kamera</Text>
+              <Text style={styles.permissionButtonText}>Grant Camera Permission</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelLink} onPress={onClose}>
-              <Text style={styles.cancelLinkText}>Batal</Text>
+              <Text style={styles.cancelLinkText}>Cancel</Text>
             </TouchableOpacity>
           </SafeAreaView>
         ) : (
@@ -102,7 +102,7 @@ export default function RealCameraQRScanner({
               <View style={styles.headerBar}>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.8}>
                   <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-                  <Text style={styles.closeText}>Kembali</Text>
+                  <Text style={styles.closeText}>Back</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{title}</Text>
                 <View style={{ width: 60 }} />

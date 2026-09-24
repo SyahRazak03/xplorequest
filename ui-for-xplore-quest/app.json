@@ -19,7 +19,7 @@
         "googleMapsApiKey": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps"
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "XploreQuest memerlukan akses lokasi anda untuk mengesan ketibaan di pos kawalan dan menyemak zon acara."
+        "NSLocationWhenInUseUsageDescription": "XploreQuest requires location access to detect checkpoint arrivals and verify event geofence zones."
       }
     },
     "android": {

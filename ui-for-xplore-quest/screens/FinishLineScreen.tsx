@@ -114,8 +114,8 @@ export default function FinishLineScreen() {
       );
       if (matchedTeamInPayload && currentTeam?.id && matchedTeamInPayload.id !== currentTeam.id) {
         Alert.alert(
-          'Kod QR Ditolak — Dikhaskan Untuk Pasukan Lain!',
-          `Kod QR yang diimbas telah dijana khas untuk ${matchedTeamInPayload.name}.\n\nPasukan anda ialah ${currentTeam.name}. Anda tidak boleh mengimbas Kod QR milik pasukan lain.`
+          'QR Code Rejected — Assigned to Another Team!',
+          `The scanned QR code was generated specifically for ${matchedTeamInPayload.name}.\n\nYour team is ${currentTeam.name}. You cannot scan QR codes belonging to other teams.`
         );
         return;
       }
@@ -152,9 +152,9 @@ export default function FinishLineScreen() {
 
   // Get status of a checkpoint for visualization list
   const getCpStatusLabel = (cpId: string) => {
-    if (completedCps.includes(cpId)) return 'SELESAI';
-    if (skippedCps.includes(cpId)) return 'TERTUNDA';
-    return 'TERKUNCI';
+    if (completedCps.includes(cpId)) return 'COMPLETED';
+    if (skippedCps.includes(cpId)) return 'PENDING';
+    return 'LOCKED';
   };
 
   const getCpStatusColor = (cpId: string) => {
@@ -168,11 +168,11 @@ export default function FinishLineScreen() {
 
   const finishCp: Checkpoint = appCheckpoints.find(cp => cp.isFinish) || {
     id: 'CP-TAMAT',
-    name: 'Garisan Penamat',
+    name: 'Finish Line',
     latitude: defaultEventLat,
     longitude: defaultEventLng,
-    clueText: 'Garisan Penamat',
-    taskDescription: 'Daftar Masuk Garisan Penamat',
+    clueText: 'Finish Line',
+    taskDescription: 'Finish Line Check-In',
     scorePoints: (activeEvent as any)?.finishPoints || 200,
     statusPerTeam: {},
     isFinish: true,
@@ -189,7 +189,7 @@ export default function FinishLineScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Garisan Penamat</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Finish Line</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -205,20 +205,20 @@ export default function FinishLineScreen() {
 
         {/* CP Info Block */}
         <View style={styles.infoCard}>
-          <Text style={[styles.cpCode, { color: theme.colors.accent }]}>POS CP-AKHIR</Text>
+          <Text style={[styles.cpCode, { color: theme.colors.accent }]}>FINAL CP POS</Text>
           <Text style={[styles.cpTitle, { color: theme.colors.text }]}>{finishCp.name}</Text>
           
           <View style={styles.divider} />
 
           <View style={styles.detailItem}>
             <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
-            <Text style={styles.detailText}>{activeEvent?.locationName || 'Lokasi Acara'}</Text>
+            <Text style={styles.detailText}>{activeEvent?.locationName || 'Event Location'}</Text>
           </View>
           
           <View style={styles.detailItem}>
             <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
             <Text style={styles.detailText}>
-              Masa Terkumpul: <Text style={{ fontWeight: '700' }}>{formatTime(localTimer)}</Text>
+              Accumulated Time: <Text style={{ fontWeight: '700' }}>{formatTime(localTimer)}</Text>
             </Text>
           </View>
         </View>
@@ -232,18 +232,18 @@ export default function FinishLineScreen() {
               activeOpacity={0.8}
             >
               <Ionicons name="qr-code-outline" size={24} color="#FFFFFF" />
-              <Text style={styles.scanBtnText}>Daftar Masuk Penamat</Text>
+              <Text style={styles.scanBtnText}>Finish Line Check-In</Text>
             </TouchableOpacity>
           </Animated.View>
           <Text style={styles.actionHint}>
-            Sila imbas kod QR Marshal Utama di astaka penamat untuk menamatkan perlumbaan secara rasmi.
+            Please scan the Main Marshal QR code at the finish pavilion to officially finish the race.
           </Text>
         </View>
 
         {/* Checkpoint checklist overview card */}
-        <Card role="participant" title="Status Senarai Semak Pasukan" style={styles.checklistCard}>
+        <Card role="participant" title="Team Checklist Status" style={styles.checklistCard}>
           <Text style={styles.checklistSubtitle}>
-            Semua checkpoint terdahulu mestilah bertanda hijau (Selesai) sebelum pendaftaran masuk dibenarkan.
+            All previous checkpoints must be marked green (Completed) before finish check-in is allowed.
           </Text>
           <View style={styles.checklistGrid}>
             {appCheckpoints.filter(cp => !cp.isFinish).map((cp, idx) => {
@@ -262,9 +262,9 @@ export default function FinishLineScreen() {
                       {status}
                     </Text>
                   </View>
-                  {status === 'SELESAI' ? (
+                  {status === 'COMPLETED' ? (
                     <Ionicons name="checkmark-circle" size={22} color={COLORS.success} />
-                  ) : status === 'TERTUNDA' ? (
+                  ) : status === 'PENDING' ? (
                     <Ionicons name="alert-circle" size={22} color={COLORS.pending} />
                   ) : (
                     <Ionicons name="lock-closed" size={20} color={COLORS.textMuted} />
@@ -286,8 +286,8 @@ export default function FinishLineScreen() {
       {/* Real Camera QR Scanner Modal */}
       <RealCameraQRScanner
         visible={scannerVisible}
-        title={`Imbas Kod QR ${finishCp.name}`}
-        subtitle="Halakan kamera pada Kod QR Garisan Penamat"
+        title={`Scan QR Code ${finishCp.name}`}
+        subtitle="Point camera at Finish Line QR Code"
         onClose={() => setScannerVisible(false)}
         onScanSuccess={(scannedData: string) => {
           handleScanSuccess(scannedData);

@@ -163,7 +163,7 @@ async function processSingleSyncItem(
           if (!item.checkpointId) {
             throw new AppError(
               ErrorCode.BAD_REQUEST,
-              'checkpointId diperlukan untuk melangkau pos kawalan.'
+              'checkpointId is required to skip checkpoint.'
             );
           }
           const skipRes = await processSkipCore(
@@ -196,7 +196,7 @@ async function processSingleSyncItem(
           if (!item.checkpointId) {
             throw new AppError(
               ErrorCode.BAD_REQUEST,
-              'checkpointId diperlukan untuk pelepasan manual.'
+              'checkpointId is required for manual override.'
             );
           }
           const overrideRes = await processOverrideCore(
@@ -235,7 +235,7 @@ async function processSingleSyncItem(
         default:
           throw new AppError(
             ErrorCode.BAD_REQUEST,
-            `Jenis operasi sync '${(item as SyncQueueItemInput).operation}' tidak disokong.`
+            `Sync operation type '${(item as SyncQueueItemInput).operation}' is not supported.`
           );
       }
 
@@ -284,7 +284,7 @@ async function processSingleSyncItem(
         ? { code: err.code, message: err.message }
         : {
             code: ErrorCode.BAD_REQUEST,
-            message: err instanceof Error ? err.message : 'Gagal memproses item sync.',
+            message: err instanceof Error ? err.message : 'Failed to process sync item.',
           };
 
     // Save failed attempt to idempotency collection so retries can report rejection reason

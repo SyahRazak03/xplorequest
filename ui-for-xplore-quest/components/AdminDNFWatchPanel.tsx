@@ -22,24 +22,24 @@ export const AdminDNFWatchPanel: React.FC<AdminDNFWatchPanelProps> = ({
   onFastForward,
 }) => {
   return (
-    <Card role="admin" borderAccent="top" title="Pemantauan DNF Automatik (ADM-06)">
+    <Card role="admin" borderAccent="top" title="Automated DNF Monitoring">
       <Text style={styles.description}>
-        Sistem memantau had masa maksimum peserta ({maxRaceTimeLimit} Minit). Pasukan yang melepasi had masa akan ditandakan DNF secara automatik.
+        The system monitors the maximum race time limit for participants ({maxRaceTimeLimit} Mins). Teams exceeding the time limit will automatically be marked DNF.
       </Text>
 
       {/* Debug Controls */}
       <View style={styles.debugRow}>
         <TouchableOpacity style={styles.fastForwardBtn} activeOpacity={0.8} onPress={onFastForward}>
           <Ionicons name="play-forward-outline" size={16} color={COLORS.textLight} />
-          <Text style={styles.fastForwardBtnText}>⏩ Tambah Masa Ujian (+15 Min)</Text>
+          <Text style={styles.fastForwardBtnText}>⏩ Fast Forward Test Time (+15 Min)</Text>
         </TouchableOpacity>
       </View>
 
       {teams.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-circle-outline" size={32} color={COLORS.success} />
-          <Text style={styles.emptyText}>Tiada Kumpulan Aktif Sedang Dipantau</Text>
-          <Text style={styles.emptySubtext}>Semua pasukan telah tamat atau disingkirkan.</Text>
+          <Text style={styles.emptyText}>No Active Teams Being Monitored</Text>
+          <Text style={styles.emptySubtext}>All teams have finished or been eliminated.</Text>
         </View>
       ) : (
         <ScrollView style={styles.scrollWrapper} nestedScrollEnabled={true}>
@@ -55,7 +55,7 @@ export const AdminDNFWatchPanel: React.FC<AdminDNFWatchPanelProps> = ({
                     <Text style={styles.teamName} numberOfLines={1}>
                       {team.teamName}
                     </Text>
-                    <Text style={styles.elapsedText}>Masa Berjalan: {team.elapsedMinutes} Min</Text>
+                    <Text style={styles.elapsedText}>Elapsed Time: {team.elapsedMinutes} Min</Text>
                   </View>
 
                   <View
@@ -80,7 +80,7 @@ export const AdminDNFWatchPanel: React.FC<AdminDNFWatchPanelProps> = ({
                         (isCritical || isUrgent) && styles.whiteText,
                       ]}
                     >
-                      {remaining > 0 ? `${remaining}m baki` : 'Selesai Tempoh'}
+                      {remaining > 0 ? `${remaining}m left` : 'Time Expired'}
                     </Text>
                   </View>
                 </View>
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     ...SHADOWS.sm,
   },
-
   fastForwardBtnText: {
     color: COLORS.textLight,
     fontSize: 12,
@@ -164,10 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   urgentBadge: {
-    backgroundColor: '#F59E0B', // Amber
+    backgroundColor: '#F59E0B',
   },
   criticalBadge: {
-    backgroundColor: COLORS.danger, // Red
+    backgroundColor: COLORS.danger,
   },
   remainingText: {
     fontSize: 11,

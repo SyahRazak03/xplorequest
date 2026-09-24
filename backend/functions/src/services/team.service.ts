@@ -52,7 +52,7 @@ export async function registerTeamService(
     // Generic error to prevent enumeration
     throw new AppError(
       ErrorCode.NOT_FOUND,
-      'Acara tidak ditemui atau kod penyertaan tidak sah.'
+      'Event not found or invalid join code.'
     );
   }
 
@@ -62,7 +62,7 @@ export async function registerTeamService(
   if (event.isFinished) {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Pendaftaran ditutup kerana acara ini telah tamat.'
+      'Registration is closed because this event has ended.'
     );
   }
 
@@ -71,7 +71,7 @@ export async function registerTeamService(
   if (input.memberCount > maxTeamSize) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      `Jumlah ahli (${input.memberCount}) melebihi had maksimum acara (${maxTeamSize} orang).`
+      `Member count (${input.memberCount}) exceeds event maximum limit (${maxTeamSize} members).`
     );
   }
 
@@ -80,7 +80,7 @@ export async function registerTeamService(
   if (existingTeam) {
     throw new AppError(
       ErrorCode.CONFLICT,
-      `Nama kumpulan '${input.name}' sudah didaftarkan untuk acara ini. Sila pilih nama lain.`
+      `Team name '${input.name}' is already registered for this event. Please choose another name.`
     );
   }
 
@@ -123,7 +123,7 @@ export async function listTeamsService(
 ): Promise<TeamDocument[] | PublicTeamView[]> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid && (callerRole === 'admin' || callerRole === 'crew')) {
@@ -162,7 +162,7 @@ export async function getTeamService(
 
   const team = await findTeamById(eventId, teamId);
   if (!team) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
   }
 
   if (
@@ -172,7 +172,7 @@ export async function getTeamService(
   ) {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Akses tidak dibenarkan untuk melihat maklumat kumpulan ini.'
+      'Access denied to view this team information.'
     );
   }
 
@@ -192,14 +192,14 @@ export async function updateTeamService(
 ): Promise<TeamDocument> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const team = await findTeamById(eventId, teamId);
   if (!team) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
   }
 
   if (input.memberCount !== undefined) {
@@ -207,7 +207,7 @@ export async function updateTeamService(
     if (input.memberCount > maxTeamSize) {
       throw new AppError(
         ErrorCode.UNPROCESSABLE_ENTITY,
-        `Jumlah ahli (${input.memberCount}) melebihi had maksimum acara (${maxTeamSize} orang).`
+        `Member count (${input.memberCount}) exceeds event maximum limit (${maxTeamSize} members).`
       );
     }
   }
@@ -217,7 +217,7 @@ export async function updateTeamService(
     if (existingName && existingName.id !== teamId) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        `Nama kumpulan '${input.name}' sudah digunakan untuk acara ini.`
+        `Team name '${input.name}' is already in use for this event.`
       );
     }
   }
@@ -244,20 +244,20 @@ export async function setTeamStatusService(
 ): Promise<TeamDocument> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const team = await findTeamById(eventId, teamId);
   if (!team) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
   }
 
   if (event.isStarted && team.status !== status) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Status kumpulan tidak boleh diubah selepas lumba bermula.'
+      'Team status cannot be modified after race has started.'
     );
   }
 
@@ -265,7 +265,7 @@ export async function setTeamStatusService(
     if (team.leaderUid) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        'Kumpulan ini telah mempunyai sesi aktif / telah log masuk. Tidak boleh ditukar kembali kepada status tertunda.'
+        'This team already has an active session / logged in. Cannot revert back to pending status.'
       );
     }
   }
@@ -285,7 +285,7 @@ export async function deleteTeamService(
 ): Promise<void> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   if (callerUid) {
@@ -294,13 +294,13 @@ export async function deleteTeamService(
 
   const team = await findTeamById(eventId, teamId);
   if (!team) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
   }
 
   if (event.isStarted) {
     throw new AppError(
       ErrorCode.RACE_ALREADY_STARTED,
-      'Kumpulan tidak boleh dipadam selepas lumba bermula.'
+      'Teams cannot be deleted after race has started.'
     );
   }
 

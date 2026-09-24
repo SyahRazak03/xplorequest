@@ -35,7 +35,7 @@ import { AppError, ErrorCode } from '../utils/errors';
 // ── Generic auth error — never leak whether identifier exists ────────────────
 const AUTH_ERROR = new AppError(
   ErrorCode.UNAUTHORIZED,
-  'ID atau kelayakan tidak sah.'
+  'Invalid credentials or ID.'
 );
 
 // ── Return shapes ─────────────────────────────────────────────────────────────
@@ -103,9 +103,9 @@ export async function adminRegister(
     });
   } catch (err: any) {
     if (err?.code === 'auth/email-already-exists') {
-      throw new AppError(ErrorCode.BAD_REQUEST, 'E-mel ini telah pun didaftarkan. Sila log masuk.');
+      throw new AppError(ErrorCode.BAD_REQUEST, 'This email is already registered. Please log in.');
     }
-    throw new AppError(ErrorCode.BAD_REQUEST, err?.message || 'Gagal mendaftar akaun admin.');
+    throw new AppError(ErrorCode.BAD_REQUEST, err?.message || 'Failed to register admin account.');
   }
 
   // Set custom claims for admin role
@@ -280,7 +280,7 @@ export async function crewLogin(
     if (!marshalId || !marshalId.trim()) {
       throw new AppError(
         ErrorCode.UNPROCESSABLE_ENTITY,
-        'ID Marshal diperlukan untuk Pos Kehadiran.'
+        'Marshal ID is required for Attendance Station.'
       );
     }
 
@@ -304,7 +304,7 @@ export async function crewLogin(
   } else {
     // Shared-PIN flow for standard checkpoints: generate a distinct UID per device
     uid = `crew_shared_${crypto.randomBytes(8).toString('hex')}`;
-    name = 'Krew Pos Kawalan';
+    name = 'Checkpoint Crew';
   }
 
   // 4. Set custom claims and mint token
@@ -374,7 +374,7 @@ export async function participantJoin(
   const eventData = eventDoc.data();
 
   if (eventData['isFinished']) {
-    throw new AppError(ErrorCode.FORBIDDEN, 'Acara ini telah tamat.');
+    throw new AppError(ErrorCode.FORBIDDEN, 'This event has ended.');
   }
 
   // 2. Find team by name (case-insensitive) within this event
@@ -478,7 +478,7 @@ export async function getMe(uid: string): Promise<MeResult> {
   const snap = await db.collection('users').doc(uid).get();
 
   if (!snap.exists) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Profil pengguna tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'User profile not found.');
   }
 
   const data = snap.data() as UserDocument;

@@ -101,7 +101,7 @@ export default function AdminPreRegistrationsScreen() {
         eventCode: code,
       });
     } catch (err: any) {
-      Alert.alert('Ralat', err?.message || 'Gagal meluluskan pendaftaran.');
+      Alert.alert('Error', err?.message || 'Failed to approve registration.');
     } finally {
       setProcessingId(null);
     }
@@ -110,20 +110,20 @@ export default function AdminPreRegistrationsScreen() {
   const handleReject = (item: PreRegistrationItem) => {
     if (!activeEvent) return;
     Alert.alert(
-      'Tolak Pendaftaran',
-      `Adakah anda pasti mahu menolak pendaftaran kumpulan "${item.teamName}"?`,
+      'Reject Registration',
+      `Are you sure you want to reject the registration for team "${item.teamName}"?`,
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Tolak',
+          text: 'Reject',
           style: 'destructive',
           onPress: async () => {
             setProcessingId(item.id);
             try {
-              await rejectPreRegistration(activeEvent.id, item.id, 'Ditolak oleh penganjur selepas semakan resit.', user?.idToken);
-              Alert.alert('Dikemaskini', `Pendaftaran ${item.teamName} telah ditolak.`);
+              await rejectPreRegistration(activeEvent.id, item.id, 'Rejected by organizer after receipt review.', user?.idToken);
+              Alert.alert('Updated', `Registration for ${item.teamName} has been rejected.`);
             } catch (err: any) {
-              Alert.alert('Ralat', err?.message || 'Gagal menolak pendaftaran.');
+              Alert.alert('Error', err?.message || 'Failed to reject registration.');
             } finally {
               setProcessingId(null);
             }
@@ -139,7 +139,7 @@ export default function AdminPreRegistrationsScreen() {
       cleanPhone = '60' + cleanPhone.slice(1);
     }
 
-    const message = `Tahniah! Pendaftaran kumpulan *${teamName}* untuk acara *${activeEvent?.name || 'XploreQuest'}* telah DILULUSKAN! 🎉\n\n📌 *Kod Acara (Event Code)*: *${eventCode}*\n📌 *Nama Kumpulan*: *${teamName}*\n\nSila muat turun aplikasi XploreQuest, pilih peranan *Peserta*, dan masukkan Kod Acara serta Nama Kumpulan di atas untuk menyertai acara.`;
+    const message = `Congratulations! Registration for team *${teamName}* for event *${activeEvent?.name || 'XploreQuest'}* has been APPROVED! 🎉\n\n📌 *Event Code*: *${eventCode}*\n📌 *Team Name*: *${teamName}*\n\nPlease download the XploreQuest app, select the *Participant* role, and enter the Event Code and Team Name above to join the event.`;
 
     const url = `whatsapp://send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
     Linking.canOpenURL(url).then((supported) => {
@@ -154,7 +154,7 @@ export default function AdminPreRegistrationsScreen() {
   if (!activeEvent) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Tiada acara dipilih.</Text>
+        <Text style={styles.errorText}>No event selected.</Text>
       </SafeAreaView>
     );
   }
@@ -169,7 +169,7 @@ export default function AdminPreRegistrationsScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Kelulusan Pre-Pendaftaran Web</Text>
+          <Text style={styles.headerTitle}>Web Pre-Registration Approval</Text>
           <Text style={styles.headerSubtitle}>{activeEvent.name}</Text>
         </View>
         <OfflineStatusChip />
@@ -183,7 +183,7 @@ export default function AdminPreRegistrationsScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
-            Belum Diluluskan ({pendingCount})
+            Pending ({pendingCount})
           </Text>
         </TouchableOpacity>
 
@@ -193,7 +193,7 @@ export default function AdminPreRegistrationsScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, activeTab === 'approved' && styles.activeTabText]}>
-            Diluluskan ({approvedCount})
+            Approved ({approvedCount})
           </Text>
         </TouchableOpacity>
 
@@ -203,7 +203,7 @@ export default function AdminPreRegistrationsScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, activeTab === 'rejected' && styles.activeTabText]}>
-            Ditolak ({rejectedCount})
+            Rejected ({rejectedCount})
           </Text>
         </TouchableOpacity>
       </View>
@@ -212,15 +212,15 @@ export default function AdminPreRegistrationsScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.admin.primary} />
-            <Text style={styles.loadingText}>Memuatkan pendaftaran web...</Text>
+            <Text style={styles.loadingText}>Loading web pre-registrations...</Text>
           </View>
         ) : filteredItems.length === 0 ? (
           <EmptyState
-            title={`Tiada Pendaftaran ${activeTab === 'pending' ? 'Menunggu' : activeTab === 'approved' ? 'Diluluskan' : 'Ditolak'}`}
+            title={`No ${activeTab === 'pending' ? 'Pending' : activeTab === 'approved' ? 'Approved' : 'Rejected'} Registrations`}
             description={
               activeTab === 'pending'
-                ? 'Belum ada pendaftaran baharu daripada borang web.'
-                : 'Tiada rekod ditemui dalam kategori ini.'
+                ? 'No new registrations from the web form yet.'
+                : 'No records found in this category.'
             }
             icon="document-text-outline"
           />
@@ -230,15 +230,15 @@ export default function AdminPreRegistrationsScreen() {
               <View style={styles.cardHeaderRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.teamNameText}>{item.teamName}</Text>
-                  <Text style={styles.leaderText}>Ketua: {item.leaderName || '—'}</Text>
+                  <Text style={styles.leaderText}>Leader: {item.leaderName || '—'}</Text>
                 </View>
                 <Badge
                   label={
                     item.status === 'approved'
-                      ? 'Diluluskan'
+                      ? 'Approved'
                       : item.status === 'rejected'
-                      ? 'Ditolak'
-                      : 'Menunggu'
+                      ? 'Rejected'
+                      : 'Pending'
                   }
                   state={
                     item.status === 'approved'
@@ -255,19 +255,19 @@ export default function AdminPreRegistrationsScreen() {
               {/* Meta details */}
               <View style={styles.metaRow}>
                 <Ionicons name="call-outline" size={16} color={COLORS.admin.primary} />
-                <Text style={styles.metaText}>Telefon: {item.leaderPhone || '—'}</Text>
+                <Text style={styles.metaText}>Phone: {item.leaderPhone || '—'}</Text>
               </View>
 
               <View style={styles.metaRow}>
                 <Ionicons name="people-outline" size={16} color={COLORS.textMuted} />
-                <Text style={styles.metaText}>Jumlah Ahli: {item.memberCount} orang</Text>
+                <Text style={styles.metaText}>Member Count: {item.memberCount} members</Text>
               </View>
 
               {item.memberNames && item.memberNames.length > 0 && (
                 <View style={styles.metaRow}>
                   <Ionicons name="person-outline" size={16} color={COLORS.textMuted} />
                   <Text style={[styles.metaText, { flex: 1 }]}>
-                    Ahli: {item.memberNames.join(', ')}
+                    Members: {item.memberNames.join(', ')}
                   </Text>
                 </View>
               )}
@@ -275,7 +275,7 @@ export default function AdminPreRegistrationsScreen() {
               <View style={styles.metaRow}>
                 <Ionicons name="time-outline" size={16} color={COLORS.textMuted} />
                 <Text style={styles.metaText}>
-                  Tarikh Hantar: {new Date(item.submittedAt).toLocaleString('ms-MY')}
+                  Submitted At: {new Date(item.submittedAt).toLocaleString('en-US')}
                 </Text>
               </View>
 
@@ -287,12 +287,12 @@ export default function AdminPreRegistrationsScreen() {
                   activeOpacity={0.8}
                 >
                   <Ionicons name="image-outline" size={18} color={COLORS.admin.primary} />
-                  <Text style={styles.receiptButtonText}>Lihat Resit Pembayaran</Text>
+                  <Text style={styles.receiptButtonText}>View Payment Receipt</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.noReceiptBox}>
                   <Ionicons name="alert-circle-outline" size={16} color={COLORS.textMuted} />
-                  <Text style={styles.noReceiptText}>Tiada muat naik resit pembayaran</Text>
+                  <Text style={styles.noReceiptText}>No payment receipt uploaded</Text>
                 </View>
               )}
 
@@ -306,7 +306,7 @@ export default function AdminPreRegistrationsScreen() {
                     activeOpacity={0.8}
                   >
                     <Ionicons name="close-circle-outline" size={18} color={COLORS.danger} />
-                    <Text style={styles.rejectBtnText}>Tolak</Text>
+                    <Text style={styles.rejectBtnText}>Reject</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -320,7 +320,7 @@ export default function AdminPreRegistrationsScreen() {
                     ) : (
                       <>
                         <Ionicons name="checkmark-circle-outline" size={18} color={COLORS.textLight} />
-                        <Text style={styles.approveBtnText}>Luluskan & Cipta Pasukan</Text>
+                        <Text style={styles.approveBtnText}>Approve & Create Team</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -340,7 +340,7 @@ export default function AdminPreRegistrationsScreen() {
                   activeOpacity={0.8}
                 >
                   <Ionicons name="logo-whatsapp" size={18} color={COLORS.textLight} />
-                  <Text style={styles.whatsappShareBtnText}>Hantar Kod Acara via WhatsApp</Text>
+                  <Text style={styles.whatsappShareBtnText}>Send Event Code via WhatsApp</Text>
                 </TouchableOpacity>
               )}
             </Card>
@@ -353,7 +353,7 @@ export default function AdminPreRegistrationsScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.receiptModalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Resit Pembayaran</Text>
+              <Text style={styles.modalTitle}>Payment Receipt</Text>
               <TouchableOpacity onPress={() => setSelectedReceiptUrl(null)}>
                 <Ionicons name="close" size={24} color={COLORS.text} />
               </TouchableOpacity>
@@ -364,13 +364,13 @@ export default function AdminPreRegistrationsScreen() {
                 {receiptImageLoading && (
                   <View style={styles.receiptLoadingBox}>
                     <ActivityIndicator size="large" color={COLORS.admin.primary} />
-                    <Text style={styles.receiptLoadingText}>Memuatkan resit...</Text>
+                    <Text style={styles.receiptLoadingText}>Loading receipt...</Text>
                   </View>
                 )}
                 {receiptImageError ? (
                   <View style={styles.receiptErrorBox}>
                     <Ionicons name="alert-circle-outline" size={40} color={COLORS.danger} />
-                    <Text style={styles.receiptErrorText}>Gagal memuatkan gambar resit dalam aplikasi.</Text>
+                    <Text style={styles.receiptErrorText}>Failed to load receipt image.</Text>
                   </View>
                 ) : (
                   <Image
@@ -391,14 +391,14 @@ export default function AdminPreRegistrationsScreen() {
                   onPress={() => {
                     if (selectedReceiptUrl) {
                       Linking.openURL(selectedReceiptUrl).catch((err) =>
-                        Alert.alert('Ralat', 'Gagal membuka pautan resit: ' + err.message)
+                        Alert.alert('Error', 'Failed to open receipt link: ' + err.message)
                       );
                     }
                   }}
                   activeOpacity={0.8}
                 >
                   <Ionicons name="open-outline" size={18} color={COLORS.admin.primary} />
-                  <Text style={styles.openBrowserButtonText}>Buka dalam Pelayar Web</Text>
+                  <Text style={styles.openBrowserButtonText}>Open in Web Browser</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -410,12 +410,12 @@ export default function AdminPreRegistrationsScreen() {
       {approvedSuccessData && (
         <CustomModalDialog
           visible={!!approvedSuccessData}
-          title="Pendaftaran Diluluskan! 🎉"
-          message={`Kumpulan "${approvedSuccessData.teamName}" telah berjaya didaftarkan ke dalam senarai pasukan.\n\nSila hantar Kod Acara kepada Ketua Pasukan (${approvedSuccessData.leaderName}).`}
+          title="Registration Approved! 🎉"
+          message={`Team "${approvedSuccessData.teamName}" has been successfully registered to the team list.\n\nPlease send the Event Code to Team Leader (${approvedSuccessData.leaderName}).`}
           variant="success"
           buttons={[
             {
-              text: 'Hantar via WhatsApp',
+              text: 'Send via WhatsApp',
               onPress: () => {
                 openWhatsApp(
                   approvedSuccessData.phone,
@@ -426,7 +426,7 @@ export default function AdminPreRegistrationsScreen() {
               },
             },
             {
-              text: 'Tutup',
+              text: 'Close',
               style: 'cancel',
               onPress: () => setApprovedSuccessData(null),
             },

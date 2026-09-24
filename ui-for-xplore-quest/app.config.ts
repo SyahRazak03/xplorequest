@@ -33,7 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
-          'XploreQuest memerlukan akses lokasi anda untuk mengesan ketibaan di pos kawalan dan menyemak zon acara.',
+          'XploreQuest requires location access to detect checkpoint arrivals and verify event geofence zones.',
       },
     },
     android: {
@@ -71,7 +71,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-location',
         {
           locationWhenInUsePermission:
-            'XploreQuest memerlukan akses lokasi anda untuk mengesan ketibaan di pos kawalan.',
+            'XploreQuest requires location access to detect checkpoint arrivals.',
         },
       ],
     ],

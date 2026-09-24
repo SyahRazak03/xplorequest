@@ -53,7 +53,7 @@ export default function CrewSelectCheckpointScreen() {
 
   const currentEvent = appEvents.find((e) => e.id === selectedEventId) || appEvents[0] || {
     id: selectedEventId,
-    name: 'Acara XploreQuest',
+    name: 'XploreQuest Event',
     locationName: '',
     date: '',
   };
@@ -90,12 +90,12 @@ export default function CrewSelectCheckpointScreen() {
 
   const handleEnterCrewView = async () => {
     if (isAttendanceStation && !marshalId.trim()) {
-      Alert.alert('Ralat', 'Pos Kehadiran memerlukan ID Marshal yang sah.');
+      Alert.alert('Error', 'Attendance Station requires a valid Marshal ID.');
       return;
     }
 
     if (!pinCode.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan PIN Krew.');
+      Alert.alert('Error', 'Please enter Crew PIN.');
       return;
     }
 
@@ -119,8 +119,8 @@ export default function CrewSelectCheckpointScreen() {
       });
       navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Log masuk gagal. Sila periksa PIN/Marshal ID.';
-      Alert.alert('Log Masuk Gagal', msg);
+      const msg = err instanceof Error ? err.message : 'Login failed. Please verify PIN/Marshal ID.';
+      Alert.alert('Login Failed', msg);
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export default function CrewSelectCheckpointScreen() {
         >
           {/* Back Button */}
           <SecondaryButton
-            label="Kembali"
+            label="Back"
             onPress={handleBack}
             icon={<Ionicons name="arrow-back-outline" size={18} color={COLORS.crew.primary} />}
             role="crew"
@@ -164,14 +164,14 @@ export default function CrewSelectCheckpointScreen() {
             <View style={styles.iconContainer}>
               <Ionicons name="qr-code" size={32} color={COLORS.crew.primary} />
             </View>
-            <Text style={styles.title}>Pos Kawalan Krew</Text>
+            <Text style={styles.title}>Crew Checkpoint Station</Text>
             <Text style={styles.subtitle}>
-              Sila pilih Acara Penganjur dan Pos Kawalan tugas anda sebelum mengesahkan PIN Krew.
+              Please select your Organizer Event and Checkpoint duty before verifying your Crew PIN.
             </Text>
           </View>
 
           {/* STEP 1: Event Selector */}
-          <Text style={styles.sectionTitle}>1. Pilih Acara Penganjur (Event)</Text>
+          <Text style={styles.sectionTitle}>1. Select Organizer Event</Text>
           <View style={styles.eventList}>
             {appEvents.map((evt) => {
               const isSelected = evt.id === selectedEventId;
@@ -216,7 +216,7 @@ export default function CrewSelectCheckpointScreen() {
 
           {/* STEP 2: Checkpoint Selector */}
           <Text style={styles.sectionTitle}>
-            2. Pilih Pos Kawalan Tugas ({currentEvent.name})
+            2. Select Checkpoint Station ({currentEvent.name})
           </Text>
 
           <View style={styles.checkpointList}>
@@ -254,15 +254,15 @@ export default function CrewSelectCheckpointScreen() {
                       </View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                         {cp.isAttendanceStation && (
-                          <Badge label="Stesen Kehadiran" state="warning" />
+                          <Badge label="Attendance Station" state="warning" />
                         )}
                         {cp.isStart && (
-                          <Badge label="MULA" state="success" />
+                          <Badge label="START" state="success" />
                         )}
                         {cp.isFinish && (
-                          <Badge label="TAMAT" state="danger" />
+                          <Badge label="FINISH" state="danger" />
                         )}
-                        <Text style={styles.checkpointPoints}>{cp.scorePoints} Mata Cabaran</Text>
+                        <Text style={styles.checkpointPoints}>{cp.scorePoints} Challenge Points</Text>
                       </View>
                     </View>
                   </View>
@@ -275,20 +275,20 @@ export default function CrewSelectCheckpointScreen() {
           </View>
 
           {/* STEP 3: Credentials Validation */}
-          <Text style={styles.sectionTitle}>3. Pengesahan Krew</Text>
+          <Text style={styles.sectionTitle}>3. Crew Verification</Text>
           <Card style={styles.formCard} role="crew">
             {isAttendanceStation && (
               <View style={styles.attendanceBanner}>
                 <Ionicons name="shield-checkmark" size={20} color={COLORS.warning} />
                 <Text style={styles.attendanceBannerText}>
-                  Stesen Kehadiran: Memerlukan ID Marshal berdaftar dan PIN Keselamatan.
+                  Attendance Station: Requires registered Marshal ID and Security PIN.
                 </Text>
               </View>
             )}
 
             {isAttendanceStation && (
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>ID Krew Marshal</Text>
+                <Text style={styles.inputLabel}>Marshal Crew ID</Text>
                 <View
                   style={[
                     styles.inputWrapper,
@@ -303,7 +303,7 @@ export default function CrewSelectCheckpointScreen() {
                   />
                   <TextInput
                     style={styles.input}
-                    placeholder="Contoh: USR-CREW-002"
+                    placeholder="e.g. USR-CREW-002"
                     placeholderTextColor={COLORS.textMuted}
                     value={marshalId}
                     onChangeText={setMarshalId}
@@ -316,7 +316,7 @@ export default function CrewSelectCheckpointScreen() {
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>PIN Keselamatan Krew</Text>
+              <Text style={styles.inputLabel}>Crew Security PIN</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -331,7 +331,7 @@ export default function CrewSelectCheckpointScreen() {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="PIN Keselamatan (4 digit)"
+                  placeholder="Security PIN (4 digits)"
                   placeholderTextColor={COLORS.textMuted}
                   value={pinCode}
                   onChangeText={setPinCode}
@@ -346,7 +346,7 @@ export default function CrewSelectCheckpointScreen() {
           </Card>
 
           <PrimaryButton
-            label={loading ? 'Mengesahkan...' : 'Masuk Pandangan Krew'}
+            label={loading ? 'Verifying...' : 'Enter Crew View'}
             onPress={handleEnterCrewView}
             role="crew"
             style={styles.submitBtn}

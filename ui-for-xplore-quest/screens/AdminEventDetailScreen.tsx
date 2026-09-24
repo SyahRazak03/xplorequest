@@ -41,7 +41,7 @@ export default function AdminEventDetailScreen() {
   const handleRegenerateMarshalId = () => {
     const newId = `MSH-${Math.floor(Math.random() * 9000 + 1000)}`;
     setAttendanceMarshalId(newId);
-    Alert.alert('Marshal ID Di-Jana Semula', `Marshal ID baharu: ${newId}`);
+    Alert.alert('Marshal ID Regenerated', `New Marshal ID: ${newId}`);
   };
 
   // Feature 4C: Payment Details Form State
@@ -70,14 +70,14 @@ export default function AdminEventDetailScreen() {
         paymentDetails: newDetails,
       });
 
-      Alert.alert('Berjaya', 'Maklumat akaun bank penganjur telah dikemaskini.');
+      Alert.alert('Success', 'Organizer bank account details updated.');
     } catch (err: any) {
       // Fallback: update AppContext state locally if backend un-reachable
       setActiveEvent({
         ...activeEvent,
         paymentDetails: newDetails,
       });
-      Alert.alert('Dikemaskini', 'Maklumat pembayaran dikemaskini dalam sesi ini.');
+      Alert.alert('Updated', 'Payment details updated for this session.');
     } finally {
       setIsSavingPayment(false);
     }
@@ -86,23 +86,23 @@ export default function AdminEventDetailScreen() {
   const copyToClipboard = (text: string, label: string) => {
     Clipboard.setString(text);
     setCopiedField(label);
-    Alert.alert('Berjaya Disalin', `${label} (${text}) telah disalin ke papan keratan.`);
+    Alert.alert('Copied to Clipboard', `${label} (${text}) copied to clipboard.`);
     setTimeout(() => setCopiedField(null), 2000);
   };
 
   const copyBothCredentials = () => {
     const marshalText = attendanceMarshalId
       ? `Marshal ID: ${attendanceMarshalId}`
-      : 'Marshal ID: (Belum log masuk / Belum ditugaskan)';
-    const text = `*Kredensial Log Masuk Krew & Marshal*\n📌 Pos Kehadiran: ${marshalText}\n🔑 Crew PIN: ${crewPinCode}`;
+      : 'Marshal ID: (Not logged in / Unassigned)';
+    const text = `*Crew & Marshal Login Credentials*\n📌 Attendance Station: ${marshalText}\n🔑 Crew PIN: ${crewPinCode}`;
     Clipboard.setString(text);
-    Alert.alert('Kredensial Disalin', 'Kredensial penuh telah disalin untuk dikongsi melalui WhatsApp.');
+    Alert.alert('Credentials Copied', 'Full credentials copied for sharing via WhatsApp.');
   };
 
   if (!activeEvent) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Tiada acara dipilih.</Text>
+        <Text style={styles.errorText}>No event selected.</Text>
       </SafeAreaView>
     );
   }
@@ -117,15 +117,15 @@ export default function AdminEventDetailScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Urus Acara</Text>
-          <Text style={styles.headerSubtitle}>Konfigurasi khusus untuk acara terpilih</Text>
+          <Text style={styles.headerTitle}>Manage Event</Text>
+          <Text style={styles.headerSubtitle}>Specific configuration for selected event</Text>
         </View>
         <OfflineStatusChip />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Selected Event Details Card */}
-        <Card role="admin" borderAccent="left" title="Maklumat Acara Terpilih">
+        <Card role="admin" borderAccent="left" title="Selected Event Details">
           <View style={styles.eventInfoContainer}>
             <View style={styles.infoRow}>
               <Ionicons name="trophy" size={20} color={COLORS.admin.primary} />
@@ -145,7 +145,7 @@ export default function AdminEventDetailScreen() {
         </Card>
 
         {/* Krew & Marshal Credentials Card */}
-        <Card role="admin" borderAccent="left" title="Kredensial Log Masuk Krew & Marshal">
+        <Card role="admin" borderAccent="left" title="Crew & Marshal Login Credentials">
           <View style={styles.credentialsContainer}>
             {/* Attendance Station Marshal ID Row */}
             <View style={styles.credRow}>
@@ -154,12 +154,12 @@ export default function AdminEventDetailScreen() {
               </View>
               <View style={styles.credMeta}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <Text style={styles.credLabel}>Pos Kehadiran (Marshal ID)</Text>
-                  <Badge label="Auto-Jana" state="success" />
+                  <Text style={styles.credLabel}>Attendance Station (Marshal ID)</Text>
+                  <Badge label="Auto-Gen" state="success" />
                 </View>
                 <Text style={styles.credValue}>{attendanceMarshalId || 'MSH-8492'}</Text>
                 <Text style={styles.unassignedSubtext}>
-                  Gunakan ID ini untuk log masuk krew di Pos Kehadiran.
+                  Use this ID for crew login at Attendance Station.
                 </Text>
               </View>
 
@@ -194,7 +194,7 @@ export default function AdminEventDetailScreen() {
                 <Ionicons name="key-outline" size={20} color={COLORS.crew.primary} />
               </View>
               <View style={styles.credMeta}>
-                <Text style={styles.credLabel}>Pos Kawalan Am (Crew PIN)</Text>
+                <Text style={styles.credLabel}>General Checkpoint (Crew PIN)</Text>
                 <Text style={[styles.credValue, { color: COLORS.crew.primary }]}>{crewPinCode}</Text>
               </View>
               <TouchableOpacity
@@ -217,27 +217,27 @@ export default function AdminEventDetailScreen() {
               activeOpacity={0.8}
             >
               <Ionicons name="logo-whatsapp" size={18} color={COLORS.textLight} />
-              <Text style={styles.shareBothBtnText}>Salin Semua Kredensial (WhatsApp)</Text>
+              <Text style={styles.shareBothBtnText}>Copy All Credentials (WhatsApp)</Text>
             </TouchableOpacity>
           </View>
         </Card>
 
         {/* Web Pre-Registration Information Card (Stage 17) */}
-        <Card role="admin" borderAccent="left" title="Konfigurasi Pre-Pendaftaran Web (Stage 17)">
+        <Card role="admin" borderAccent="left" title="Web Pre-Registration Configuration">
           <View style={styles.credentialsContainer}>
             <View style={styles.credRow}>
               <View style={styles.credIconWrap}>
                 <Ionicons name="globe-outline" size={20} color={COLORS.admin.primary} />
               </View>
               <View style={styles.credMeta}>
-                <Text style={styles.credLabel}>Pautan Form Web (URL Slug)</Text>
+                <Text style={styles.credLabel}>Web Form Link (URL Slug)</Text>
                 <Text style={[styles.credValue, { fontSize: 13 }]} numberOfLines={1}>
                   xplorequest-cab6c.web.app/registration-form/{activeEvent.urlSlug || 'explorace-tasik-titiwangsa-2026'}
                 </Text>
               </View>
               <TouchableOpacity
                 style={styles.copyBtn}
-                onPress={() => copyToClipboard(`https://xplorequest-cab6c.web.app/registration-form/${activeEvent.urlSlug || 'explorace-tasik-titiwangsa-2026'}`, 'Pautan Web')}
+                onPress={() => copyToClipboard(`https://xplorequest-cab6c.web.app/registration-form/${activeEvent.urlSlug || 'explorace-tasik-titiwangsa-2026'}`, 'Web Link')}
                 activeOpacity={0.7}
               >
                 <Ionicons name="copy-outline" size={18} color={COLORS.admin.primary} />
@@ -251,9 +251,9 @@ export default function AdminEventDetailScreen() {
                 <Ionicons name="cash-outline" size={20} color={COLORS.admin.primary} />
               </View>
               <View style={styles.credMeta}>
-                <Text style={styles.credLabel}>Yuran Pendaftaran Kumpulan</Text>
+                <Text style={styles.credLabel}>Team Registration Fee</Text>
                 <Text style={styles.credValue}>
-                  {activeEvent.entryFee !== undefined && activeEvent.entryFee > 0 ? `RM ${activeEvent.entryFee.toFixed(2)}` : 'Percuma'}
+                  {activeEvent.entryFee !== undefined && activeEvent.entryFee > 0 ? `RM ${activeEvent.entryFee.toFixed(2)}` : 'Free'}
                 </Text>
               </View>
             </View>
@@ -265,7 +265,7 @@ export default function AdminEventDetailScreen() {
                 <Ionicons name="card-outline" size={20} color={COLORS.admin.primary} />
               </View>
               <View style={styles.credMeta}>
-                <Text style={styles.credLabel}>Maklumat Akaun Bank</Text>
+                <Text style={styles.credLabel}>Bank Account Information</Text>
                 <Text style={[styles.credValue, { fontSize: 13 }]}>
                   {activeEvent.paymentDetails?.bankName
                     ? `${activeEvent.paymentDetails.bankName} - ${activeEvent.paymentDetails.accountNumber} (${activeEvent.paymentDetails.accountHolderName})`
@@ -276,14 +276,14 @@ export default function AdminEventDetailScreen() {
           </View>
         </Card>
 
-        {/* Kemaskini Maklumat Pembayaran (Feature 4C) */}
-        <Card role="admin" borderAccent="left" title="Kemaskini Akaun Bank & Pembayaran">
+        {/* Update Payment Information */}
+        <Card role="admin" borderAccent="left" title="Update Bank Account & Payment">
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nama Bank</Text>
+              <Text style={styles.inputLabel}>Bank Name</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Contoh: Maybank, CIMB, Bank Islam"
+                placeholder="Example: Maybank, CIMB, Bank Islam"
                 placeholderTextColor={COLORS.textMuted}
                 value={bankName}
                 onChangeText={setBankName}
@@ -292,10 +292,10 @@ export default function AdminEventDetailScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nama Pemegang Akaun</Text>
+              <Text style={styles.inputLabel}>Account Holder Name</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Contoh: XploreQuest Resources"
+                placeholder="Example: XploreQuest Resources"
                 placeholderTextColor={COLORS.textMuted}
                 value={accountHolderName}
                 onChangeText={setAccountHolderName}
@@ -304,10 +304,10 @@ export default function AdminEventDetailScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nombor Akaun Bank</Text>
+              <Text style={styles.inputLabel}>Bank Account Number</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Contoh: 564123456789"
+                placeholder="Example: 564123456789"
                 placeholderTextColor={COLORS.textMuted}
                 value={accountNumber}
                 onChangeText={setAccountNumber}
@@ -317,10 +317,10 @@ export default function AdminEventDetailScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nota / Arahan Pembayaran (Pilihan)</Text>
+              <Text style={styles.inputLabel}>Payment Notes / Instructions (Optional)</Text>
               <TextInput
                 style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
-                placeholder="Contoh: Sila letakkan nama kumpulan pada rujukan."
+                placeholder="Example: Please include team name in payment reference."
                 placeholderTextColor={COLORS.textMuted}
                 value={paymentNote}
                 onChangeText={setPaymentNote}
@@ -341,7 +341,7 @@ export default function AdminEventDetailScreen() {
               ) : (
                 <>
                   <Ionicons name="save-outline" size={18} color={COLORS.textLight} />
-                  <Text style={styles.savePaymentBtnText}>Simpan Maklumat Pembayaran</Text>
+                  <Text style={styles.savePaymentBtnText}>Save Payment Information</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -350,7 +350,7 @@ export default function AdminEventDetailScreen() {
 
         {/* Action Buttons list */}
         <View style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>Modul Pengurusan Acara</Text>
+          <Text style={styles.sectionTitle}>Event Management Modules</Text>
 
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: COLORS.admin.accent }]}
@@ -358,7 +358,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminGeofenceDesigner')}
           >
             <Ionicons name="map-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Rekabentuk Sempadan Geofence (ADM-02)</Text>
+            <Text style={styles.actionButtonText}>Design Geofence Boundaries</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -368,7 +368,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminCheckpointManager')}
           >
             <Ionicons name="flag-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Urus Pos Kawalan & Klu (ADM-03)</Text>
+            <Text style={styles.actionButtonText}>Manage Checkpoints & Clues</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -378,7 +378,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminRulesConfig')}
           >
             <Ionicons name="settings-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Urus Peraturan & Denda (ADM-04)</Text>
+            <Text style={styles.actionButtonText}>Manage Rules & Penalties</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -388,7 +388,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminPreRegistrations' as any)}
           >
             <Ionicons name="clipboard-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Kelulusan Pendaftaran Web (Pre-Registrations)</Text>
+            <Text style={styles.actionButtonText}>Web Pre-Registration Approval</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -398,7 +398,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminTeamsManager' as any)}
           >
             <Ionicons name="people-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Urus Kumpulan Peserta (Teams)</Text>
+            <Text style={styles.actionButtonText}>Manage Participant Teams</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 
@@ -408,7 +408,7 @@ export default function AdminEventDetailScreen() {
             onPress={() => navigation.navigate('AdminLeaderboard')}
           >
             <Ionicons name="stats-chart-outline" size={20} color={COLORS.textLight} />
-            <Text style={styles.actionButtonText}>Leaderboard & Keputusan Live (ADM-05)</Text>
+            <Text style={styles.actionButtonText}>Leaderboard & Live Results</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
           </TouchableOpacity>
 

@@ -44,49 +44,49 @@ export default function AntiCheatExplainerScreen() {
   const normalSlides: ExplainerSlide[] = [
     {
       id: 'step-1',
-      title: '1. Pemilihan Kumpulan',
-      subtitle: 'Marshal Memilih Pasukan Beratur',
-      description: 'Marshal mengenal pasti pasukan di hadapan kaunter verifikasi fizikal dan memilih profil pasukan tersebut dalam aplikasi crew.',
+      title: '1. Team Selection',
+      subtitle: 'Marshal Selects Queued Team',
+      description: 'Marshal identifies the team at the physical verification desk and selects their team profile in the crew app.',
       iconName: 'people-outline',
       iconColor: COLORS.admin.primary,
     },
     {
       id: 'step-2',
-      title: '2. Kunci Kriptografi Server',
-      subtitle: 'Penjanaan Tandatangan HMAC Unik',
-      description: 'Server keselamatan menandatangani payload maklumat dengan kunci rahsia SHA-256 (HMAC). Token ini dikunci khas kepada Team ID kumpulan tersebut.',
+      title: '2. Server Cryptographic Key',
+      subtitle: 'Generation of Unique HMAC Signature',
+      description: 'Security server signs the data payload with a secret SHA-256 (HMAC) key. This token is locked to the specific Team ID.',
       iconName: 'key-outline',
       iconColor: COLORS.pending,
     },
     {
       id: 'step-3',
-      title: '3. Kod QR Dinamik 30s',
-      subtitle: 'Had Masa Tempoh Imbasan Terhad',
-      description: 'Aplikasi memaparkan Kod QR yang dijana dari token HMAC. Kod ini didatangkan dengan kitaran luput 30 saat untuk mengelakkan penyalahgunaan.',
+      title: '3. 30s Dynamic QR Code',
+      subtitle: 'Time-Limited Scanning Period',
+      description: 'App renders a QR Code generated from the HMAC token. This code cycles and expires every 30 seconds to prevent unauthorized sharing.',
       iconName: 'qr-code-outline',
       iconColor: COLORS.success,
     },
     {
       id: 'step-4',
-      title: '4. Imbasan Kod QR',
-      subtitle: 'Pasukan Mengimbas Menggunakan Telefon Pintar',
-      description: 'Peserta menggunakan aplikasi telefon mereka sendiri untuk mengimbas Kod QR fizikal yang dipaparkan pada peranti Marshal di pos kawalan.',
+      title: '4. QR Code Scan',
+      subtitle: 'Team Scans Using Smartphone',
+      description: 'Participants use their own phone app to scan the QR Code shown on the Marshal device at the checkpoint.',
       iconName: 'scan-outline',
       iconColor: COLORS.admin.accent,
     },
     {
       id: 'step-5',
-      title: '5. Saringan Sempadan & Kelajuan',
-      subtitle: 'Analisis Geolokasi & Halaju GPS',
-      description: 'Sistem menyemak: Adakah peserta berada dalam radius geofence Pos Kawalan? Adakah beza jarak masa imbasan logik dengan kelajuan fizikal berlari?',
+      title: '5. Boundary & Velocity Checks',
+      subtitle: 'GPS Geofence & Velocity Analysis',
+      description: 'System validates: Is the participant inside the Checkpoint geofence radius? Is the scan timestamp difference physically logical for running speed?',
       iconName: 'navigate-outline',
       iconColor: COLORS.admin.primary,
     },
     {
       id: 'step-6',
-      title: '6. Pengesahan Berjaya!',
-      subtitle: 'Pos Kawalan Ditandakan Selesai',
-      description: 'Selepas melepasi semua saringan keselamatan, status CP dikemas kini secara rasmi dan mata ganjaran dikreditkan terus ke papan pendahulu.',
+      title: '6. Verification Successful!',
+      subtitle: 'Checkpoint Marked Complete',
+      description: 'After passing all security checks, CP status is officially updated and points are credited to the leaderboard.',
       iconName: 'checkmark-done-circle-outline',
       iconColor: COLORS.success,
     },
@@ -95,9 +95,9 @@ export default function AntiCheatExplainerScreen() {
   // Cheat scenario slide inserted when toggle is active
   const cheatSlide: ExplainerSlide = {
     id: 'cheat-error',
-    title: '⚠️ KESAN KECURANGAN',
-    subtitle: 'Screenshot Dikesan & Ditolak ❌',
-    description: 'Sekiranya peserta menghantar screenshot Kod QR ke ahli kumpulan lain, saringan Server akan menolak imbasan kerana: (1) Tandatangan HMAC luput 30s, atau (2) ID Peranti tidak padan.',
+    title: '⚠️ CHEAT DETECTION',
+    subtitle: 'Screenshot Detected & Rejected ❌',
+    description: 'If a participant sends a screenshot of the QR Code to another member, server validation will reject it because: (1) HMAC signature expired, or (2) Device ID mismatch.',
     iconName: 'alert-circle-outline',
     iconColor: COLORS.danger,
     isErrorSlide: true,
@@ -133,8 +133,8 @@ export default function AntiCheatExplainerScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Sistem Anti-Pintasan (Anti-Cheat)</Text>
-          <Text style={styles.headerSubtitle}>Bagaimana XploreQuest menjamin integriti acara (Storytelling)</Text>
+          <Text style={styles.headerTitle}>Anti-Cheat Security System</Text>
+          <Text style={styles.headerSubtitle}>How XploreQuest ensures event integrity</Text>
         </View>
       </View>
 
@@ -144,7 +144,7 @@ export default function AntiCheatExplainerScreen() {
         <View style={styles.commentaryBox}>
           <Ionicons name="bulb-outline" size={16} color={COLORS.admin.primary} />
           <Text style={styles.commentaryText}>
-            <Text style={styles.boldText}>PENAFIAN TEKNIKAL:</Text> Modul ini menjelaskan konsep keselamatan kriptografi HMAC, geofencing GPS, dan velocity check secara ringkas bagi memastikan integriti perlumbaan.
+            <Text style={styles.boldText}>TECHNICAL OVERVIEW:</Text> This module explains HMAC cryptographic security, GPS geofencing, and velocity check concepts.
           </Text>
         </View>
 
@@ -152,9 +152,9 @@ export default function AntiCheatExplainerScreen() {
         <Card role="participant" style={styles.toggleCard}>
           <View style={styles.toggleRow}>
             <View style={styles.toggleTextContainer}>
-              <Text style={styles.toggleTitle}>Simulasi Penipuan Kongsi Screenshot</Text>
+              <Text style={styles.toggleTitle}>Simulate Screenshot Sharing Violation</Text>
               <Text style={styles.toggleSubtitle}>
-                Lihat apa yang berlaku jika QR dikongsi kepada kawan lain.
+                See what happens if QR code is shared to another user.
               </Text>
             </View>
             <Switch
@@ -211,12 +211,12 @@ export default function AntiCheatExplainerScreen() {
                       {!slide.isErrorSlide ? (
                         <View style={styles.securitySealBadge}>
                           <Ionicons name="shield-checkmark" size={14} color={COLORS.success} />
-                          <Text style={styles.sealText}>SINKRONISASI AKTIF</Text>
+                          <Text style={styles.sealText}>ACTIVE SYNC</Text>
                         </View>
                       ) : (
                         <View style={[styles.securitySealBadge, styles.securitySealBadgeError]}>
                           <Ionicons name="alert-circle-outline" size={14} color={COLORS.danger} />
-                          <Text style={[styles.sealText, styles.sealTextError]}>PERINTASAN DIHALANG</Text>
+                          <Text style={[styles.sealText, styles.sealTextError]}>BYPASS BLOCKED</Text>
                         </View>
 
                       )}
@@ -245,19 +245,19 @@ export default function AntiCheatExplainerScreen() {
 
         {/* Informational Cards detailing core security parameters */}
         <View style={styles.infoCardsSection}>
-          <Text style={styles.infoSectionTitle}>Penyelesaian Anti-Cheat Multi-Faktor</Text>
+          <Text style={styles.infoSectionTitle}>Multi-Factor Anti-Cheat Solution</Text>
 
           <View style={styles.infoGridRow}>
             <View style={styles.featureItem}>
               <Ionicons name="lock-closed" size={20} color={COLORS.admin.primary} />
               <Text style={styles.featureItemTitle}>Dynamic QR 30s</Text>
-              <Text style={styles.featureItemDesc}>Satu kitaran kod QR hanya bertahan 30 saat untuk menghalang screenshot luput.</Text>
+              <Text style={styles.featureItemDesc}>Each QR code cycle lasts only 30 seconds to invalidate old screenshots.</Text>
             </View>
 
             <View style={styles.featureItem}>
               <Ionicons name="locate" size={20} color={COLORS.admin.primary} />
               <Text style={styles.featureItemTitle}>GPS Geofencing</Text>
-              <Text style={styles.featureItemDesc}>Memastikan peranti peserta betul-betul berada di dalam perimeter pos kawalan.</Text>
+              <Text style={styles.featureItemDesc}>Ensures participant device is physically inside the checkpoint perimeter.</Text>
             </View>
           </View>
 
@@ -265,13 +265,13 @@ export default function AntiCheatExplainerScreen() {
             <View style={styles.featureItem}>
               <Ionicons name="speedometer" size={20} color={COLORS.admin.primary} />
               <Text style={styles.featureItemTitle}>Velocity Check</Text>
-              <Text style={styles.featureItemDesc}>Sistem menghalang pergerakan kelajuan yang tidak logik (contohnya menaiki motosikal).</Text>
+              <Text style={styles.featureItemDesc}>System blocks unrealistic movement speeds (e.g. using vehicles).</Text>
             </View>
 
             <View style={styles.featureItem}>
               <Ionicons name="finger-print" size={20} color={COLORS.admin.primary} />
               <Text style={styles.featureItemTitle}>Team Lock Device</Text>
-              <Text style={styles.featureItemDesc}>Setiap pasukan dikunci kepada UUID peranti ahli untuk mengelak imbasan jarak jauh.</Text>
+              <Text style={styles.featureItemDesc}>Each team is locked to member device UUID to prevent remote scanning.</Text>
             </View>
           </View>
         </View>

@@ -58,10 +58,10 @@ export default function ParticipantDashboardScreen() {
   const rawCheckpoints: Checkpoint[] = (checkpoints && checkpoints.length > 0)
     ? checkpoints
     : [
-        { id: 'CP-START', name: 'Garisan Mula (Pos Attendance)', latitude: 3.172, longitude: 101.7, clueText: 'Pos Mula Attendance', taskDescription: 'Imbas QR Attendance', scorePoints: 0, statusPerTeam: {}, isStart: true },
-        { id: 'CP-001', name: 'Pos Kawalan 1', latitude: 3.173, longitude: 101.71, clueText: 'Selesaikan tugasan pos 1', taskDescription: 'Tugasan Pos 1', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
-        { id: 'CP-002', name: 'Pos Kawalan 2', latitude: 3.174, longitude: 101.72, clueText: 'Selesaikan tugasan pos 2', taskDescription: 'Tugasan Pos 2', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
-        { id: 'CP-END', name: 'Garisan Penamat', latitude: 3.175, longitude: 101.73, clueText: 'Pelepasan Tamat', taskDescription: 'Daftar Masuk Penamat', scorePoints: 20, statusPerTeam: {}, isFinish: true },
+        { id: 'CP-START', name: 'Start Line (Attendance Point)', latitude: 3.172, longitude: 101.7, clueText: 'Start Attendance Point', taskDescription: 'Scan Attendance QR', scorePoints: 0, statusPerTeam: {}, isStart: true },
+        { id: 'CP-001', name: 'Checkpoint 1', latitude: 3.173, longitude: 101.71, clueText: 'Complete checkpoint task 1', taskDescription: 'Checkpoint Task 1', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-002', name: 'Checkpoint 2', latitude: 3.174, longitude: 101.72, clueText: 'Complete checkpoint task 2', taskDescription: 'Checkpoint Task 2', scorePoints: 10, statusPerTeam: {}, isStart: false, isFinish: false },
+        { id: 'CP-END', name: 'Finish Line', latitude: 3.175, longitude: 101.73, clueText: 'Finish Line', taskDescription: 'Finish Line Check-In', scorePoints: 20, statusPerTeam: {}, isFinish: true },
       ];
 
   const startCP = rawCheckpoints.find((cp: Checkpoint) => cp.isStart || (cp as any).type === 'start');
@@ -253,8 +253,8 @@ export default function ParticipantDashboardScreen() {
     if (checkpoint.isFinish || checkpoint.id === finishCP?.id || checkpoint.id === 'CP-TAMAT') {
       if (!canFinish) {
         Alert.alert(
-          'Akses Dihalang',
-          'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos kawalan sebelum mendaftar masuk di Garisan Penamat.'
+          'Access Blocked',
+          'You have not completed all checkpoints yet! Please complete all checkpoints before checking in at the Finish Line.'
         );
         return;
       }
@@ -274,7 +274,7 @@ export default function ParticipantDashboardScreen() {
     const targetCpId = cpId || currentCpId;
     const currentCpIndex = orderedCheckpoints.findIndex((cp) => cp.id === targetCpId);
     if (currentCpIndex === -1 || currentCpIndex >= orderedCheckpoints.length - 1) {
-      Alert.alert('Info', 'Anda berada di checkpoint terakhir. Tidak boleh langkau.');
+      Alert.alert('Info', 'You are at the final checkpoint. Cannot skip.');
       return;
     }
 
@@ -293,7 +293,7 @@ export default function ParticipantDashboardScreen() {
     
     // Toast feedback using standard display index
     const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(orderedCheckpoints[currentCpIndex]) + 1;
-    triggerToast(`Pos CP-${displayIndex} ditangguhkan. Aktif: ${nextCp.name}`, 'warning');
+    triggerToast(`Checkpoint CP-${displayIndex} deferred. Active: ${nextCp.name}`, 'warning');
 
   };
 
@@ -303,8 +303,8 @@ export default function ParticipantDashboardScreen() {
     if (cpIdToScan === 'CP-TAMAT' || cpIdToScan === finishCP?.id) {
       if (!canFinish) {
         Alert.alert(
-          'Akses Dihalang',
-          'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos CP-01 hingga CP-06 sebelum mendaftar masuk di Garisan Penamat.'
+          'Access Blocked',
+          'You have not completed all checkpoints yet! Please complete all checkpoints before checking in at the Finish Line.'
         );
         return;
       }
@@ -321,8 +321,8 @@ export default function ParticipantDashboardScreen() {
     if (completedCps.includes(cpIdToScan)) {
       const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
       Alert.alert(
-        'Pos Kawalan Sudah Selesai',
-        `Pasukan anda telah menyempurnakan ${targetCp?.name || 'pos kawalan ini'}.`
+        'Checkpoint Already Completed',
+        `Your team has already completed ${targetCp?.name || 'this checkpoint'}.`
       );
       return;
     }
@@ -332,15 +332,15 @@ export default function ParticipantDashboardScreen() {
       const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
       const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
       Alert.alert(
-        'Imbasan Ditolak — Pos Kawalan Tidak Mengikut Urutan!',
-        `Pasukan anda ditugaskan untuk menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu mengikut laluan pelepasan anda.\n\nSila selesaikan ${activeCp?.name || 'pos kawalan aktif'} sebelum mencuba pos ${targetCp?.name || ''}.`
+        'Scan Rejected — Checkpoints Out of Sequence!',
+        `Your team is assigned to complete ${activeCp?.name || 'active checkpoint'} first according to your start route.\n\nPlease complete ${activeCp?.name || 'active checkpoint'} before trying ${targetCp?.name || ''}.`
       );
       return;
     }
 
     const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) {
-      Alert.alert('Cabaran Tamat', 'Tiada checkpoint aktif untuk diimbas.');
+      Alert.alert('Challenge Finished', 'No active checkpoint to scan.');
       return;
     }
 
@@ -357,8 +357,8 @@ export default function ParticipantDashboardScreen() {
       );
       if (matchedTeamInPayload && currentTeam?.id && matchedTeamInPayload.id !== currentTeam.id) {
         Alert.alert(
-          'Kod QR Ditolak — Dikhaskan Untuk Pasukan Lain!',
-          `Kod QR yang diimbas telah dijana khas untuk ${matchedTeamInPayload.name}.\n\nPasukan anda ialah ${currentTeam.name}. Anda tidak boleh mengimbas Kod QR milik pasukan lain.`
+          'QR Code Rejected — Assigned to Another Team!',
+          `The scanned QR code was generated specifically for ${matchedTeamInPayload.name}.\n\nYour team is ${currentTeam.name}. You cannot scan QR codes belonging to other teams.`
         );
         return;
       }
@@ -370,8 +370,8 @@ export default function ParticipantDashboardScreen() {
       if (matchedCpInPayload && matchedCpInPayload.id !== currentCpId) {
         const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
         Alert.alert(
-          'Imbasan Kod QR Ditolak!',
-          `Kod QR yang diimbas adalah untuk ${matchedCpInPayload.name}.\n\nPasukan anda dikehendaki menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu mengikut laluan pelepasan.`
+          'QR Code Scan Rejected!',
+          `The scanned QR code is for ${matchedCpInPayload.name}.\n\nYour team is required to complete ${activeCp?.name || 'active checkpoint'} first according to your start route.`
         );
         return;
       }
@@ -381,8 +381,8 @@ export default function ParticipantDashboardScreen() {
     if (currentCpId && cpIdToScan !== currentCpId) {
       const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
       Alert.alert(
-        'Imbasan Ditolak — Pos Kawalan Tidak Mengikut Urutan!',
-        `Pasukan anda dikehendaki menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu.`
+        'Scan Rejected — Checkpoint Out of Sequence!',
+        `Your team is required to complete ${activeCp?.name || 'active checkpoint'} first.`
       );
       return;
     }
@@ -413,16 +413,16 @@ export default function ParticipantDashboardScreen() {
         calculatedNextCpId = nextCp.id;
         setCurrentCpId(nextCp.id);
         const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
-        triggerToast(`Imbasan berjaya! CP-${displayIndex} selesai. Aktif: ${nextCp.name}`, 'success');
+        triggerToast(`Scan successful! CP-${displayIndex} completed. Active: ${nextCp.name}`, 'success');
       } else {
         // Finished the entire race!
         calculatedNextCpId = '';
         setCurrentCpId('');
-        triggerToast(`Tamat Cabaran! Tahniah pasukan anda berjaya menyelesaikan cabaran!`, 'success');
+        triggerToast(`Challenge Complete! Congratulations, your team successfully finished the challenge!`, 'success');
       }
     } else {
       const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
-      triggerToast(`Imbasan berjaya! CP-${displayIndex} diselesaikan daripada status tertunda.`, 'success');
+      triggerToast(`Scan successful! CP-${displayIndex} resolved from pending status.`, 'success');
     }
 
     // Live sync to Firestore
@@ -452,7 +452,7 @@ export default function ParticipantDashboardScreen() {
       setScanModalVisible(false);
       handleScanCompleted(cpIdToScan);
     } else {
-      Alert.alert('Kod Tidak Sah', 'Sila minta kod laluan manual yang betul daripada Marshal bertugas.');
+      Alert.alert('Invalid Code', 'Please ask the Marshal on duty for the correct manual passcode.');
     }
   };
 
@@ -475,7 +475,7 @@ export default function ParticipantDashboardScreen() {
           <View style={[styles.statBox, !rules.pointsSystemEnabled && { flex: 1, width: '100%' }, { backgroundColor: activeTheme.colors.card, borderColor: activeTheme.colors.border, borderWidth: 1, ...activeTheme.shadows.sm }]}>
             <View style={styles.statIconHeader}>
               <Ionicons name="time-outline" size={20} color={activeTheme.colors.primary} />
-              <Text style={[styles.statLabel, { color: activeTheme.colors.textMuted }]}>Masa Berjalan</Text>
+              <Text style={[styles.statLabel, { color: activeTheme.colors.textMuted }]}>Elapsed Time</Text>
             </View>
             <Text style={[styles.statValue, { color: activeTheme.colors.text }]}>
               {formatTime(elapsedTime)}
@@ -486,7 +486,7 @@ export default function ParticipantDashboardScreen() {
             <View style={[styles.statBox, { backgroundColor: activeTheme.colors.card, borderColor: activeTheme.colors.border, borderWidth: 1, ...activeTheme.shadows.sm }]}>
               <View style={styles.statIconHeader}>
                 <Ionicons name="trophy-outline" size={20} color={activeTheme.colors.accent} />
-                <Text style={[styles.statLabel, { color: activeTheme.colors.textMuted }]}>Jumlah Mata</Text>
+                <Text style={[styles.statLabel, { color: activeTheme.colors.textMuted }]}>Total Points</Text>
               </View>
               <Text style={[styles.statValue, { color: activeTheme.colors.text }]}>
                 {points} Pts
@@ -497,13 +497,13 @@ export default function ParticipantDashboardScreen() {
 
 
         {/* Progress Tracker Card */}
-        <Card role="participant" borderAccent="left" title="Kemajuan Laluan Kumpulan">
+        <Card role="participant" borderAccent="left" title="Team Route Progress">
           <View style={styles.progressRow}>
             <Text style={[styles.progressText, { color: activeTheme.colors.text }]}>
-              {completedCps.length} daripada {orderedCheckpoints.length} Checkpoint Selesai
+              {completedCps.length} of {orderedCheckpoints.length} Checkpoints Completed
             </Text>
             {skippedCps.length > 0 && (
-              <Badge label={`${skippedCps.length} Dilangkau`} state="warning" />
+              <Badge label={`${skippedCps.length} Skipped`} state="warning" />
             )}
           </View>
           <ProgressBar progress={progressPercent} role="participant" style={{ marginTop: 8 }} />
@@ -513,11 +513,11 @@ export default function ParticipantDashboardScreen() {
         <Card
           role="participant"
           style={{ borderColor: activeTheme.colors.primary, borderWidth: 1, marginTop: 12 }}
-          title="Daftar Masuk Garisan Penamat"
-          headerRight={<Badge label="Pintu TAMAT" state="info" />}
+          title="Finish Line Check-In"
+          headerRight={<Badge label="FINISH Gate" state="info" />}
         >
           <Text style={{ fontSize: 13, color: activeTheme.colors.textMuted, marginBottom: 12, lineHeight: 18 }}>
-            Sedia untuk menamatkan acara? Pendaftaran garisan penamat memerlukan semua pos kawalan diselesaikan terlebih dahulu.
+            Ready to finish the event? Finish line check-in requires all checkpoints to be completed first.
           </Text>
           <TouchableOpacity
             style={{
@@ -533,8 +533,8 @@ export default function ParticipantDashboardScreen() {
             onPress={() => {
               if (!canFinish) {
                 Alert.alert(
-                  'Akses Dihalang',
-                  'Anda belum menyelesaikan semua pos kawalan! Sila selesaikan semua pos kawalan sebelum mendaftar masuk di Garisan Penamat.'
+                  'Access Blocked',
+                  'You have not completed all checkpoints yet! Please complete all checkpoints before checking in at the Finish Line.'
                 );
                 return;
               }
@@ -549,7 +549,7 @@ export default function ParticipantDashboardScreen() {
           >
             <Ionicons name="flag" size={16} color={canFinish ? '#FFFFFF' : '#94A3B8'} />
             <Text style={{ color: canFinish ? '#FFFFFF' : '#94A3B8', fontWeight: '700', fontSize: 14 }}>
-              {canFinish ? 'Pergi ke Garisan Penamat' : 'Laluan Belum Selesai (Terkunci)'}
+              {canFinish ? 'Proceed to Finish Line' : 'Route Incomplete (Locked)'}
             </Text>
             <Ionicons name="chevron-forward" size={16} color={canFinish ? '#FFFFFF' : '#94A3B8'} />
           </TouchableOpacity>
@@ -568,9 +568,9 @@ export default function ParticipantDashboardScreen() {
               <Card
                 role="participant"
                 style={[styles.activeCpCard, { borderColor: activeTheme.colors.primary, borderWidth: 1 }]}
-                title={currentCp.isStart ? 'Checkpoint Aktif: MULA' : currentCp.isFinish ? 'Checkpoint Aktif: TAMAT' : `Checkpoint Aktif: CP ${displayIndex}`}
+                title={currentCp.isStart ? 'Active Checkpoint: START' : currentCp.isFinish ? 'Active Checkpoint: FINISH' : `Active Checkpoint: CP ${displayIndex}`}
 
-                headerRight={<Badge label="Sila Ke Sini" state="warning" />}
+                headerRight={<Badge label="Proceed Here" state="warning" />}
               >
                 <Text style={[styles.activeCpName, { color: activeTheme.colors.text }]}>
                   {currentCp.name}
@@ -579,7 +579,7 @@ export default function ParticipantDashboardScreen() {
                 <View style={[styles.activeCpDetailItem, { marginTop: 12 }]}>
                   <Ionicons name="bulb-outline" size={18} color={activeTheme.colors.accent} style={{ marginTop: 2 }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.activeCpDetailLabel, { color: activeTheme.colors.accent }]}>Petunjuk Lokasi</Text>
+                    <Text style={[styles.activeCpDetailLabel, { color: activeTheme.colors.accent }]}>Location Clue</Text>
                     <Text style={[styles.activeCpDetailVal, { color: activeTheme.colors.text }]}>{currentCp.clueText}</Text>
                   </View>
                 </View>
@@ -587,7 +587,7 @@ export default function ParticipantDashboardScreen() {
                 <View style={[styles.activeCpDetailItem, { marginTop: 12 }]}>
                   <Ionicons name="checkbox-outline" size={18} color={activeTheme.colors.primary} style={{ marginTop: 2 }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.activeCpDetailLabel, { color: activeTheme.colors.primary }]}>Tugasan Pos</Text>
+                    <Text style={[styles.activeCpDetailLabel, { color: activeTheme.colors.primary }]}>Checkpoint Task</Text>
                     <Text style={[styles.activeCpDetailVal, { color: activeTheme.colors.text }]}>{currentCp.taskDescription}</Text>
                   </View>
                 </View>
@@ -599,7 +599,7 @@ export default function ParticipantDashboardScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="arrow-redo-outline" size={16} color={COLORS.danger} />
-                    <Text style={[styles.skipBtnText, { color: COLORS.danger }]}>Langkau (Congested)</Text>
+                    <Text style={[styles.skipBtnText, { color: COLORS.danger }]}>Skip (Congested)</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -608,7 +608,7 @@ export default function ParticipantDashboardScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="qr-code-outline" size={16} color="#FFFFFF" />
-                    <Text style={styles.scanBtnActionText}>Imbas QR Marshal</Text>
+                    <Text style={styles.scanBtnActionText}>Scan Marshal QR</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -632,7 +632,7 @@ export default function ParticipantDashboardScreen() {
                 >
                   <Ionicons name="image-outline" size={16} color={activeTheme.colors.primary} />
                   <Text style={{ color: activeTheme.colors.primary, fontWeight: '700', fontSize: 12 }}>
-                    Lihat Landmark & Butiran
+                    View Landmark & Details
                   </Text>
                 </TouchableOpacity>
               </Card>
@@ -640,12 +640,12 @@ export default function ParticipantDashboardScreen() {
           })()
 
         ) : (
-          <Card role="participant" borderAccent="left" title="Cabaran Tamat!">
+          <Card role="participant" borderAccent="left" title="Challenge Complete!">
             <View style={styles.finishContainer}>
               <Ionicons name="flag" size={48} color={activeTheme.colors.primary} />
-              <Text style={[styles.finishTitle, { color: activeTheme.colors.text }]}>Cabaran Selesai! 🏁</Text>
+              <Text style={[styles.finishTitle, { color: activeTheme.colors.text }]}>Challenge Complete! 🏁</Text>
               <Text style={[styles.finishSubtitle, { color: activeTheme.colors.textMuted }]}>
-                Sila ke Pentas Utama / Astaka Urus Setia untuk pengesahan keputusan rasmi.
+                Please proceed to the Main Stage / Crew Pavilion for official verification.
               </Text>
               <TouchableOpacity
                 style={{
@@ -667,7 +667,7 @@ export default function ParticipantDashboardScreen() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="stats-chart" size={16} color="#FFFFFF" />
-                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>Lihat Keputusan Penamat</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>View Finish Results</Text>
               </TouchableOpacity>
             </View>
           </Card>
@@ -678,11 +678,11 @@ export default function ParticipantDashboardScreen() {
           <Card
             role="participant"
             style={[styles.pendingCard, { borderColor: activeTheme.colors.warning, borderWidth: 1 }]}
-            title="Senarai Checkpoint Tertunda"
-            headerRight={<Badge label={`${skippedCps.length} Tertunda`} state="warning" />}
+            title="Pending Checkpoints List"
+            headerRight={<Badge label={`${skippedCps.length} Pending`} state="warning" />}
           >
             <Text style={[styles.pendingDescription, { color: activeTheme.colors.textMuted }]}>
-              Anda telah melangkau checkpoint ini kerana kesesakan. Sila kembali ke lokasi ini apabila keadaan mengizinkan untuk menyelesaikan tugasan.
+              You skipped these checkpoints due to congestion. Please return when clear to complete the tasks.
             </Text>
             <View style={{ marginTop: 12, gap: 8 }}>
               {checkpoints
@@ -711,12 +711,12 @@ export default function ParticipantDashboardScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <Ionicons name="alert-circle" size={18} color={activeTheme.colors.warning} />
                         <Text style={{ fontWeight: '700', fontSize: 13, color: activeTheme.colors.text }}>
-                          {cp.isStart ? 'MULA' : cp.isFinish ? 'TAMAT' : `CP ${displayIndex}`}: {cp.name}
+                          {cp.isStart ? 'START' : cp.isFinish ? 'FINISH' : `CP ${displayIndex}`}: {cp.name}
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ fontSize: 11, color: activeTheme.colors.primary, fontWeight: '700' }}>
-                          Kembali
+                          Return
                         </Text>
                         <Ionicons name="chevron-forward" size={14} color={activeTheme.colors.primary} />
                       </View>
@@ -730,7 +730,7 @@ export default function ParticipantDashboardScreen() {
         {/* Scrollable Checkpoint Roadmap List */}
         <View style={styles.listContainer}>
           <Text style={[styles.listHeaderTitle, { color: activeTheme.colors.text }]}>
-            Senarai Semak Laluan Acara
+            Event Route Checklist
           </Text>
           {orderedCheckpoints.map((cp: Checkpoint) => {
             const displayIndex = checkpoints.filter((c: Checkpoint) => !c.isStart && !c.isFinish).indexOf(cp) + 1;
@@ -776,9 +776,9 @@ export default function ParticipantDashboardScreen() {
     return (
       <View style={styles.scannerTabContainer}>
         <View style={styles.scannerHeader}>
-          <Text style={[styles.scannerTitle, { color: activeTheme.colors.text }]}>Imbas Kod QR Pos</Text>
+          <Text style={[styles.scannerTitle, { color: activeTheme.colors.text }]}>Scan Checkpoint QR Code</Text>
           <Text style={[styles.scannerSubtitle, { color: activeTheme.colors.textMuted }]}>
-            Halakan kamera pada kod QR Marshal di checkpoint aktif.
+            Point camera at the Marshal QR code at the active checkpoint.
           </Text>
         </View>
 
@@ -814,7 +814,7 @@ export default function ParticipantDashboardScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="camera" size={20} color="#FFFFFF" />
-            <Text style={styles.simScanText}>Imbas Kod QR CP Aktif</Text>
+            <Text style={styles.simScanText}>Scan Active CP QR Code</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -823,7 +823,7 @@ export default function ParticipantDashboardScreen() {
             activeOpacity={0.7}
           >
             <Text style={[styles.manualCodeButtonText, { color: activeTheme.colors.primary }]}>
-              Masukkan Kod Laluan Manual
+              Enter Manual Passcode
             </Text>
           </TouchableOpacity>
         </View>
@@ -837,30 +837,30 @@ export default function ParticipantDashboardScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Team Card */}
-        <Card role="participant" borderAccent="left" title="Profil Kumpulan">
+        <Card role="participant" borderAccent="left" title="Team Profile">
           <View style={styles.profileHeader}>
             <View style={[styles.profileAvatar, { backgroundColor: activeTheme.colors.primaryLight }]}>
               <Text style={[styles.profileAvatarText, { color: activeTheme.colors.primary }]}>PH</Text>
             </View>
             <View style={styles.profileMeta}>
               <Text style={[styles.profileTeamName, { color: activeTheme.colors.text }]}>
-                {currentTeam?.name || user?.name || 'Pasukan Peserta'}
+                {currentTeam?.name || user?.name || 'Participant Team'}
               </Text>
               <Text style={[styles.profileSubText, { color: activeTheme.colors.textMuted }]}>
-                Ketua Kumpulan: {user?.name || 'Syamil'}
+                Team Leader: {user?.name || 'Syamil'}
               </Text>
               <Text style={[styles.profileSubText, { color: activeTheme.colors.textMuted }]}>
-                Ahli Kumpulan: 4 Orang
+                Team Members: 4 Members
               </Text>
             </View>
           </View>
         </Card>
 
         {/* Leaderboard Card */}
-        <Card role="participant" title="Kedudukan Semasa Kumpulan">
+        <Card role="participant" title="Current Team Leaderboard">
           {teams.length === 0 ? (
             <Text style={{ fontSize: 13, color: activeTheme.colors.textMuted, fontStyle: 'italic', paddingVertical: 8 }}>
-              Tiada data kedudukan kumpulan lagi.
+              No leaderboard data available yet.
             </Text>
           ) : (
             [...teams]
@@ -932,7 +932,7 @@ export default function ParticipantDashboardScreen() {
           activeOpacity={0.7}
         >
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-          <Text style={styles.logoutBtnText}>Log Keluar</Text>
+          <Text style={styles.logoutBtnText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -949,7 +949,7 @@ export default function ParticipantDashboardScreen() {
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
             <Text style={[styles.headerTeamName, { color: activeTheme.colors.primary, marginTop: 0 }]}>
-              🏆 {(user as any)?.teamName || user?.name || 'Kumpulan Peserta'}
+              🏆 {(user as any)?.teamName || user?.name || 'Participant Team'}
             </Text>
             <OfflineStatusChip />
           </View>
@@ -958,8 +958,8 @@ export default function ParticipantDashboardScreen() {
           style={styles.headerInfoBtn}
           onPress={() =>
             Alert.alert(
-              'Informasi Acara',
-              `${activeEvent?.name || 'XploreQuest'}\nTarikh: ${activeEvent?.date || '-'}\nLokasi: ${
+              'Event Information',
+              `${activeEvent?.name || 'XploreQuest'}\nDate: ${activeEvent?.date || '-'}\nLocation: ${
                 activeEvent?.locationName || '-'
               }`
             )
@@ -989,25 +989,25 @@ export default function ParticipantDashboardScreen() {
           <View style={[styles.modalCard, { borderRadius: activeTheme.radius.md }]}>
             <View style={styles.modalManual}>
               <View style={styles.modalHeaderRow}>
-                <Text style={[styles.modalTitle, { color: activeTheme.colors.text }]}>Kod Laluan Manual</Text>
+                <Text style={[styles.modalTitle, { color: activeTheme.colors.text }]}>Manual Passcode</Text>
                 <TouchableOpacity onPress={() => setScanModalVisible(false)}>
                   <Ionicons name="close" size={24} color={activeTheme.colors.textMuted} />
                 </TouchableOpacity>
               </View>
               <Text style={styles.modalSubText}>
-                Masukkan kod manual 6-aksara yang diberikan oleh Marshal di pos kawalan aktif.
+                Enter the manual code provided by the Marshal at the active checkpoint.
               </Text>
               
               {__DEV__ && currentCpId && (
                 <Text style={styles.demoHintText}>
-                  💡 Kod Ujian Dev: Kod laluan untuk checkpoint aktif ialah{' '}
+                  💡 Dev Test Code: Passcode for active checkpoint is{' '}
                   <Text style={{ fontWeight: 'bold' }}>{`PASS${currentCpId.replace('-', '')}`}</Text>
                 </Text>
               )}
 
               <TextInput
                 style={[styles.manualInput, { borderColor: activeTheme.colors.border, borderRadius: activeTheme.radius.sm }]}
-                placeholder="Contoh: PASSCP003"
+                placeholder="e.g. PASSCP003"
                 placeholderTextColor="#94A3B8"
                 value={manualCode}
                 onChangeText={setManualCode}
@@ -1020,7 +1020,7 @@ export default function ParticipantDashboardScreen() {
                 onPress={handleManualCodeSubmit}
                 activeOpacity={0.8}
               >
-                <Text style={styles.modalSubmitText}>Sahkan Kod</Text>
+                <Text style={styles.modalSubmitText}>Verify Code</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1059,7 +1059,7 @@ export default function ParticipantDashboardScreen() {
               },
             ]}
           >
-            Utama
+            Home
           </Text>
         </TouchableOpacity>
 
@@ -1086,7 +1086,7 @@ export default function ParticipantDashboardScreen() {
               },
             ]}
           >
-            Peta
+            Map
           </Text>
         </TouchableOpacity>
 
@@ -1110,7 +1110,7 @@ export default function ParticipantDashboardScreen() {
               },
             ]}
           >
-            Imbas
+            Scan
           </Text>
         </TouchableOpacity>
 
@@ -1133,7 +1133,7 @@ export default function ParticipantDashboardScreen() {
               },
             ]}
           >
-            Kumpulan
+            Team
           </Text>
         </TouchableOpacity>
       </View>
@@ -1163,8 +1163,8 @@ export default function ParticipantDashboardScreen() {
       {/* Real Camera QR Scanner Modal */}
       <RealCameraQRScanner
         visible={qrSimVisible}
-        title={`Imbas Kod QR ${cpIdBeingScanned || currentCpId}`}
-        subtitle="Halakan kamera pada Kod QR Krew di checkpoint"
+        title={`Scan QR Code ${cpIdBeingScanned || currentCpId}`}
+        subtitle="Point camera at Crew QR Code at checkpoint"
         onClose={() => setQrSimVisible(false)}
         onScanSuccess={(scannedData: string) => {
           setQrSimVisible(false);
@@ -1176,7 +1176,7 @@ export default function ParticipantDashboardScreen() {
       {/* Verification Success Modal */}
       <VerificationSuccessModal
         visible={successModalVisible}
-        checkpointName={successCpName || 'Pos Kawalan'}
+        checkpointName={successCpName || 'Checkpoint'}
         pointsEarned={successPointsEarned}
         onClose={() => setSuccessModalVisible(false)}
       />

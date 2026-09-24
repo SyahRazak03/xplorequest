@@ -365,7 +365,7 @@ export default function AdminGeofenceDesignerScreen() {
             {
               place_id: 'v_custom',
               description: `${text}, Malaysia`,
-              structured_formatting: { main_text: text, secondary_text: 'Kawasan Acara Malaysia' },
+              structured_formatting: { main_text: text, secondary_text: 'Malaysia Event Area' },
               latitude: 3.1479,
               longitude: 101.6940,
             },
@@ -420,8 +420,8 @@ export default function AdminGeofenceDesignerScreen() {
     // 2. Prompt organizer to reset / re-center boundary vertices around new location
     setModalConfig({
       visible: true,
-      title: 'Lokasi Acara Ditukar 📍',
-      message: `Kamera peta telah bergerak ke "${venueTitle}".\n\nAdakah anda mahu menetapkan semula (re-center) bucu sempadan geofence di sekeliling lokasi baharu ini?`,
+      title: 'Event Location Changed 📍',
+      message: `Map camera centered on "${venueTitle}".\n\nDo you want to re-center the geofence boundary vertices around this new location?`,
       variant: 'confirm',
       icon: 'navigate-outline',
       onConfirm: () => {
@@ -464,8 +464,8 @@ export default function AdminGeofenceDesignerScreen() {
         setSelectedPaletteCp(null);
         setModalConfig({
           visible: true,
-          title: 'Pin Diletakkan 📍',
-          message: `Pos Kawalan "${cpItem.name}" telah diletakkan pada koordinat (${coord.latitude.toFixed(5)}, ${coord.longitude.toFixed(5)}).`,
+          title: 'Pin Placed 📍',
+          message: `Checkpoint "${cpItem.name}" placed at coordinates (${coord.latitude.toFixed(5)}, ${coord.longitude.toFixed(5)}).`,
           variant: 'info',
           icon: 'location-outline',
         });
@@ -511,8 +511,8 @@ export default function AdminGeofenceDesignerScreen() {
     if (vertices.length < 3) {
       setModalConfig({
         visible: true,
-        title: 'Ralat Sempadan ⚠️',
-        message: 'Sila masukkan sekurang-kurangnya 3 mata bucu untuk melengkapkan sempadan geofence.',
+        title: 'Boundary Error ⚠️',
+        message: 'Please add at least 3 vertex points to define a geofence boundary.',
         variant: 'warning',
         icon: 'warning-outline',
       });
@@ -575,8 +575,8 @@ export default function AdminGeofenceDesignerScreen() {
 
       setModalConfig({
         visible: true,
-        title: 'Sempadan Disimpan 🎉',
-        message: 'Sempadan Geofence Acara & peletakan pos kawalan berjaya disimpan ke dalam konfigurasi acara.',
+        title: 'Boundary Saved 🎉',
+        message: 'Event Geofence Boundary & checkpoint pin placements saved successfully.',
         variant: 'success',
         icon: 'checkmark-circle-outline',
         onConfirm: () => navigation.goBack(),
@@ -584,8 +584,8 @@ export default function AdminGeofenceDesignerScreen() {
     } catch (err: any) {
       setModalConfig({
         visible: true,
-        title: 'Gagal Menyimpan Sempadan',
-        message: err.message || 'Sila cuba sebentar lagi.',
+        title: 'Failed to Save Boundary',
+        message: err.message || 'Please try again shortly.',
         variant: 'danger',
         icon: 'alert-circle-outline',
       });
@@ -605,7 +605,7 @@ export default function AdminGeofenceDesignerScreen() {
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Geofence Boundary Designer</Text>
-          <Text style={styles.headerSubtitle}>Melukis sempadan geofence secara interaktif (Google Maps)</Text>
+          <Text style={styles.headerSubtitle}>Interactive geofence boundary editor (Google Maps)</Text>
         </View>
       </View>
 
@@ -613,18 +613,18 @@ export default function AdminGeofenceDesignerScreen() {
         {/* Editor Controls Card */}
         <Card role="admin" style={styles.controlCard}>
           <View style={styles.badgeRow}>
-            <Badge label="Mod Suntingan Peta" state="info" />
-            <Text style={styles.infoText}>Bucu: {vertices.length} | Pos: {checkpointPins.length}</Text>
+            <Badge label="Map Edit Mode" state="info" />
+            <Text style={styles.infoText}>Vertices: {vertices.length} | Checkpoints: {checkpointPins.length}</Text>
           </View>
           <Text style={styles.guideText}>
-            • Carian lokasi di atas peta untuk berpindah ke lokasi acara baharu (contoh: "Taman Pudu Ulu").{"\n"}
-            • Ketik pada peta untuk menambah bucu sempadan poligon.{"\n"}
-            • Seret penanda bucu biru untuk mengubah suai koordinat bucu.
+            • Search location on map to jump to new event venue (e.g. "Taman Pudu Ulu").{"\n"}
+            • Tap on map to add polygon boundary vertices.{"\n"}
+            • Drag blue vertex markers to adjust coordinates.
           </Text>
 
           <View style={styles.buttonGroup}>
             <SecondaryButton
-              label="Pusatkan Bucu"
+              label="Center Vertices"
               onPress={() => recenterVerticesAround(currentCenter.latitude, currentCenter.longitude)}
               role="admin"
               variant="outline"
@@ -632,7 +632,7 @@ export default function AdminGeofenceDesignerScreen() {
               style={styles.controlBtn}
             />
             <SecondaryButton
-              label="Undur Bucu"
+              label="Undo Vertex"
               onPress={handleUndo}
               role="admin"
               variant="outline"
@@ -640,7 +640,7 @@ export default function AdminGeofenceDesignerScreen() {
               style={styles.controlBtn}
             />
             <SecondaryButton
-              label="Padam Sempadan"
+              label="Clear Boundary"
               onPress={handleClear}
               role="admin"
               variant="outline"
@@ -658,7 +658,7 @@ export default function AdminGeofenceDesignerScreen() {
               <Ionicons name="search" size={18} color={COLORS.admin.primary} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Cari lokasi venue (contoh: Taman Pudu Ulu)..."
+                placeholder="Search venue location (e.g. Taman Pudu Ulu)..."
                 placeholderTextColor={COLORS.textMuted}
                 value={searchQuery}
                 onChangeText={handleSearchTextChange}
@@ -752,7 +752,7 @@ export default function AdminGeofenceDesignerScreen() {
                 <View style={styles.pinBubble}>
                   <Ionicons name="location" size={14} color="#FFFFFF" />
                   <Text style={styles.pinText}>
-                    {pin.id === 'CP-START' ? 'MULA' : pin.id === 'CP-TAMAT' ? 'TAMAT' : pin.id.replace('CP-00', '')}
+                    {pin.id === 'CP-START' ? 'START' : pin.id === 'CP-TAMAT' || pin.id === 'CP-FINISH' ? 'FINISH' : pin.id.replace('CP-00', '')}
                   </Text>
                 </View>
               </Marker>
@@ -762,9 +762,9 @@ export default function AdminGeofenceDesignerScreen() {
 
         {/* Checkpoint Pin Palette Section */}
         <View style={styles.paletteSection}>
-          <Text style={styles.paletteTitle}>Palet Pos Kawalan (Pins)</Text>
+          <Text style={styles.paletteTitle}>Checkpoint Pins Palette</Text>
           <Text style={styles.paletteSubtitle}>
-            Ketik pada salah satu pin di bawah, kemudian ketik pada kawasan peta di atas untuk meletakkannya:
+            Tap a checkpoint pin below, then tap the map above to place it:
           </Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.paletteRow}>
@@ -804,7 +804,7 @@ export default function AdminGeofenceDesignerScreen() {
 
         {/* Save Event Boundary */}
         <PrimaryButton
-          label={isSaving ? 'Menyimpan...' : 'Simpan Sempadan Acara'}
+          label={isSaving ? 'Saving...' : 'Save Event Boundary'}
           onPress={handleSave}
           role="admin"
           disabled={isSaving}
@@ -822,7 +822,7 @@ export default function AdminGeofenceDesignerScreen() {
         message={modalConfig.message}
         buttons={[
           {
-            text: modalConfig.variant === 'confirm' ? 'YA, RESET BUCU' : 'FAHAM',
+            text: modalConfig.variant === 'confirm' ? 'YES, RE-CENTER VERTICES' : 'GOT IT',
             style: modalConfig.variant === 'confirm' ? 'default' : 'default',
             onPress: () => {
               const cb = modalConfig.onConfirm;
@@ -833,7 +833,7 @@ export default function AdminGeofenceDesignerScreen() {
           ...(modalConfig.variant === 'confirm'
             ? [
                 {
-                  text: 'KEKALKAN BUCU',
+                  text: 'KEEP CURRENT VERTICES',
                   style: 'cancel' as const,
                   onPress: () => setModalConfig((prev) => ({ ...prev, visible: false })),
                 },

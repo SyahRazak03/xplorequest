@@ -43,7 +43,7 @@ export default function CrewDashboardScreen() {
   // Find current checkpoint assigned to this crew member
   const defaultCheckpoint: Checkpoint = {
     id: 'CP-START',
-    name: 'Stesen Pendaftaran & Pelepasan',
+    name: 'Registration & Flag-Off Station',
     latitude: activeEvent?.latitude || 3.1764,
     longitude: activeEvent?.longitude || 101.7061,
     clueText: '',
@@ -222,8 +222,8 @@ export default function CrewDashboardScreen() {
     setTeams(prev => prev.map(t => t.id === selectedTeamForRelease.id ? updatedTeam : t));
 
     Alert.alert(
-      'Pelepasan Berjaya',
-      `Pasukan "${selectedTeamForRelease.name}" telah berjaya didaftarkan kehadiran dan dilepaskan mula!`
+      'Release Successful',
+      `Team "${selectedTeamForRelease.name}" attendance confirmed and flagged off!`
     );
     setSelectedTeamForRelease(null);
   };
@@ -239,23 +239,23 @@ export default function CrewDashboardScreen() {
           <View style={styles.headerTopRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleSelectCheckpoint}>
               <Ionicons name="location-outline" size={16} color={COLORS.crew.primary} />
-              <Text style={styles.backButtonText}>Tukar Pos</Text>
+              <Text style={styles.backButtonText}>Change Station</Text>
             </TouchableOpacity>
 
             <OfflineStatusChip />
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
-              <Text style={styles.logoutButtonText}>Log Keluar</Text>
+              <Text style={styles.logoutButtonText}>Log Out</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.checkpointBanner}>
             <View style={[styles.checkpointIconContainer, { backgroundColor: COLORS.success }]}>
-              <Text style={[styles.checkpointIconText, { color: '#FFFFFF', fontSize: 10 }]}>MULA</Text>
+              <Text style={[styles.checkpointIconText, { color: '#FFFFFF', fontSize: 10 }]}>START</Text>
             </View>
             <View style={styles.checkpointTitleContainer}>
-              <Text style={styles.marshalLabel}>Urus Setia Pendaftaran:</Text>
+              <Text style={styles.marshalLabel}>Registration Secretariat:</Text>
               <Text style={styles.checkpointName} numberOfLines={1}>
                 {checkpoint.name}
               </Text>
@@ -279,7 +279,7 @@ export default function CrewDashboardScreen() {
               }}>
                 <Ionicons name="radio-outline" size={18} color={COLORS.success} />
                 <Text style={{ fontSize: 13, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.success, letterSpacing: 0.5 }}>
-                  PERLUMBAAN SEDANG BERLANGSUNG
+                  RACE IN PROGRESS
                 </Text>
               </View>
             ) : (
@@ -300,7 +300,7 @@ export default function CrewDashboardScreen() {
               >
                 <Ionicons name="play-circle" size={22} color="#FFFFFF" />
                 <Text style={{ fontSize: 14, fontWeight: TYPOGRAPHY.fontWeight.bold, color: '#FFFFFF', letterSpacing: 0.8 }}>
-                  MULAKAN PERLUMBAAN (START RACE)
+                  START RACE
                 </Text>
               </TouchableOpacity>
             )}
@@ -312,15 +312,15 @@ export default function CrewDashboardScreen() {
           visible={startRaceModalVisible}
           variant="danger"
           icon="play-circle-outline"
-          title="Mula Perlumbaan Rasmi? 🏁"
-          message="Tindakan ini akan memulakan jam perlumbaan rasmi dan menyiarkan status perlumbaan aktif kepada semua peserta & krew."
+          title="Official Race Flag-Off? 🏁"
+          message="This action will start the official race timer and broadcast race active status to all participants & crew."
           buttons={[
             {
-              text: 'BATAL',
+              text: 'CANCEL',
               style: 'cancel',
             },
             {
-              text: 'MULAKAN PERLUMBAAN',
+              text: 'START RACE',
               style: 'destructive',
               onPress: () => {
                 startRace();
@@ -336,9 +336,9 @@ export default function CrewDashboardScreen() {
           visible={successModalVisible}
           variant="success"
           icon="checkmark-circle-outline"
-          title="PERLUMBAAN BERMULA! 🎉"
-          message="Semua krew dan peserta telah dimaklumkan secara langsung."
-          buttons={[{ text: 'TERUSKAN', style: 'default' }]}
+          title="RACE HAS STARTED! 🎉"
+          message="All crew and participants have been notified in real time."
+          buttons={[{ text: 'CONTINUE', style: 'default' }]}
           onDismiss={() => setSuccessModalVisible(false)}
         />
 
@@ -350,7 +350,7 @@ export default function CrewDashboardScreen() {
             onPress={() => setStartActiveTab('register')}
           >
             <Text style={[styles.tabText, startActiveTab === 'register' && styles.activeTabText]}>
-              Pendaftaran Kehadiran
+              Attendance Registration
             </Text>
             <View
               style={[
@@ -369,7 +369,7 @@ export default function CrewDashboardScreen() {
             onPress={() => setStartActiveTab('released')}
           >
             <Text style={[styles.tabText, startActiveTab === 'released' && styles.activeTabText]}>
-              Telah Dilepaskan
+              Released Teams
             </Text>
             <View
               style={[
@@ -388,11 +388,11 @@ export default function CrewDashboardScreen() {
         <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
           {activeStartList.length === 0 ? (
             <EmptyState
-              title="Tiada Kumpulan"
+              title="No Teams"
               description={
                 startActiveTab === 'register'
-                  ? 'Tiada pasukan pre-pendaftaran tertunda untuk didaftarkan.'
-                  : 'Belum ada pasukan yang dilepaskan hari ini.'
+                  ? 'No pending pre-registered teams to check in.'
+                  : 'No teams released yet today.'
               }
               icon={startActiveTab === 'released' ? 'checkmark-done-circle-outline' : 'people-outline'}
             />
@@ -425,18 +425,18 @@ export default function CrewDashboardScreen() {
                           {/* Registered User info from Pre-Event Form */}
                           <View style={{ gap: SPACING.xs, marginVertical: SPACING.sm }}>
                             <Text style={{ fontSize: 12, fontWeight: 'bold', color: COLORS.text, marginBottom: 2 }}>
-                              Maklumat Pendaftaran Google Form (XploreQuest Form):
+                              Web Registration Details (XploreQuest Form):
                             </Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Ketua Kumpulan:</Text>
+                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Team Leader:</Text>
                               <Text style={{ fontSize: 12, fontWeight: 'bold', color: COLORS.text }}>{team.leaderName || 'N/A'}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>No. Telefon:</Text>
+                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Phone Number:</Text>
                               <Text style={{ fontSize: 12, fontWeight: 'bold', color: COLORS.text }}>{team.phone || 'N/A'}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Senarai Ahli:</Text>
+                              <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Member List:</Text>
                               <Text style={{ fontSize: 12, fontWeight: 'bold', color: COLORS.text, flex: 1, textAlign: 'right', marginLeft: 16 }}>
                                 {team.membersList || 'N/A'}
                               </Text>
@@ -447,7 +447,7 @@ export default function CrewDashboardScreen() {
 
                           {startActiveTab === 'register' ? (
                             <PrimaryButton
-                              label="Sahkan & Jana QR Pelepasan"
+                              label="Verify & Generate Start QR"
                               onPress={() => handleGenerateReleaseQR(team)}
                               role="crew"
                               icon={<Ionicons name="qr-code-outline" size={16} color="#FFFFFF" />}
@@ -457,7 +457,7 @@ export default function CrewDashboardScreen() {
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center', paddingVertical: 8 }}>
                               <Ionicons name="checkmark-done-circle" size={18} color={COLORS.success} />
                               <Text style={{ color: COLORS.success, fontWeight: 'bold', fontSize: 13 }}>
-                                Telah Dilepaskan Mula
+                                Released at Start Line
                               </Text>
                             </View>
                           )}
@@ -481,14 +481,14 @@ export default function CrewDashboardScreen() {
           <View style={styles.startModalOverlay}>
             <View style={styles.startModalCard}>
               <View style={styles.startModalHeaderRow}>
-                <Text style={styles.startModalTitle}>Kod QR Pelepasan Mula</Text>
+                <Text style={styles.startModalTitle}>Start Line Release QR Code</Text>
                 <TouchableOpacity onPress={() => setReleaseModalVisible(false)}>
                   <Ionicons name="close" size={24} color={COLORS.textMuted} />
                 </TouchableOpacity>
               </View>
 
               <Text style={styles.startModalSubText}>
-                Minta peserta Pasukan "{selectedTeamForRelease?.name}" untuk mengimbas kod QR ini di skrin "Sertai Acara" peranti mereka.
+                Ask Team "{selectedTeamForRelease?.name}" participants to scan this QR code on their device "Event Attendance" screen.
               </Text>
 
               {/* Real HMAC-SHA256 Signed Dynamic QR Code */}
@@ -497,7 +497,7 @@ export default function CrewDashboardScreen() {
                   <View style={{ alignItems: 'center', gap: 12, paddingVertical: 40 }}>
                     <ActivityIndicator size="large" color={COLORS.crew.primary} />
                     <Text style={{ fontSize: 12, color: COLORS.textMuted }}>
-                      Menjana Kod QR HMAC-SHA256 untuk {selectedTeamForRelease?.name}...
+                      Generating HMAC-SHA256 QR Code for {selectedTeamForRelease?.name}...
                     </Text>
                   </View>
                 ) : (
@@ -508,16 +508,16 @@ export default function CrewDashboardScreen() {
                       size={180}
                       onRefresh={() => selectedTeamForRelease && handleGenerateReleaseQR(selectedTeamForRelease)}
                     />
-                    <Badge label={`HANYA UNTUK: ${selectedTeamForRelease?.name}`} state="info" />
+                    <Badge label={`ONLY FOR: ${selectedTeamForRelease?.name}`} state="info" />
                     <Text style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
-                      ID Kumpulan: {selectedTeamForRelease?.id}
+                      Team ID: {selectedTeamForRelease?.id}
                     </Text>
                   </View>
                 )}
               </View>
 
               <PrimaryButton
-                label="Tutup Kod QR"
+                label="Close QR Code"
                 onPress={() => setReleaseModalVisible(false)}
                 role="crew"
                 style={{ width: '100%', marginTop: SPACING.md }}
@@ -551,7 +551,7 @@ export default function CrewDashboardScreen() {
             <View style={styles.rightHeaderContainer}>
               <View style={styles.memberBadge}>
                 <Ionicons name="people-outline" size={14} color={COLORS.textMuted} />
-                <Text style={styles.memberCountText}>{team.memberCount} Ahli</Text>
+                <Text style={styles.memberCountText}>{team.memberCount} Members</Text>
               </View>
             </View>
           </View>
@@ -563,21 +563,21 @@ export default function CrewDashboardScreen() {
               {activeTab === 'queue' && (
                 <View style={styles.statusRow}>
                   <View style={[styles.dotIndicator, { backgroundColor: COLORS.pending }]} />
-                  <Text style={styles.statusLabelText}>Sedang Beratur</Text>
+                  <Text style={styles.statusLabelText}>Queued</Text>
                 </View>
               )}
 
               {activeTab === 'completed' && (
                 <View style={styles.statusRow}>
                   <View style={[styles.dotIndicator, { backgroundColor: COLORS.success }]} />
-                  <Text style={styles.statusLabelText}>Selesai Hari Ini</Text>
+                  <Text style={styles.statusLabelText}>Completed Today</Text>
                 </View>
               )}
             </View>
 
             {activeTab !== 'completed' && (
               <View style={styles.actionPromptContainer}>
-                <Text style={styles.actionPromptText}>Sahkan Tugas</Text>
+                <Text style={styles.actionPromptText}>Verify Duty</Text>
 
                 <Ionicons
                   name="chevron-forward"
@@ -613,7 +613,7 @@ export default function CrewDashboardScreen() {
         <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <View style={styles.header}>
           <View style={styles.checkpointBanner}>
-            <Text style={styles.checkpointName}>Memuatkan data...</Text>
+            <Text style={styles.checkpointName}>Loading data...</Text>
           </View>
         </View>
         <View style={{ padding: SPACING.md }}>
@@ -633,23 +633,23 @@ export default function CrewDashboardScreen() {
           <View style={styles.headerTopRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleSelectCheckpoint}>
               <Ionicons name="location-outline" size={16} color={COLORS.crew.primary} />
-              <Text style={styles.backButtonText}>Tukar Pos</Text>
+              <Text style={styles.backButtonText}>Change Station</Text>
             </TouchableOpacity>
 
             <OfflineStatusChip />
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
-              <Text style={styles.logoutButtonText}>Log Keluar</Text>
+              <Text style={styles.logoutButtonText}>Log Out</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.checkpointBanner}>
             <View style={[styles.checkpointIconContainer, { backgroundColor: COLORS.crew.primary }]}>
-              <Text style={[styles.checkpointIconText, { color: '#FFFFFF', fontSize: 10 }]}>TAMAT</Text>
+              <Text style={[styles.checkpointIconText, { color: '#FFFFFF', fontSize: 10 }]}>FINISH</Text>
             </View>
             <View style={styles.checkpointTitleContainer}>
-              <Text style={styles.marshalLabel}>Stesen Garisan Penamat:</Text>
+              <Text style={styles.marshalLabel}>Finish Line Station:</Text>
               <Text style={styles.checkpointName} numberOfLines={1}>
                 {checkpoint.name}
               </Text>
@@ -667,10 +667,10 @@ export default function CrewDashboardScreen() {
               <Ionicons name="flag-outline" size={24} color={COLORS.crew.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 15, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text }}>
-                  Penyiaran Kod QR Penamat
+                  Finish QR Code Broadcast
                 </Text>
                 <Text style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
-                  Mana-mana pasukan yang tiba di garisan penamat boleh mengimbas Kod QR ini secara terus.
+                  Any team arriving at the finish line can scan this QR Code directly.
                 </Text>
               </View>
             </View>
@@ -689,7 +689,7 @@ export default function CrewDashboardScreen() {
                   onRefresh={handleGenerateEndQR}
                 />
                 <Text style={{ fontSize: 12, color: COLORS.textMuted, marginTop: SPACING.sm, textAlign: 'center' }}>
-                  ⚡ Kod QR diperbaharui secara automatik setiap 30 saat untuk keselamatan.
+                  ⚡ QR Code auto-refreshes every 30 seconds for security.
                 </Text>
               </View>
             ) : (
@@ -706,10 +706,10 @@ export default function CrewDashboardScreen() {
                   <Ionicons name="qr-code-outline" size={40} color={COLORS.crew.primary} />
                 </View>
                 <Text style={{ fontSize: 16, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text, marginBottom: 4 }}>
-                  Kod QR Belum Dijana
+                  QR Code Not Generated Yet
                 </Text>
                 <Text style={{ fontSize: 13, color: COLORS.textMuted, textAlign: 'center', paddingHorizontal: SPACING.md }}>
-                  Tekan butang di bawah untuk memulakan penyiaran Kod QR Garisan Penamat.
+                  Tap the button below to start broadcasting the Finish Line QR Code.
                 </Text>
               </View>
             )}
@@ -717,7 +717,7 @@ export default function CrewDashboardScreen() {
 
           {/* Primary Action Button */}
           <PrimaryButton
-            label={endQrGenerated ? 'Kemaskini Kod QR Penamat' : 'Jana Kod QR Penamat'}
+            label={endQrGenerated ? 'Refresh Finish QR Code' : 'Generate Finish QR Code'}
             onPress={handleGenerateEndQR}
             role="crew"
             icon={<Ionicons name="refresh-outline" size={18} color="#FFFFFF" />}
@@ -728,14 +728,14 @@ export default function CrewDashboardScreen() {
           <Card role="crew" style={{ padding: SPACING.md }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm }}>
               <Text style={{ fontSize: 13, fontWeight: TYPOGRAPHY.fontWeight.bold, color: COLORS.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Pasukan Selesai Hari Ini
+                Teams Finished Today
               </Text>
-              <Badge label={`${completedTeams.length} Pasukan`} state="success" />
+              <Badge label={`${completedTeams.length} Teams`} state="success" />
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
               {completedTeams.length === 0 ? (
                 <Text style={{ fontSize: 12, color: COLORS.textMuted, italic: true } as any}>
-                  Belum ada pasukan yang tamat imbasan.
+                  No teams finished scanning yet.
                 </Text>
               ) : (
                 completedTeams.map(t => (
@@ -780,14 +780,14 @@ export default function CrewDashboardScreen() {
         <View style={styles.headerTopRow}>
           <TouchableOpacity style={styles.backButton} onPress={handleSelectCheckpoint}>
             <Ionicons name="location-outline" size={16} color={COLORS.crew.primary} />
-            <Text style={styles.backButtonText}>Tukar Pos</Text>
+            <Text style={styles.backButtonText}>Change Station</Text>
           </TouchableOpacity>
 
           <OfflineStatusChip />
 
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
-            <Text style={styles.logoutButtonText}>Log Keluar</Text>
+            <Text style={styles.logoutButtonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
 
@@ -799,7 +799,7 @@ export default function CrewDashboardScreen() {
             </Text>
           </View>
           <View style={styles.checkpointTitleContainer}>
-            <Text style={styles.marshalLabel}>Marshal bertugas di:</Text>
+            <Text style={styles.marshalLabel}>Marshal on duty at:</Text>
             <Text style={styles.checkpointName} numberOfLines={1}>
               {checkpoint.name}
             </Text>
@@ -814,7 +814,7 @@ export default function CrewDashboardScreen() {
           onPress={() => setActiveTab('queue')}
         >
           <Text style={[styles.tabText, activeTab === 'queue' && styles.activeTabText]}>
-            Beratur
+            Queue
           </Text>
           <View
             style={[
@@ -838,7 +838,7 @@ export default function CrewDashboardScreen() {
           onPress={() => setActiveTab('completed')}
         >
           <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
-            Selesai
+            Completed
           </Text>
           <View
             style={[
@@ -865,11 +865,11 @@ export default function CrewDashboardScreen() {
       >
         {activeList.length === 0 ? (
           <EmptyState
-            title="Tiada Kumpulan"
+            title="No Teams"
             description={
               activeTab === 'queue'
-                ? 'Tiada pasukan yang sedang beratur di pos kawalan ini.'
-                : 'Belum ada pasukan yang menamatkan tugasan hari ini.'
+                ? 'No teams currently queued at this checkpoint.'
+                : 'No teams have completed tasks today yet.'
             }
             icon={activeTab === 'completed' ? 'checkmark-done-circle-outline' : 'people-outline'}
           />

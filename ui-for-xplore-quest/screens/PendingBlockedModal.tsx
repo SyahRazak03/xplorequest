@@ -52,15 +52,15 @@ export default function PendingBlockedModal({
               <View style={styles.warningBadge}>
                 <Ionicons name="warning-outline" size={32} color={COLORS.danger} />
               </View>
-              <Text style={styles.headerTitle}>AKSES DISEKAT!</Text>
-              <Text style={styles.headerSubtitle}>Tugasan Belum Selesai</Text>
+              <Text style={styles.headerTitle}>ACCESS BLOCKED!</Text>
+              <Text style={styles.headerSubtitle}>Uncompleted Checkpoint Task</Text>
             </View>
 
             {/* Warning Message block */}
             <View style={styles.body}>
               <View style={styles.messageBox}>
                 <Text style={styles.warningMessage}>
-                  {`:: ANDA BELUM MELENGKAPKAN TUGASAN DI ${cpNumber.toUpperCase()} !!! ::`}
+                  {`:: YOU HAVE NOT COMPLETED TASK AT ${cpNumber.toUpperCase()} !!! ::`}
                 </Text>
               </View>
 
@@ -69,14 +69,14 @@ export default function PendingBlockedModal({
               </Text>
               
               <Text style={styles.instructions}>
-                Mengikut syarat rasmi acara, semua checkpoint mesti disahkan dan diselesaikan sebelum anda dibenarkan untuk mendaftar masuk di Garisan Penamat.
+                According to official event rules, all checkpoints must be verified and completed before you can check in at the Finish Line.
               </Text>
 
               {/* Box displaying the clue/task of the pending checkpoint */}
               <View style={styles.clueCard}>
                 <View style={styles.clueHeader}>
                   <Ionicons name="bulb-outline" size={16} color={COLORS.participant.primary} />
-                  <Text style={styles.clueTitle}>Tugasan Pos Kawalan:</Text>
+                  <Text style={styles.clueTitle}>Checkpoint Task:</Text>
                 </View>
                 <Text style={styles.clueText}>{pendingCheckpoint.taskDescription}</Text>
               </View>
@@ -90,7 +90,7 @@ export default function PendingBlockedModal({
                 activeOpacity={0.85}
               >
                 <Ionicons name="arrow-back-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.actionButtonText}>Kembali ke Checkpoint Tertunda</Text>
+                <Text style={styles.actionButtonText}>Return to Pending Checkpoint</Text>
               </TouchableOpacity>
             </View>
           </View>

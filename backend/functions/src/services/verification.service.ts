@@ -80,7 +80,7 @@ export async function uploadPhotoProofService(
 ): Promise<PhotoProofResult> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, caller.uid, caller.role, caller.eventId);
@@ -90,7 +90,7 @@ export async function uploadPhotoProofService(
     if (caller.eventId !== eventId || caller.checkpointId !== checkpointId) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Akses ditolak: Kru hanya boleh memuat naik bukti gambar untuk pos kawalan yang ditugaskan.'
+        'Access denied: Crew can only upload photo proof for their assigned checkpoint.'
       );
     }
   }
@@ -101,12 +101,12 @@ export async function uploadPhotoProofService(
 
   // Server-side Size Validation
   if (imageBuffer.length === 0) {
-    throw new AppError(ErrorCode.BAD_REQUEST, 'Data imej tidak sah atau kosong.');
+    throw new AppError(ErrorCode.BAD_REQUEST, 'Invalid or empty image data.');
   }
   if (imageBuffer.length > MAX_IMAGE_SIZE_BYTES) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      `Saiz fail imej melebihi had maksimum yang dibenarkan (5MB). Saiz dikesan: ${(
+      `Image file size exceeds maximum allowed limit (5MB). Detected size: ${(
         imageBuffer.length / (1024 * 1024)
       ).toFixed(2)}MB.`
     );
@@ -117,7 +117,7 @@ export async function uploadPhotoProofService(
   if (!isMagicValid) {
     throw new AppError(
       ErrorCode.UNPROCESSABLE_ENTITY,
-      'Struktur binari fail imej rosak atau tidak sepadan dengan jenis MIME yang diisytiharkan.'
+      'Image binary structure is corrupt or does not match declared MIME type.'
     );
   }
 
@@ -206,14 +206,14 @@ export async function processOverrideCore(
   if (caller.role === 'participant') {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Akses ditolak: Peserta tidak dibenarkan membuat pelepasan manual.'
+      'Access denied: Participants are not allowed to perform manual clearance.'
     );
   }
   if (caller.role === 'crew') {
     if (caller.eventId !== eventId || caller.checkpointId !== checkpointId) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Akses ditolak: Kru hanya boleh membuat pelepasan manual untuk pos kawalan yang ditugaskan.'
+        'Access denied: Crew can only perform manual clearance for their assigned checkpoint.'
       );
     }
   }
@@ -231,32 +231,32 @@ export async function processOverrideCore(
     ]);
 
     if (!eventSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
     }
     const eventData = eventSnap.data() as EventDocument;
     assertEventOwner({ ...eventData, id: eventId }, caller.uid, caller.role, caller.eventId);
 
     if (!eventData.isStarted) {
-      throw new AppError(ErrorCode.RACE_NOT_STARTED, 'Perlumbaan belum bermula.');
+      throw new AppError(ErrorCode.RACE_NOT_STARTED, 'Race has not started yet.');
     }
     if (eventData.isFinished) {
-      throw new AppError(ErrorCode.FORBIDDEN, 'Acara ini telah tamat.');
+      throw new AppError(ErrorCode.FORBIDDEN, 'This event has ended.');
     }
 
     if (!teamSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
     }
     const teamData = teamSnap.data() as TeamDocument;
 
     if (teamData.isDisqualified || teamData.isExcluded) {
-      throw new AppError(ErrorCode.FORBIDDEN, 'Kumpulan telah dibatalkan atau dikecualikan.');
+      throw new AppError(ErrorCode.FORBIDDEN, 'Team is disqualified or excluded.');
     }
     if (teamData.finishedAt) {
-      throw new AppError(ErrorCode.CONFLICT, 'Kumpulan telah menamatkan perlumbaan.');
+      throw new AppError(ErrorCode.CONFLICT, 'Team has completed the race.');
     }
 
     if (!cpSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Checkpoint not found.');
     }
     const cpData = cpSnap.data() as CheckpointDocument;
 
@@ -270,7 +270,7 @@ export async function processOverrideCore(
     if (completedList.includes(checkpointId)) {
       throw new AppError(
         ErrorCode.CHECKPOINT_ALREADY_COMPLETED,
-        'Pos kawalan ini telah pun diselesaikan oleh kumpulan ini.'
+        'This checkpoint has already been completed by this team.'
       );
     }
 
@@ -280,7 +280,7 @@ export async function processOverrideCore(
     if (!isCurrent && !isPreviouslySkipped) {
       throw new AppError(
         ErrorCode.OUT_OF_SEQUENCE,
-        `Pos kawalan ini bukan giliran laluan semasa kumpulan dan belum dilangkau. Pos semasa: ${teamData.currentCheckpointId}.`
+        `This checkpoint is not the team's current route sequence and has not been skipped. Current CP: ${teamData.currentCheckpointId}.`
       );
     }
 
@@ -303,7 +303,7 @@ export async function processOverrideCore(
     if (!geofenceAudited && (!input.skipGeofenceReason || input.skipGeofenceReason.trim().length < 5)) {
       throw new AppError(
         ErrorCode.UNPROCESSABLE_ENTITY,
-        'Alasan pengecualian geofence (sekurang-kurangnya 5 aksara) diperlukan apabila kru berada di luar radius atau lokasi GPS tidak dibekalkan.'
+        'Geofence exception reason (at least 5 characters) is required when crew is outside radius or GPS location is not provided.'
       );
     }
 
@@ -404,14 +404,14 @@ export async function processPenaltyCore(
   if (caller.role === 'participant') {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Akses ditolak: Peserta tidak dibenarkan mengenakan penalti.'
+      'Access denied: Participants are not allowed to apply penalties.'
     );
   }
   if (caller.role === 'crew') {
     if (caller.eventId !== eventId) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Akses ditolak: Kru hanya boleh mengenakan penalti bagi acara yang ditugaskan.'
+        'Access denied: Crew can only apply penalties for their assigned event.'
       );
     }
   }
@@ -427,13 +427,13 @@ export async function processPenaltyCore(
     ]);
 
     if (!eventSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
     }
     const eventData = eventSnap.data() as EventDocument;
     assertEventOwner({ ...eventData, id: eventId }, caller.uid, caller.role, caller.eventId);
 
     if (!teamSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
     }
     const teamData = teamSnap.data() as TeamDocument;
 
@@ -448,13 +448,13 @@ export async function processPenaltyCore(
       if (pointPenalty > maxAllowedPointPenalty) {
         throw new AppError(
           ErrorCode.UNPROCESSABLE_ENTITY,
-          `Had maksimum penalti mata oleh kru ialah ${maxAllowedPointPenalty} mata. Nilai diminta: ${pointPenalty}.`
+          `Maximum allowed point penalty by crew is ${maxAllowedPointPenalty} points. Requested value: ${pointPenalty}.`
         );
       }
       if (timePenaltyMinutes > maxAllowedTimePenalty) {
         throw new AppError(
           ErrorCode.UNPROCESSABLE_ENTITY,
-          `Had maksimum penalti masa oleh kru ialah ${maxAllowedTimePenalty} minit. Nilai diminta: ${timePenaltyMinutes}.`
+          `Maximum allowed time penalty by crew is ${maxAllowedTimePenalty} minutes. Requested value: ${timePenaltyMinutes}.`
         );
       }
     }
@@ -500,7 +500,7 @@ export async function processPenaltyCore(
       scannedByUid: caller.uid,
       penaltyApplied: pointPenalty,
       penaltyMinutesApplied: timePenaltyMinutes,
-      rejectionReason: `Penalti Dikenakan (${input.penaltyType}): ${input.reason}`,
+      rejectionReason: `Penalty Applied (${input.penaltyType}): ${input.reason}`,
       scannedAt: nowIso,
       createdAt: serverTimestamp,
       updatedAt: serverTimestamp,

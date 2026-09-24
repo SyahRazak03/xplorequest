@@ -216,7 +216,7 @@ export default function OrganizerAuthScreen() {
             }}
           >
             <Ionicons name="arrow-back-outline" size={22} color={COLORS.text} />
-            <Text style={styles.backText}>Kembali</Text>
+            <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
 
           {/* ── Logo + Heading ──────────────────────────────────────── */}
@@ -228,9 +228,9 @@ export default function OrganizerAuthScreen() {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.headingTitle}>Portal Penganjur</Text>
+            <Text style={styles.headingTitle}>Organizer Portal</Text>
             <Text style={styles.headingSubtitle}>
-              Log masuk atau buat akaun baharu untuk mengurus acara explorace anda.
+              Log in or create a new account to manage your explorace events.
             </Text>
           </View>
 
@@ -243,7 +243,7 @@ export default function OrganizerAuthScreen() {
               activeOpacity={0.8}
             >
               <Text style={[styles.tabLabel, activeTab === 'login' && styles.tabLabelActive]}>
-                Log Masuk
+                Login
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -252,7 +252,7 @@ export default function OrganizerAuthScreen() {
               activeOpacity={0.8}
             >
               <Text style={[styles.tabLabel, activeTab === 'signup' && styles.tabLabelActive]}>
-                Daftar Akaun
+                Register Account
               </Text>
             </TouchableOpacity>
           </View>
@@ -264,7 +264,7 @@ export default function OrganizerAuthScreen() {
             {activeTab === 'login' && (
               <>
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>E-mel Penganjur</Text>
+                  <Text style={styles.fieldLabel}>Organizer Email</Text>
                   <View style={[styles.inputShell, focused === 'loginEmail' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'loginEmail' && styles.iconStripFocused]}>
                       <Ionicons name="mail-outline" size={20}
@@ -272,7 +272,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="contoh@organisasi.com"
+                      placeholder="example@organization.com"
                       placeholderTextColor="#BEB5C8"
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -285,7 +285,7 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Kata Laluan</Text>
+                  <Text style={styles.fieldLabel}>Password</Text>
                   <View style={[styles.inputShell, focused === 'loginPassword' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'loginPassword' && styles.iconStripFocused]}>
                       <Ionicons name="lock-closed-outline" size={20}
@@ -293,7 +293,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="Masukkan kata laluan"
+                      placeholder="Enter password"
                       placeholderTextColor="#BEB5C8"
                       secureTextEntry={!loginPasswordVisible}
                       autoCapitalize="none"
@@ -329,21 +329,21 @@ export default function OrganizerAuthScreen() {
                     style={styles.btnIcon}
                   />
                   <Text style={styles.primaryBtnText}>
-                    {loading ? 'Mengesahkan...' : 'Log Masuk'}
+                    {loading ? 'Authenticating...' : 'Log In'}
                   </Text>
                 </TouchableOpacity>
 
                 <View style={styles.dividerRow}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>ATAU</Text>
+                  <Text style={styles.dividerText}>OR</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
                 {/* Sign up link */}
                 <TouchableOpacity style={styles.switchRow} onPress={() => switchTab('signup')}>
                   <Text style={styles.switchText}>
-                    Belum ada akaun?{' '}
-                    <Text style={styles.switchLink}>Daftar sekarang →</Text>
+                    Don't have an account?{' '}
+                    <Text style={styles.switchLink}>Register now →</Text>
                   </Text>
                 </TouchableOpacity>
               </>
@@ -353,7 +353,7 @@ export default function OrganizerAuthScreen() {
             {activeTab === 'signup' && (
               <>
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Nama Penuh Penganjur</Text>
+                  <Text style={styles.fieldLabel}>Full Name of Organizer</Text>
                   <View style={[styles.inputShell, focused === 'signupName' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'signupName' && styles.iconStripFocused]}>
                       <Ionicons name="person-outline" size={20}
@@ -361,7 +361,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="Nama penuh anda"
+                      placeholder="Your full name"
                       placeholderTextColor="#BEB5C8"
                       value={signupName}
                       onChangeText={setSignupName}
@@ -372,7 +372,7 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Nama Organisasi / Persatuan</Text>
+                  <Text style={styles.fieldLabel}>Organization / Association Name</Text>
                   <View style={[styles.inputShell, focused === 'signupOrg' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'signupOrg' && styles.iconStripFocused]}>
                       <Ionicons name="business-outline" size={20}
@@ -380,7 +380,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="Contoh: Persatuan Sukan UTM"
+                      placeholder="Example: UTM Sports Association"
                       placeholderTextColor="#BEB5C8"
                       value={signupOrg}
                       onChangeText={setSignupOrg}
@@ -391,7 +391,7 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>E-mel Rasmi</Text>
+                  <Text style={styles.fieldLabel}>Official Email</Text>
                   <View style={[styles.inputShell, focused === 'signupEmail' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'signupEmail' && styles.iconStripFocused]}>
                       <Ionicons name="mail-outline" size={20}
@@ -399,7 +399,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="e-mel@organisasi.com"
+                      placeholder="email@organization.com"
                       placeholderTextColor="#BEB5C8"
                       keyboardType="email-address"
                       autoCapitalize="none"
@@ -412,7 +412,7 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Kata Laluan</Text>
+                  <Text style={styles.fieldLabel}>Password</Text>
                   <View style={[styles.inputShell, focused === 'signupPassword' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'signupPassword' && styles.iconStripFocused]}>
                       <Ionicons name="lock-closed-outline" size={20}
@@ -420,7 +420,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="Min. 8 aksara"
+                      placeholder="Min. 8 characters"
                       placeholderTextColor="#BEB5C8"
                       secureTextEntry={!signupPasswordVisible}
                       autoCapitalize="none"
@@ -437,7 +437,7 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Sahkan Kata Laluan</Text>
+                  <Text style={styles.fieldLabel}>Confirm Password</Text>
                   <View style={[styles.inputShell, focused === 'signupConfirm' && styles.inputShellFocused]}>
                     <View style={[styles.iconStrip, focused === 'signupConfirm' && styles.iconStripFocused]}>
                       <Ionicons name="shield-checkmark-outline" size={20}
@@ -445,7 +445,7 @@ export default function OrganizerAuthScreen() {
                     </View>
                     <TextInput
                       style={styles.inputText}
-                      placeholder="Taip semula kata laluan"
+                      placeholder="Retype password"
                       placeholderTextColor="#BEB5C8"
                       secureTextEntry={!signupConfirmVisible}
                       autoCapitalize="none"
@@ -463,7 +463,7 @@ export default function OrganizerAuthScreen() {
 
                 {/* Password strength hint */}
                 <View style={styles.strengthRow}>
-                  {['Lemah', 'Sederhana', 'Kuat'].map((level, i) => (
+                  {['Weak', 'Medium', 'Strong'].map((level, i) => (
                     <View
                       key={level}
                       style={[
@@ -482,10 +482,10 @@ export default function OrganizerAuthScreen() {
                     {signupPassword.length === 0
                       ? ''
                       : signupPassword.length < 5
-                      ? 'Lemah'
+                      ? 'Weak'
                       : signupPassword.length < 9
-                      ? 'Sederhana'
-                      : 'Kuat'}
+                      ? 'Medium'
+                      : 'Strong'}
                   </Text>
                 </View>
 
@@ -493,8 +493,8 @@ export default function OrganizerAuthScreen() {
                 <View style={styles.termsRow}>
                   <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
                   <Text style={styles.termsText}>
-                    Dengan mendaftar, anda bersetuju dengan{' '}
-                    <Text style={styles.termsLink}>Terma & Syarat</Text> XploreQuest.
+                    By registering, you agree to the{' '}
+                    <Text style={styles.termsLink}>Terms & Conditions</Text> of XploreQuest.
                   </Text>
                 </View>
 
@@ -513,20 +513,20 @@ export default function OrganizerAuthScreen() {
                     style={styles.btnIcon}
                   />
                   <Text style={styles.primaryBtnText}>
-                    {loading ? 'Mendaftar...' : 'Buat Akaun Penganjur'}
+                    {loading ? 'Registering...' : 'Create Organizer Account'}
                   </Text>
                 </TouchableOpacity>
 
                 <View style={styles.dividerRow}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>ATAU</Text>
+                  <Text style={styles.dividerText}>OR</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
                 <TouchableOpacity style={styles.switchRow} onPress={() => switchTab('login')}>
                   <Text style={styles.switchText}>
-                    Sudah ada akaun?{' '}
-                    <Text style={styles.switchLink}>← Log masuk</Text>
+                    Already have an account?{' '}
+                    <Text style={styles.switchLink}>← Log in</Text>
                   </Text>
                 </TouchableOpacity>
               </>
@@ -537,9 +537,9 @@ export default function OrganizerAuthScreen() {
           {/* ── Feature badges ─────────────────────────────────────── */}
           <View style={styles.badgeStrip}>
             {[
-              { icon: 'shield-checkmark-outline', label: 'Data Selamat' },
-              { icon: 'wifi-outline', label: 'Sokongan Offline' },
-              { icon: 'flash-outline', label: 'Masa Nyata' },
+              { icon: 'shield-checkmark-outline', label: 'Secure Data' },
+              { icon: 'wifi-outline', label: 'Offline Support' },
+              { icon: 'flash-outline', label: 'Real-Time' },
             ].map(b => (
               <View key={b.label} style={styles.featureBadge}>
                 <Ionicons name={b.icon as any} size={14} color={COLORS.admin.primary} />

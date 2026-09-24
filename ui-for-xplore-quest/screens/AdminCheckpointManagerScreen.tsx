@@ -140,7 +140,7 @@ export default function AdminCheckpointManagerScreen() {
 
         return normalizeCheckpoints(updated);
       });
-      Alert.alert('Berjaya', 'Maklumat pos kawalan telah dikemaskini.');
+      Alert.alert('Success', 'Checkpoint details updated.');
     } else {
       // Add Mode
       let serverCheckpoint: Checkpoint | null = null;
@@ -148,7 +148,7 @@ export default function AdminCheckpointManagerScreen() {
         const res = await createCheckpoint(
           eventId,
           {
-            name: data.name || 'Pos Kawalan Baru',
+            name: data.name || 'New Checkpoint',
             latitude: data.latitude || activeEvent?.latitude || 3.1492,
             longitude: data.longitude || activeEvent?.longitude || 101.6938,
             clueText: data.clueText || '',
@@ -171,7 +171,7 @@ export default function AdminCheckpointManagerScreen() {
       const newCpId = serverCheckpoint?.id || data.id || `CP-${Math.floor(Math.random() * 900 + 100)}`;
       const newCheckpoint: Checkpoint = serverCheckpoint || {
         id: newCpId,
-        name: data.name || 'Pos Kawalan Baru',
+        name: data.name || 'New Checkpoint',
         latitude: data.latitude || activeEvent?.latitude || 3.1492,
         longitude: data.longitude || activeEvent?.longitude || 101.6938,
         clueText: data.clueText || '',
@@ -193,7 +193,7 @@ export default function AdminCheckpointManagerScreen() {
         }));
         return normalizeCheckpoints([...updated, newCheckpoint]);
       });
-      Alert.alert('Berjaya', 'Pos kawalan baru telah ditambah.');
+      Alert.alert('Success', 'New checkpoint added.');
     }
 
     setModalVisible(false);
@@ -210,8 +210,8 @@ export default function AdminCheckpointManagerScreen() {
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Urus Pos Kawalan</Text>
-            <Text style={styles.headerSubtitle}>Konfigurasi klu, tugasan, dan marshal (ADM-03)</Text>
+            <Text style={styles.headerTitle}>Manage Checkpoints</Text>
+            <Text style={styles.headerSubtitle}>Configure clues, tasks, and marshals</Text>
           </View>
         </View>
         <View style={{ padding: SPACING.md }}>
@@ -232,8 +232,8 @@ export default function AdminCheckpointManagerScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Urus Pos Kawalan (Checkpoints)</Text>
-          <Text style={styles.headerSubtitle}>Konfigurasi klu, tugasan, dan marshal (ADM-03)</Text>
+          <Text style={styles.headerTitle}>Manage Checkpoints</Text>
+          <Text style={styles.headerSubtitle}>Configure clues, tasks, and marshals</Text>
         </View>
       </View>
 
@@ -241,15 +241,15 @@ export default function AdminCheckpointManagerScreen() {
         {/* Add Checkpoint Button */}
         <TouchableOpacity style={styles.addButton} activeOpacity={0.8} onPress={handleAddPress}>
           <Ionicons name="add-circle" size={20} color={COLORS.textLight} />
-          <Text style={styles.addButtonText}>Tambah Pos Kawalan Baru</Text>
+          <Text style={styles.addButtonText}>Add New Checkpoint</Text>
         </TouchableOpacity>
 
         {checkpoints.length === 0 ? (
           <EmptyState
-            title="Tiada Pos Kawalan Dikonfigurasikan"
-            description="Sila tambah pos kawalan baru menggunakan butang di atas untuk memulakan cabaran pencarian klu."
+            title="No Checkpoints Configured"
+            description="Please add a new checkpoint using the button above to start the clue hunt challenge."
             icon="flag-outline"
-            actionLabel="Tambah Pos Kawalan Pertama"
+            actionLabel="Add First Checkpoint"
             onAction={handleAddPress}
           />
         ) : (
@@ -260,17 +260,17 @@ export default function AdminCheckpointManagerScreen() {
               <View style={styles.cardHeader}>
                 <View style={styles.cpIconContainer}>
                   <Text style={[styles.cpIconText, (cp.isStart || cp.isFinish) && { fontSize: 9 }]}>
-                    {cp.isStart ? 'MULA' : cp.isFinish ? 'TAMAT' : cp.id.startsWith('CP-') ? cp.id.replace('CP-', '') : `CP ${index}`}
+                    {cp.isStart ? 'START' : cp.isFinish ? 'FINISH' : cp.id.startsWith('CP-') ? cp.id.replace('CP-', '') : `CP ${index}`}
                   </Text>
                 </View>
 
                 <View style={styles.cpMetaText}>
                   <Text style={styles.cpNameText} numberOfLines={1}>{cp.name}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
-                    <Text style={styles.cpPointsText}>Mata: {cp.scorePoints} Pts</Text>
-                    {cp.isStart && <Badge label="MULA" state="success" />}
-                    {cp.isFinish && <Badge label="TAMAT" state="danger" />}
-                    {cp.isHiddenInMap && <Badge label="TERSEMBUNYI DI PETA" state="warning" />}
+                    <Text style={styles.cpPointsText}>Points: {cp.scorePoints} Pts</Text>
+                    {cp.isStart && <Badge label="START" state="success" />}
+                    {cp.isFinish && <Badge label="FINISH" state="danger" />}
+                    {cp.isHiddenInMap && <Badge label="HIDDEN ON MAP" state="warning" />}
                   </View>
                 </View>
               </View>
@@ -321,7 +321,7 @@ export default function AdminCheckpointManagerScreen() {
                       styles.actionChipText,
                       { color: cp.isHiddenInMap ? COLORS.danger : COLORS.admin.primary }
                     ]}>
-                      {cp.isHiddenInMap ? 'Tersembunyi' : 'Dipapar di Peta'}
+                      {cp.isHiddenInMap ? 'Hidden' : 'Visible on Map'}
                     </Text>
                   </TouchableOpacity>
 
@@ -346,17 +346,17 @@ export default function AdminCheckpointManagerScreen() {
 
               {/* Clue Text Preview */}
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Klu Pencarian:</Text>
+                <Text style={styles.detailLabel}>Hunt Clue:</Text>
                 <Text style={styles.detailValueText} numberOfLines={2}>
-                  {cp.clueText || 'Tiada klu diisi.'}
+                  {cp.clueText || 'No clue entered.'}
                 </Text>
               </View>
 
               {/* Task Description */}
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Tugasan Fizikal:</Text>
+                <Text style={styles.detailLabel}>Physical Task:</Text>
                 <Text style={styles.detailValueText} numberOfLines={2}>
-                  {cp.taskDescription || 'Tiada tugasan fizikal diisi.'}
+                  {cp.taskDescription || 'No physical task entered.'}
                 </Text>
               </View>
             </Card>
@@ -378,15 +378,15 @@ export default function AdminCheckpointManagerScreen() {
         visible={deleteModalVisible}
         variant="danger"
         icon="trash-outline"
-        title="Padam Pos Kawalan? ⚠️"
-        message="Adakah anda pasti mahu memadam pos kawalan ini? Tindakan ini tidak boleh diundur."
+        title="Delete Checkpoint? ⚠️"
+        message="Are you sure you want to delete this checkpoint? This action cannot be undone."
         buttons={[
           {
-            text: 'BATAL',
+            text: 'CANCEL',
             style: 'cancel',
           },
           {
-            text: 'PADAM',
+            text: 'DELETE',
             style: 'destructive',
             onPress: async () => {
               if (deleteTargetId) {

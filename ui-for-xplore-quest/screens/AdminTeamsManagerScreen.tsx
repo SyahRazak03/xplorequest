@@ -89,12 +89,12 @@ export default function AdminTeamsManagerScreen() {
 
   const handleSaveTeam = () => {
     if (!teamName.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan Nama Kumpulan.');
+      Alert.alert('Error', 'Please enter Team Name.');
       return;
     }
     const count = parseInt(memberCount, 10);
     if (isNaN(count) || count <= 0) {
-      Alert.alert('Ralat', 'Sila masukkan Jumlah Ahli yang sah.');
+      Alert.alert('Error', 'Please enter a valid Member Count.');
       return;
     }
 
@@ -114,7 +114,7 @@ export default function AdminTeamsManagerScreen() {
             : t
         )
       );
-      Alert.alert('Berjaya', 'Maklumat kumpulan telah dikemas kini.');
+      Alert.alert('Success', 'Team information updated.');
     } else {
       // Add mode
       const newTeam: Team = {
@@ -131,7 +131,7 @@ export default function AdminTeamsManagerScreen() {
         phone,
       };
       setTeams(prev => [...prev, newTeam]);
-      Alert.alert('Berjaya', 'Kumpulan baharu telah didaftarkan.');
+      Alert.alert('Success', 'New team registered.');
     }
     setModalVisible(false);
   };
@@ -147,8 +147,8 @@ export default function AdminTeamsManagerScreen() {
       prev.map(t => (t.id === team.id ? { ...t, status: newStatus } : t))
     );
     Alert.alert(
-      'Status Dikemaskini',
-      `Kumpulan "${team.name}" kini ${newStatus === 'approved' ? 'diluluskan' : 'ditunda kelulusan'}.`
+      'Status Updated',
+      `Team "${team.name}" is now ${newStatus === 'approved' ? 'approved' : 'pending approval'}.`
     );
   };
 
@@ -162,8 +162,8 @@ export default function AdminTeamsManagerScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Urus Kumpulan Peserta</Text>
-          <Text style={styles.headerSubtitle}>Daftar & Edit data pendaftaran kumpulan</Text>
+          <Text style={styles.headerTitle}>Manage Participant Teams</Text>
+          <Text style={styles.headerSubtitle}>Register & edit team registration data</Text>
         </View>
         <OfflineStatusChip />
       </View>
@@ -172,15 +172,15 @@ export default function AdminTeamsManagerScreen() {
         {/* Add Team Button */}
         <TouchableOpacity style={styles.addButton} activeOpacity={0.8} onPress={handleOpenAddModal}>
           <Ionicons name="add-circle" size={20} color={COLORS.textLight} />
-          <Text style={styles.addButtonText}>Tambah Kumpulan Baru</Text>
+          <Text style={styles.addButtonText}>Add New Team</Text>
         </TouchableOpacity>
 
         {teams.length === 0 ? (
           <EmptyState
-            title="Tiada Kumpulan Didatar"
-            description="Sila daftarkan kumpulan baharu menggunakan butang di atas untuk memulakan cabaran."
+            title="No Teams Registered"
+            description="Please register new teams using the button above to start the challenge."
             icon="people-outline"
-            actionLabel="Daftar Kumpulan Pertama"
+            actionLabel="Register First Team"
             onAction={handleOpenAddModal}
           />
         ) : (
@@ -204,7 +204,7 @@ export default function AdminTeamsManagerScreen() {
                       </View>
                       <View style={styles.badgeCol}>
                         <Badge
-                          label={team.status === 'approved' ? 'Lulus' : 'Tertunda'}
+                          label={team.status === 'approved' ? 'Approved' : 'Pending'}
                           state={team.status === 'approved' ? 'success' : 'warning'}
                         />
                         <Ionicons
@@ -222,19 +222,19 @@ export default function AdminTeamsManagerScreen() {
                         {/* Registration fields list */}
                         <View style={styles.detailsList}>
                           <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Ketua Kumpulan:</Text>
+                            <Text style={styles.detailLabel}>Team Leader:</Text>
                             <Text style={styles.detailValue}>{team.leaderName || 'N/A'}</Text>
                           </View>
                           <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>No. Telefon:</Text>
+                            <Text style={styles.detailLabel}>Phone No.:</Text>
                             <Text style={styles.detailValue}>{team.phone || 'N/A'}</Text>
                           </View>
                           <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Jumlah Ahli:</Text>
-                            <Text style={styles.detailValue}>{team.memberCount} Orang</Text>
+                            <Text style={styles.detailLabel}>Member Count:</Text>
+                            <Text style={styles.detailValue}>{team.memberCount} Members</Text>
                           </View>
                           <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Senarai Nama Ahli:</Text>
+                            <Text style={styles.detailLabel}>Member Names List:</Text>
                             <Text style={[styles.detailValue, { flex: 1, textAlign: 'right', marginLeft: 16 }]}>
                               {team.membersList || 'N/A'}
                             </Text>
@@ -251,7 +251,7 @@ export default function AdminTeamsManagerScreen() {
                           >
                             <Ionicons name={team.status === 'approved' ? 'close-circle' : 'checkmark-circle'} size={15} color={COLORS.admin.primary} />
                             <Text style={styles.actionBtnText}>
-                              {team.status === 'approved' ? 'Tunda' : 'Luluskan'}
+                              {team.status === 'approved' ? 'Hold' : 'Approve'}
                             </Text>
                           </TouchableOpacity>
 
@@ -268,7 +268,7 @@ export default function AdminTeamsManagerScreen() {
                             onPress={() => handleDeleteTeam(team.id)}
                           >
                             <Ionicons name="trash-outline" size={15} color={COLORS.danger} />
-                            <Text style={[styles.actionBtnText, { color: COLORS.danger }]}>Hapus</Text>
+                            <Text style={[styles.actionBtnText, { color: COLORS.danger }]}>Delete</Text>
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -292,7 +292,7 @@ export default function AdminTeamsManagerScreen() {
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {editingTeam ? 'Kemaskini Kumpulan' : 'Daftar Kumpulan Baru'}
+                {editingTeam ? 'Update Team' : 'Register New Team'}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color={COLORS.textMuted} />
@@ -301,10 +301,10 @@ export default function AdminTeamsManagerScreen() {
 
             <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nama Kumpulan</Text>
+                <Text style={styles.label}>Team Name</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Contoh: Pasukan Harimau"
+                  placeholder="Example: Tiger Team"
                   value={teamName}
                   onChangeText={setTeamName}
                   placeholderTextColor={COLORS.textMuted}
@@ -312,10 +312,10 @@ export default function AdminTeamsManagerScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Ketua Kumpulan</Text>
+                <Text style={styles.label}>Team Leader</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Nama Penuh Ketua"
+                  placeholder="Leader Full Name"
                   value={leaderName}
                   onChangeText={setLeaderName}
                   placeholderTextColor={COLORS.textMuted}
@@ -323,10 +323,10 @@ export default function AdminTeamsManagerScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>No. Telefon Ketua</Text>
+                <Text style={styles.label}>Leader Phone No.</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Contoh: +6012-3456789"
+                  placeholder="Example: +6012-3456789"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -335,10 +335,10 @@ export default function AdminTeamsManagerScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Jumlah Ahli</Text>
+                <Text style={styles.label}>Member Count</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Had standard: 4"
+                  placeholder="Standard limit: 4"
                   value={memberCount}
                   onChangeText={setMemberCount}
                   keyboardType="numeric"
@@ -347,7 +347,7 @@ export default function AdminTeamsManagerScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Senarai Ahli (Dipisahkan Koma)</Text>
+                <Text style={styles.label}>Member List (Comma Separated)</Text>
                 <TextInput
                   style={[styles.textInput, { height: 60 }]}
                   placeholder="Abu, Ahmad, Amin"
@@ -359,7 +359,7 @@ export default function AdminTeamsManagerScreen() {
               </View>
 
               <PrimaryButton
-                label="Simpan Kumpulan"
+                label="Save Team"
                 onPress={handleSaveTeam}
                 role="admin"
                 style={{ marginTop: SPACING.md, marginBottom: SPACING.lg }}
@@ -374,15 +374,15 @@ export default function AdminTeamsManagerScreen() {
         visible={deleteModalVisible}
         variant="danger"
         icon="people-circle-outline"
-        title="Padam Kumpulan? ⚠️"
-        message="Adakah anda pasti mahu memadam kumpulan ini? Tindakan ini tidak boleh diundur."
+        title="Delete Team? ⚠️"
+        message="Are you sure you want to delete this team? This action cannot be undone."
         buttons={[
           {
-            text: 'BATAL',
+            text: 'CANCEL',
             style: 'cancel',
           },
           {
-            text: 'PADAM',
+            text: 'DELETE',
             style: 'destructive',
             onPress: () => {
               if (deleteTargetId) {

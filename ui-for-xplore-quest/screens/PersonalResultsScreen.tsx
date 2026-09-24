@@ -60,9 +60,9 @@ export default function PersonalResultsScreen() {
     const s = secs % 60;
     
     let result = '';
-    if (h > 0) result += `${h} Jam `;
-    if (m > 0) result += `${m} Minit `;
-    result += `${s} Saat`;
+    if (h > 0) result += `${h}h `;
+    if (m > 0) result += `${m}m `;
+    result += `${s}s`;
     return result;
   };
 
@@ -83,7 +83,7 @@ export default function PersonalResultsScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       {/* Top Header */}
       <View style={styles.headerBar}>
-        <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Keputusan Rasmi Pasukan</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.primary }]}>Official Team Results</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -91,16 +91,16 @@ export default function PersonalResultsScreen() {
         {/* Banner Card */}
         <View style={[styles.bannerCard, { backgroundColor: theme.colors.primary, borderRadius: theme.radius.md, ...theme.shadows.md }]}>
           <Ionicons name="ribbon-outline" size={48} color="#FFD700" style={styles.ribbonIcon} />
-          <Text style={styles.bannerTitle}>TAMAT PERLUMBAAN</Text>
-          <Text style={styles.bannerSubtitle}>Keputusan rasmi anda direkodkan dalam pangkalan data acara.</Text>
+          <Text style={styles.bannerTitle}>RACE FINISHED</Text>
+          <Text style={styles.bannerSubtitle}>Your official results have been recorded in the event database.</Text>
         </View>
 
         {/* Highlight Stats Block */}
         <View style={styles.statsCard}>
           <View style={styles.rankRow}>
-            <Text style={styles.rankLabel}>KEDUDUKAN (SEMENTARA)</Text>
+            <Text style={styles.rankLabel}>RANKING (PROVISIONAL)</Text>
             <Text style={[styles.rankValue, { color: theme.colors.accent }]}>
-              TEMPAT KE-{teamRank} / {totalTeams}
+              RANK #{teamRank} / {totalTeams}
             </Text>
           </View>
 
@@ -110,7 +110,7 @@ export default function PersonalResultsScreen() {
             <View style={[styles.statCol, !rules.pointsSystemEnabled && { flex: 1, borderRightWidth: 0, alignItems: 'center' }]}>
               <View style={styles.statHeader}>
                 <Ionicons name="time-outline" size={18} color={theme.colors.primary} />
-                <Text style={styles.statLabel}>Masa Selesai</Text>
+                <Text style={styles.statLabel}>Completion Time</Text>
               </View>
               <Text style={styles.statValue}>{formatFullTime(elapsedTime)}</Text>
             </View>
@@ -119,7 +119,7 @@ export default function PersonalResultsScreen() {
               <View style={styles.statCol}>
                 <View style={styles.statHeader}>
                   <Ionicons name="trophy-outline" size={18} color={theme.colors.primary} />
-                  <Text style={styles.statLabel}>Jumlah Mata</Text>
+                  <Text style={styles.statLabel}>Total Points</Text>
                 </View>
                 <Text style={styles.statValue}>{finalPoints} Pts</Text>
               </View>
@@ -129,13 +129,13 @@ export default function PersonalResultsScreen() {
 
 
         {/* Analytics Card */}
-        <Card role="participant" title="Analitis Prestasi Larian" borderAccent="left">
+        <Card role="participant" title="Race Performance Analytics" borderAccent="left">
           <View style={styles.analyticsList}>
             
             <View style={styles.analyticRow}>
               <View style={styles.analyticLabelCol}>
                 <Ionicons name="speedometer-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.analyticLabel}>Purata Pace per CP</Text>
+                <Text style={styles.analyticLabel}>Average Pace per CP</Text>
               </View>
               <Text style={styles.analyticValue}>
                 {avgPaceMin > 0 ? `${avgPaceMin}m ` : ''}{avgPaceSec}s / CP
@@ -145,7 +145,7 @@ export default function PersonalResultsScreen() {
             <View style={styles.analyticRow}>
               <View style={styles.analyticLabelCol}>
                 <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.success} />
-                <Text style={styles.analyticLabel}>Kadar Penyelesaian CP</Text>
+                <Text style={styles.analyticLabel}>CP Completion Rate</Text>
               </View>
               <Text style={styles.analyticValue}>100% ({completedCount}/{totalCps} CP)</Text>
             </View>
@@ -153,16 +153,16 @@ export default function PersonalResultsScreen() {
             <View style={styles.analyticRow}>
               <View style={styles.analyticLabelCol}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.analyticLabel}>Status Akuan Krew</Text>
+                <Text style={styles.analyticLabel}>Crew Verification Status</Text>
               </View>
-              <Badge label="DISAHKAN" state="success" />
+              <Badge label="VERIFIED" state="success" />
             </View>
 
             {rules.pointsSystemEnabled && (
               <View style={styles.analyticRow}>
                 <View style={styles.analyticLabelCol}>
                   <Ionicons name="flame-outline" size={20} color={theme.colors.accent} />
-                  <Text style={styles.analyticLabel}>Mata CP Akhir</Text>
+                  <Text style={styles.analyticLabel}>Final CP Points</Text>
                 </View>
                 <Text style={[styles.analyticValue, { color: theme.colors.accent, fontWeight: '700' }]}>+300 Pts</Text>
               </View>
@@ -174,7 +174,7 @@ export default function PersonalResultsScreen() {
         {/* Congratulations Notice */}
         <View style={styles.noticeCard}>
           <Text style={styles.noticeText}>
-            Sila tunjukkan paparan skrin ini kepada krew pendaftaran di meja urus setia utama untuk menebus medal fizikal dan cenderahati acara kumpulan anda. Terima kasih kerana menyertai!
+            Please show this screen to registration crew at the main secretariat desk to redeem your team physical medals and event souvenirs. Thank you for participating!
           </Text>
         </View>
 
@@ -185,7 +185,7 @@ export default function PersonalResultsScreen() {
             onPress={handleFinishDemo}
             activeOpacity={0.85}
           >
-            <Text style={styles.finishBtnText}>Selesai & Log Keluar</Text>
+            <Text style={styles.finishBtnText}>Finish & Log Out</Text>
             <Ionicons name="exit-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>

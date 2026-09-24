@@ -48,11 +48,11 @@ export default function ParticipantJoinScreen() {
     const cleanTeamName = teamName.trim();
 
     if (!cleanEventCode) {
-      Alert.alert('Ralat', 'Sila masukkan Kod Acara.');
+      Alert.alert('Error', 'Please enter an Event Code.');
       return;
     }
     if (!cleanTeamName) {
-      Alert.alert('Ralat', 'Sila masukkan Nama Kumpulan.');
+      Alert.alert('Error', 'Please enter a Team Name.');
       return;
     }
 
@@ -66,9 +66,9 @@ export default function ParticipantJoinScreen() {
       ) || (activeEvent && (activeEvent.id.toUpperCase() === cleanEventCode || (activeEvent.joinCode && activeEvent.joinCode.toUpperCase() === cleanEventCode)) ? activeEvent : null) || activeEvent;
 
       if (!targetEvent && events.length > 0) {
-        const errorMsg = `Kod Acara "${cleanEventCode}" tidak wujud. Sila semak Kod Penyertaan yang diberikan penganjur.`;
+        const errorMsg = `Event Code "${cleanEventCode}" does not exist. Please check the Join Code provided by the organizer.`;
         setAuthError(errorMsg);
-        Alert.alert('Ralat Log Masuk', errorMsg);
+        Alert.alert('Login Error', errorMsg);
         return;
       }
 
@@ -94,16 +94,16 @@ export default function ParticipantJoinScreen() {
       );
 
       if (!matchedTeam) {
-        const errorMsg = `Nama kumpulan "${cleanTeamName}" tidak ditemui dalam senarai pendaftaran yang diluluskan bagi Kod Acara ${cleanEventCode}. Sila semak semula ejaan nama kumpulan anda.`;
+        const errorMsg = `Team name "${cleanTeamName}" was not found in the approved registration list for Event Code ${cleanEventCode}. Please check your team name spelling.`;
         setAuthError(errorMsg);
-        Alert.alert('Ralat Log Masuk', errorMsg);
+        Alert.alert('Login Error', errorMsg);
         return;
       }
 
       if (matchedTeam.status === 'pending') {
-        const errorMsg = `Pendaftaran kumpulan "${matchedTeam.name}" masih dalam status menantikan kelulusan penganjur.`;
+        const errorMsg = `Registration for team "${matchedTeam.name}" is still pending organizer approval.`;
         setAuthError(errorMsg);
-        Alert.alert('Status Pendaftaran', errorMsg);
+        Alert.alert('Registration Status', errorMsg);
         return;
       }
 
@@ -136,9 +136,9 @@ export default function ParticipantJoinScreen() {
         navigation.navigate('ParticipantAttendanceScan');
       }
     } catch (_err: unknown) {
-      const errorMsg = `Gagal menyemak permohonan untuk pasukan "${cleanTeamName}". Sila semak semula maklumat.`;
+      const errorMsg = `Failed to verify registration for team "${cleanTeamName}". Please check your details.`;
       setAuthError(errorMsg);
-      Alert.alert('Ralat Log Masuk', errorMsg);
+      Alert.alert('Login Error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -167,7 +167,7 @@ export default function ParticipantJoinScreen() {
           <View style={{ flex: 1 }}>
             {/* Back Button */}
             <SecondaryButton
-              label="Kembali"
+              label="Back"
               onPress={handleBack}
               icon={<Ionicons name="arrow-back-outline" size={18} color={COLORS.participant.primary} />}
               role="participant"
@@ -184,19 +184,19 @@ export default function ParticipantJoinScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text style={styles.title}>Sertai Acara Kumpulan</Text>
+              <Text style={styles.title}>Join Team Event</Text>
               <Text style={styles.subtitle}>
-                Sila masukkan Kod Acara dan Nama Kumpulan anda yang telah diluluskan oleh penganjur.
+                Please enter your Event Code and Team Name as approved by the organizer.
               </Text>
             </View>
 
             {/* Action Form Card */}
             <Card style={styles.formCard} role="participant">
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>KOD PENYERTAAN ACARA</Text>
+                <Text style={styles.inputLabel}>EVENT JOIN CODE</Text>
                 <TextInput
                   style={[styles.textInput, styles.codeHighlight]}
-                  placeholder="Contoh: XT2026"
+                  placeholder="e.g. XT2026"
                   value={eventCode}
                   onChangeText={setEventCode}
                   autoCapitalize="characters"
@@ -206,10 +206,10 @@ export default function ParticipantJoinScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>NAMA KUMPULAN</Text>
+                <Text style={styles.inputLabel}>TEAM NAME</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Contoh: Pasukan Harimau"
+                  placeholder="e.g. Tiger Team"
                   value={teamName}
                   onChangeText={setTeamName}
                   placeholderTextColor={COLORS.textMuted}
@@ -224,7 +224,7 @@ export default function ParticipantJoinScreen() {
               ) : null}
 
               <PrimaryButton
-                label={loading ? "Menyemak..." : "Sertai Acara (Join Event)"}
+                label={loading ? "Verifying..." : "Join Event"}
                 onPress={handleStartSubmit}
                 disabled={loading}
                 role="participant"

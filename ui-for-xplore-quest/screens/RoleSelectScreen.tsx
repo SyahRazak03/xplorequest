@@ -8,8 +8,6 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  Modal,
-  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -29,9 +27,9 @@ export default function RoleSelectScreen() {
   const roles = [
     {
       id: 'participant' as const,
-      title: 'Ketua Kumpulan (Participant)',
-      malayTitle: 'Ketua Pasukan',
-      description: 'Daftar kod menyertai explorace, selesaikan klu aktiviti, imbas kod QR checkpoint.',
+      title: 'Team Leader (Participant)',
+      categoryTitle: 'Team Leader',
+      description: 'Enter event join code, solve activity clues, scan checkpoint QR codes.',
       icon: 'people-outline',
       themeColor: COLORS.participant.primary,
       accentColor: COLORS.participant.accent,
@@ -39,9 +37,9 @@ export default function RoleSelectScreen() {
     },
     {
       id: 'crew' as const,
-      title: 'Krew Acara (Marshal)',
-      malayTitle: 'Marshal Checkpoint',
-      description: 'Sahkan cabaran fizikal kumpulan di lokasi, ambil gambar bukti, jana kod QR rawak 30 saat.',
+      title: 'Event Crew (Marshal)',
+      categoryTitle: 'Checkpoint Marshal',
+      description: 'Verify physical team challenges on-site, upload photo proof, generate dynamic 30s QR codes.',
       icon: 'qr-code-outline',
       themeColor: COLORS.crew.primary,
       accentColor: COLORS.crew.accent,
@@ -49,9 +47,9 @@ export default function RoleSelectScreen() {
     },
     {
       id: 'admin' as const,
-      title: 'Penganjur Acara (Admin)',
-      malayTitle: 'Urus Setia / Admin',
-      description: 'Pantau status, luluskan penyertaan pasukan, semak live leaderboard, urus checkpoint.',
+      title: 'Event Organizer (Admin)',
+      categoryTitle: 'Organizer / Admin',
+      description: 'Monitor race status, approve team pre-registrations, view live leaderboard, manage checkpoints.',
       icon: 'settings-outline',
       themeColor: COLORS.admin.primary,
       accentColor: COLORS.admin.accent,
@@ -71,7 +69,6 @@ export default function RoleSelectScreen() {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
@@ -83,9 +80,9 @@ export default function RoleSelectScreen() {
 
         {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.title}>Pilih Peranan</Text>
+          <Text style={styles.title}>Select Role</Text>
           <Text style={styles.subtitle}>
-            Sila pilih peranan anda untuk memulakan XploreQuest.
+            Please select your role to proceed with XploreQuest.
           </Text>
         </View>
 
@@ -114,8 +111,8 @@ export default function RoleSelectScreen() {
 
                 {/* Right Side: Text details */}
                 <View style={styles.detailsWrapper}>
-                  <Text style={[styles.roleMalayTitle, { color: item.themeColor }]}>
-                    {item.malayTitle}
+                  <Text style={[styles.roleCategoryTitle, { color: item.themeColor }]}>
+                    {item.categoryTitle}
                   </Text>
                   <Text style={styles.roleTitle}>{item.title}</Text>
                   <Text style={styles.roleDesc}>{item.description}</Text>
@@ -136,7 +133,7 @@ export default function RoleSelectScreen() {
         {/* Info Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Aplikasi XploreQuest sedia untuk pengurusan acara explorace langsung.
+            XploreQuest platform ready for live explorace event management.
           </Text>
         </View>
       </ScrollView>
@@ -156,7 +153,6 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     justifyContent: 'space-between',
   },
-  // Decorative element positions
   starTopRight: {
     position: 'absolute',
     top: SPACING.lg,
@@ -226,7 +222,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: SPACING.xs,
   },
-  roleMalayTitle: {
+  roleCategoryTitle: {
     fontSize: 12,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     textTransform: 'uppercase',
@@ -258,94 +254,5 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textAlign: 'center',
     lineHeight: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(28, 16, 46, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FAF9F6', // Field Journal Cream
-    borderRadius: RADIUS.lg,
-    paddingTop: 32,
-    paddingBottom: 24,
-    paddingHorizontal: SPACING.lg,
-    borderWidth: 1.5,
-    borderColor: '#E5E0D6',
-    borderStyle: 'dashed',
-    ...SHADOWS.lg,
-    position: 'relative',
-  },
-  modalWashiTape: {
-    position: 'absolute',
-    top: -8,
-    left: 20,
-    transform: [{ rotate: '-3deg' }],
-    zIndex: 10,
-  },
-  modalWashiTapeInner: {
-    width: 56,
-    height: 14,
-    backgroundColor: COLORS.decorative.starBurst,
-    opacity: 0.85,
-    borderRadius: 3,
-  },
-  modalHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  modalCloseBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.participant.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalTitle: {
-    fontSize: 26,
-    color: COLORS.participant.primary,
-    fontFamily: TYPOGRAPHY.fontFamily.display,
-  },
-  modalSubText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    lineHeight: 18,
-    marginBottom: SPACING.lg,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.background,
-    marginBottom: SPACING.md,
-  },
-  optionIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: SPACING.md,
-  },
-  optionTextWrapper: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 14,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: 4,
-  },
-  optionDesc: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    lineHeight: 15,
   },
 });

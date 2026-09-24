@@ -63,7 +63,7 @@ export async function getCheckpoints(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal memuat turun pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to load checkpoints.';
     throw new Error(msg);
   }
 
@@ -98,7 +98,7 @@ export async function createCheckpoint(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal mencipta pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to create checkpoint.';
     throw new Error(msg);
   }
 
@@ -137,7 +137,7 @@ export async function updateCheckpoint(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal mengemaskini pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to update checkpoint.';
     throw new Error(msg);
   }
 
@@ -172,7 +172,7 @@ export async function deleteCheckpoint(
   };
 
   if (!resp.ok || !json.success) {
-    const msg = json.error?.message ?? 'Gagal memadam pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to delete checkpoint.';
     throw new Error(msg);
   }
 
@@ -206,7 +206,7 @@ export async function saveBoundary(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal menyimpan sempadan geofence.';
+    const msg = json.error?.message ?? 'Failed to save geofence boundary.';
     throw new Error(msg);
   }
 
@@ -277,7 +277,7 @@ export async function skipCheckpoint(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal melangkau pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to skip checkpoint.';
     throw new Error(msg);
   }
 
@@ -315,7 +315,7 @@ export async function scanCheckpoint(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal mengesahkan imbasan pos kawalan.';
+    const msg = json.error?.message ?? 'Failed to verify checkpoint scan.';
     throw new Error(msg);
   }
 
@@ -356,7 +356,7 @@ export async function finishRaceScan(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const errorObj = new Error(json.error?.message ?? 'Gagal menamatkan perlumbaan.') as Error & {
+    const errorObj = new Error(json.error?.message ?? 'Failed to finish race.') as Error & {
       code?: string;
       uncompletedCheckpoints?: IncompleteCheckpointInfo[];
     };
@@ -403,7 +403,7 @@ export async function generateAttendanceQR(
   };
 
   if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Gagal menjana Kod QR Pelepasan Kehadiran.';
+    const msg = json.error?.message ?? 'Failed to generate attendance release QR code.';
     throw new Error(msg);
   }
 

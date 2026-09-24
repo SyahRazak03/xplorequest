@@ -72,7 +72,7 @@ function doSegmentsIntersect(
  */
 export function isValidSimplePolygon(vertices: GeoPoint[]): { valid: boolean; reason?: string } {
   if (!vertices || vertices.length < 3) {
-    return { valid: false, reason: 'Poligon sempadan mesti mempunyai sekurang-kurangnya 3 bucu.' };
+    return { valid: false, reason: 'Boundary polygon must have at least 3 vertices.' };
   }
 
   const coords = vertices.map(toCoordTuple);
@@ -83,7 +83,7 @@ export function isValidSimplePolygon(vertices: GeoPoint[]): { valid: boolean; re
     const current = coords[i];
     const next = coords[(i + 1) % n];
     if (current[0] === next[0] && current[1] === next[1]) {
-      return { valid: false, reason: 'Poligon tidak boleh mempunyai bucu bertindih yang berturutan.' };
+      return { valid: false, reason: 'Polygon cannot have duplicate consecutive vertices.' };
     }
   }
 
@@ -102,7 +102,7 @@ export function isValidSimplePolygon(vertices: GeoPoint[]): { valid: boolean; re
       const d = coords[(j + 1) % n];
 
       if (doSegmentsIntersect(a, b, c, d)) {
-        return { valid: false, reason: 'Sempadan poligon bersilang dengan dirinya sendiri (self-intersecting).' };
+        return { valid: false, reason: 'Polygon boundary is self-intersecting.' };
       }
     }
   }

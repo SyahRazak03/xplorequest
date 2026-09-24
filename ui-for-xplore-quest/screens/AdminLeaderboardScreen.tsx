@@ -138,7 +138,7 @@ export default function AdminLeaderboardScreen() {
             : t
         )
       );
-      setTickerMessage(`${exceeded.teamName} ditandakan DNF — melebihi had masa (${limit} min).`);
+      setTickerMessage(`${exceeded.teamName} marked DNF — exceeded time limit (${limit} min).`);
     }
   }, [leaderboardData, rules.maxRaceTime]);
 
@@ -155,7 +155,7 @@ export default function AdminLeaderboardScreen() {
         return t;
       })
     );
-    setTickerMessage('Masa simulasi dipercepatkan: +15 Minit bagi semua kumpulan aktif.');
+    setTickerMessage('Simulation time fast-forwarded: +15 Mins for all active teams.');
   };
 
 
@@ -196,14 +196,14 @@ export default function AdminLeaderboardScreen() {
   const getStatusBadge = (status: 'active' | 'finished' | 'dnf' | 'registered') => {
     switch (status) {
       case 'finished':
-        return <Badge label="SELESAI" state="success" size="sm" />;
+        return <Badge label="FINISHED" state="success" size="sm" />;
       case 'dnf':
         return <Badge label="DNF" state="danger" size="sm" />;
       case 'registered':
-        return <Badge label="BERDAFTAR" state="success" size="sm" />;
+        return <Badge label="REGISTERED" state="success" size="sm" />;
       case 'active':
       default:
-        return <Badge label="AKTIF" state="pending" size="sm" />;
+        return <Badge label="ACTIVE" state="pending" size="sm" />;
     }
   };
 
@@ -240,8 +240,8 @@ export default function AdminLeaderboardScreen() {
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Keputusan Rasmi Acara</Text>
-            <Text style={styles.headerSubtitle}>Pemantauan kedudukan masa nyata (ADM-05)</Text>
+            <Text style={styles.headerTitle}>Official Event Results</Text>
+            <Text style={styles.headerSubtitle}>Real-time leaderboard monitoring</Text>
           </View>
         </View>
         <View style={{ padding: SPACING.md }}>
@@ -263,8 +263,8 @@ export default function AdminLeaderboardScreen() {
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Keputusan Rasmi Acara</Text>
-            <Text style={styles.headerSubtitle}>Pemantauan kedudukan masa nyata (ADM-05)</Text>
+            <Text style={styles.headerTitle}>Official Event Results</Text>
+            <Text style={styles.headerSubtitle}>Real-time leaderboard monitoring</Text>
           </View>
         </View>
 
@@ -272,7 +272,7 @@ export default function AdminLeaderboardScreen() {
         <View style={[styles.liveIndicatorContainer, !isRaceStarted && { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
           <Animated.View style={[styles.liveDot, { opacity: isRaceStarted ? pulseOpacity : 1, backgroundColor: isRaceStarted ? COLORS.success : COLORS.warning }]} />
           <Text style={[styles.liveIndicatorText, { color: isRaceStarted ? COLORS.success : COLORS.warning }]}>
-            {isRaceStarted ? 'LIVE' : 'BELUM MULA'}
+            {isRaceStarted ? 'LIVE' : 'NOT STARTED'}
           </Text>
         </View>
       </View>
@@ -301,9 +301,9 @@ export default function AdminLeaderboardScreen() {
               }}
             >
               <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
-                {f === 'all' && 'Semua'}
-                {f === 'active' && 'Aktif'}
-                {f === 'finished' && 'Selesai'}
+                {f === 'all' && 'All'}
+                {f === 'active' && 'Active'}
+                {f === 'finished' && 'Finished'}
                 {f === 'dnf' && 'DNF'}
               </Text>
             </TouchableOpacity>
@@ -318,10 +318,10 @@ export default function AdminLeaderboardScreen() {
             <Ionicons name="information-circle-outline" size={20} color={COLORS.admin.primary} />
             <View style={{ flex: 1 }}>
               <Text style={styles.pendingBannerTitle}>
-                Pelepasan Acara Belum Bermula
+                Event Start Pending
               </Text>
               <Text style={styles.pendingBannerSubtitle}>
-                Keputusan live, pemantauan timer, dan denda DNF akan diaktifkan secara automatik sebaik sahaja krew pos kawalan memulakan pelepasan perlumbaan.
+                Live results, timer tracking, and DNF penalties will activate automatically once crew starts the race release.
               </Text>
             </View>
           </View>
@@ -343,8 +343,8 @@ export default function AdminLeaderboardScreen() {
 
         {filteredData.length === 0 ? (
           <EmptyState
-            title="Tiada Pasukan Hadir Lagi"
-            description="Belum ada pasukan yang mengimbas imbasan kehadiran di Pos Kehadiran Mula. Senarai akan dikemas kini secara automatik apabila imbasan disahkan."
+            title="No Teams Present Yet"
+            description="No team has scanned attendance at the Start Checkpoint yet. List will update automatically when scans are verified."
             icon="people-outline"
           />
         ) : (
@@ -373,9 +373,9 @@ export default function AdminLeaderboardScreen() {
                 <View style={styles.teamDetailsWrapper}>
                   <Text style={styles.teamNameText}>{team.teamName}</Text>
                   <View style={styles.metaRow}>
-                    <Text style={styles.metaText}>Masa: {team.totalTimeFormatted}</Text>
+                    <Text style={styles.metaText}>Time: {team.totalTimeFormatted}</Text>
                     {team.penaltiesMinutes > 0 && (
-                      <Text style={styles.penaltyText}>Denda: +{team.penaltiesMinutes}m</Text>
+                      <Text style={styles.penaltyText}>Penalty: +{team.penaltiesMinutes}m</Text>
                     )}
                   </View>
                 </View>
@@ -385,7 +385,7 @@ export default function AdminLeaderboardScreen() {
                   {rules.pointsSystemEnabled && (
                     <View style={styles.pointsRow}>
                       <Text style={styles.pointsNumberText}>{team.points}</Text>
-                      <Text style={styles.pointsLabelText}>Mata</Text>
+                      <Text style={styles.pointsLabelText}>Pts</Text>
                       {team.lastChange && (
                         <Ionicons
                           name={team.lastChange === 'up' ? 'arrow-up' : 'arrow-down'}

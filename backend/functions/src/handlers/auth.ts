@@ -43,15 +43,15 @@ export const authRouter = Router();
 // ── Validation schemas ────────────────────────────────────────────────────────
 
 const adminRegisterSchema = z.object({
-  name: z.string().min(1, 'Nama diperlukan.').max(100),
-  email: z.string().email('E-mel tidak sah.').max(254),
-  password: z.string().min(6, 'Kata laluan mestilah sekurang-kurangnya 6 aksara.').max(128),
+  name: z.string().min(1, 'Name is required.').max(100),
+  email: z.string().email('Invalid email.').max(254),
+  password: z.string().min(6, 'Password must be at least 6 characters.').max(128),
   organization: z.string().max(100).optional(),
 });
 
 const adminLoginSchema = z.object({
-  email: z.string().email('E-mel tidak sah.').max(254),
-  password: z.string().min(6, 'Kata laluan terlalu pendek.').max(128),
+  email: z.string().email('Invalid email.').max(254),
+  password: z.string().min(6, 'Password is too short.').max(128),
 });
 
 const crewLoginSchema = z.object({
@@ -62,19 +62,19 @@ const crewLoginSchema = z.object({
     .optional(),
   crewPinCode: z
     .string()
-    .length(4, 'PIN mestilah 4 digit.')
-    .regex(/^\d{4}$/, 'PIN mestilah nombor sahaja.'),
-  checkpointId: z.string().min(1, 'Checkpoint ID diperlukan.').max(32),
-  eventId: z.string().min(1, 'Event ID diperlukan.').max(64),
+    .length(4, 'PIN must be 4 digits.')
+    .regex(/^\d{4}$/, 'PIN must be numeric digits only.'),
+  checkpointId: z.string().min(1, 'Checkpoint ID is required.').max(32),
+  eventId: z.string().min(1, 'Event ID is required.').max(64),
 });
 
 const participantJoinSchema = z.object({
   joinCode: z
     .string()
-    .min(4, 'Kod penyertaan tidak sah.')
+    .min(4, 'Invalid join code.')
     .max(10)
     .transform((v) => v.trim().toUpperCase()),
-  teamName: z.string().min(1, 'Nama kumpulan diperlukan.').max(100).trim(),
+  teamName: z.string().min(1, 'Team name is required.').max(100).trim(),
 });
 
 // ── Helper: extract raw IP for rate limiter ───────────────────────────────────
@@ -101,7 +101,7 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     const parsed = adminRegisterSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Input tidak sah.');
+      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Invalid input.');
     }
 
     const { name, email, password, organization } = parsed.data;
@@ -118,7 +118,7 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     const parsed = adminLoginSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Input tidak sah.');
+      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Invalid input.');
     }
 
     const { email, password } = parsed.data;
@@ -139,7 +139,7 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     const parsed = crewLoginSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Input tidak sah.');
+      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Invalid input.');
     }
 
     const { marshalId, crewPinCode, checkpointId, eventId } = parsed.data;
@@ -159,7 +159,7 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     const parsed = participantJoinSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Input tidak sah.');
+      throw new AppError(ErrorCode.BAD_REQUEST, parsed.error.errors[0]?.message ?? 'Invalid input.');
     }
 
     const { joinCode, teamName } = parsed.data;
@@ -179,10 +179,10 @@ authRouter.post(
   asyncHandler(async (req, res) => {
     const uid = req.user?.uid;
     if (!uid) {
-      throw new AppError(ErrorCode.UNAUTHORIZED, 'Pengesahan gagal.');
+      throw new AppError(ErrorCode.UNAUTHORIZED, 'Authentication failed.');
     }
     await logout(uid);
-    sendSuccess(res, { message: 'Log keluar berjaya.' });
+    sendSuccess(res, { message: 'Successfully logged out.' });
   })
 );
 
@@ -194,7 +194,7 @@ authRouter.get(
   asyncHandler(async (req, res) => {
     const uid = req.user?.uid;
     if (!uid) {
-      throw new AppError(ErrorCode.UNAUTHORIZED, 'Pengesahan gagal.');
+      throw new AppError(ErrorCode.UNAUTHORIZED, 'Authentication failed.');
     }
     const profile = await getMe(uid);
     sendSuccess(res, profile);

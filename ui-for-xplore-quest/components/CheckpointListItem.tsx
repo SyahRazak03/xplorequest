@@ -38,7 +38,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
           iconColor: colors.success,
           bgColor: '#F0FDF4', // Light success green
           borderColor: '#DCFCE7',
-          statusText: 'Selesai',
+          statusText: 'Completed',
           statusState: 'success' as const,
         };
       case 'active':
@@ -47,7 +47,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
           iconColor: colors.primary,
           bgColor: colors.primaryLight,
           borderColor: colors.primary,
-          statusText: 'Sedang Aktif',
+          statusText: 'Active Now',
           statusState: 'warning' as const, // orange-ish alert
         };
       case 'pending':
@@ -56,7 +56,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
           iconColor: colors.pending,
           bgColor: '#FEF3C7', // Light amber
           borderColor: '#FDE68A',
-          statusText: 'Dilangkau / Sedia',
+          statusText: 'Skipped / Ready',
           statusState: 'warning' as const,
         };
       case 'locked':
@@ -66,7 +66,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
           iconColor: colors.textMuted,
           bgColor: '#F8FAFC', // Slate 50
           borderColor: colors.border,
-          statusText: 'Terkunci',
+          statusText: 'Locked',
           statusState: 'neutral' as const,
         };
     }
@@ -130,15 +130,15 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
                 },
               ]}
             >
-              {checkpoint.isStart ? 'MULA' : checkpoint.isFinish ? 'TAMAT' : `CP ${index}`}
+              {checkpoint.isStart ? 'START' : checkpoint.isFinish ? 'FINISH' : `CP ${index}`}
             </Text>
               <View style={styles.badgeRow}>
                 {checkpoint.isAttendanceStation && (
-                  <Badge label="Stesen Kehadiran" state="warning" />
+                  <Badge label="Attendance Station" state="warning" />
                 )}
                 {rules.pointsSystemEnabled && (
                   <Badge
-                    label={`${checkpoint.scorePoints} Mata`}
+                    label={`${checkpoint.scorePoints} Pts`}
                     state={status === 'completed' ? 'success' : 'info'}
                   />
                 )}
@@ -179,7 +179,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
               borderTopColor: colors.border,
               borderTopWidth: 1,
               padding: spacing.md,
-              backgroundColor: '#FAFAF9', // Malaysian off-white tint for detail pane
+              backgroundColor: '#FAFAF9',
             },
           ]}
         >
@@ -197,7 +197,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
                   },
                 ]}
               >
-                PETUNJUK / KLU
+                CLUE / HINT
               </Text>
             </View>
             <Text
@@ -228,7 +228,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
                   },
                 ]}
               >
-                TUGASAN DI POS
+                STATION TASK
               </Text>
             </View>
             <Text
@@ -267,7 +267,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
                       { color: colors.primary, fontWeight: typography.fontWeight.bold },
                     ]}
                   >
-                    Butiran Clue
+                    Clue Details
                   </Text>
                 </TouchableOpacity>
               )}
@@ -293,7 +293,7 @@ export const CheckpointListItem: React.FC<CheckpointListItemProps> = ({
                       { fontWeight: typography.fontWeight.bold },
                     ]}
                   >
-                    {status === 'pending' ? 'Imbas QR Sedia' : 'Imbas QR'}
+                    {status === 'pending' ? 'Scan QR (Ready)' : 'Scan QR'}
                   </Text>
                 </TouchableOpacity>
               )}

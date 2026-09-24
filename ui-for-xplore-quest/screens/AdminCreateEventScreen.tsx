@@ -345,7 +345,7 @@ export default function AdminCreateEventScreen() {
         }
       }
     } catch {
-      Alert.alert('Ralat', 'Gagal memilih gambar.');
+      Alert.alert('Error', 'Failed to pick image.');
     }
   };
 
@@ -368,19 +368,19 @@ export default function AdminCreateEventScreen() {
 
   const handleSubmit = async () => {
     if (!eventName.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan Nama Acara.');
+      Alert.alert('Error', 'Please enter Event Name.');
       return;
     }
     if (!locationName.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan Lokasi Acara.');
+      Alert.alert('Error', 'Please enter Event Location.');
       return;
     }
     if (!eventDate.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan Tarikh Acara.');
+      Alert.alert('Error', 'Please enter Event Date.');
       return;
     }
     if (!startTime.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan Masa Mula.');
+      Alert.alert('Error', 'Please enter Start Time.');
       return;
     }
 
@@ -449,7 +449,7 @@ export default function AdminCreateEventScreen() {
               <Ionicons name="arrow-back" size={24} color={COLORS.text} />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>Penyediaan Acara Baru</Text>
+              <Text style={styles.headerTitle}>New Event Setup</Text>
               <Text style={styles.headerSubtitle}>Stage 4.1 Admin Console (ADM-01)</Text>
             </View>
           </View>
@@ -459,9 +459,9 @@ export default function AdminCreateEventScreen() {
             <View style={styles.successContainer}>
               <View style={styles.successBadgeContainer}>
                 <Ionicons name="checkmark-circle" size={56} color={COLORS.success} />
-                <Text style={styles.successTitle}>Acara Berjaya Dicipta!</Text>
+                <Text style={styles.successTitle}>Event Created Successfully!</Text>
                 <Text style={styles.successSubtitle}>
-                  Sistem kini sedia untuk menerima pendaftaran kumpulan.
+                  System is now ready to receive team registrations.
                 </Text>
               </View>
 
@@ -477,59 +477,59 @@ export default function AdminCreateEventScreen() {
                 ]}
               >
                 <Text style={[styles.shareLabel, { color: COLORS.crew.primary }]}>
-                  PIN MASUK MARSHAL (CREW)
+                  CREW MARSHAL LOGIN PIN
                 </Text>
                 <Text style={[styles.shareCode, { color: COLORS.crew.primary }]}>{crewCode}</Text>
                 <TouchableOpacity
                   style={styles.shareAction}
-                  onPress={() => Alert.alert('Kongsi PIN', 'PIN Crew telah disalin!')}
+                  onPress={() => Alert.alert('Share PIN', 'Crew PIN copied!')}
                 >
                   <Ionicons name="copy-outline" size={16} color={COLORS.crew.primary} />
                   <Text style={[styles.shareActionText, { color: COLORS.crew.primary }]}>
-                    Salin PIN
+                    Copy PIN
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {/* Summary Card */}
-              <Card role="admin" title="Ringkasan Maklumat Acara" borderAccent="left">
+              <Card role="admin" title="Event Summary" borderAccent="left">
                 <View style={styles.summaryGrid}>
                   <View style={styles.summaryItem}>
-                    <Text style={styles.summaryLabel}>Nama Acara</Text>
+                    <Text style={styles.summaryLabel}>Event Name</Text>
                     <Text style={styles.summaryValue}>{eventName}</Text>
                   </View>
 
                   <View style={styles.summaryItem}>
-                    <Text style={styles.summaryLabel}>Lokasi</Text>
+                    <Text style={styles.summaryLabel}>Location</Text>
                     <Text style={styles.summaryValue}>{locationName}</Text>
                   </View>
 
                   <View style={styles.summaryItemRow}>
                     <View style={styles.summaryItemHalf}>
-                      <Text style={styles.summaryLabel}>Tarikh</Text>
+                      <Text style={styles.summaryLabel}>Date</Text>
                       <Text style={styles.summaryValue}>{eventDate}</Text>
                     </View>
                     <View style={styles.summaryItemHalf}>
-                      <Text style={styles.summaryLabel}>Masa Mula</Text>
+                      <Text style={styles.summaryLabel}>Start Time</Text>
                       <Text style={styles.summaryValue}>{startTime}</Text>
                     </View>
                   </View>
 
                   <View style={styles.summaryItemRow}>
                     <View style={styles.summaryItemHalf}>
-                      <Text style={styles.summaryLabel}>Saiz Max Kumpulan</Text>
-                      <Text style={styles.summaryValue}>{maxTeamSize} Orang</Text>
+                      <Text style={styles.summaryLabel}>Max Team Size</Text>
+                      <Text style={styles.summaryValue}>{maxTeamSize} Members</Text>
                     </View>
                     <View style={styles.summaryItemHalf}>
-                      <Text style={styles.summaryLabel}>Had Masa</Text>
-                      <Text style={styles.summaryValue}>4 Jam</Text>
+                      <Text style={styles.summaryLabel}>Time Limit</Text>
+                      <Text style={styles.summaryValue}>4 Hours</Text>
                     </View>
                   </View>
                 </View>
               </Card>
 
               <PrimaryButton
-                label="Ke Papan Pemuka Admin"
+                label="To Admin Dashboard"
                 onPress={handleBackToDashboard}
                 role="admin"
                 style={styles.actionButton}
@@ -538,13 +538,13 @@ export default function AdminCreateEventScreen() {
           ) : (
             /* Creation Form View */
             <View style={styles.formContainer}>
-              <Card role="admin" title="Konfigurasi Parameter Acara" borderAccent="top">
+              <Card role="admin" title="Event Parameter Configuration" borderAccent="top">
                 {/* Event Name Input */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Nama Acara</Text>
+                  <Text style={styles.label}>Event Name</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Contoh: Cabaran Rimba 2026"
+                    placeholder="Example: Jungle Challenge 2026"
                     value={eventName}
                     onChangeText={setEventName}
                     placeholderTextColor={COLORS.textMuted}
@@ -553,11 +553,11 @@ export default function AdminCreateEventScreen() {
 
                 {/* Location Input with Presets & Map Selector */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Lokasi Acara</Text>
+                  <Text style={styles.label}>Event Location</Text>
                   <View style={styles.inputWithIconRow}>
                     <TextInput
                       style={[styles.textInput, { flex: 1 }]}
-                      placeholder="Contoh: Taman Tasik Titiwangsa, KL"
+                      placeholder="Example: Titiwangsa Lake Park, KL"
                       value={locationName}
                       onChangeText={setLocationName}
                       placeholderTextColor={COLORS.textMuted}
@@ -568,7 +568,7 @@ export default function AdminCreateEventScreen() {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="map-outline" size={20} color={COLORS.admin.primary} />
-                      <Text style={styles.iconActionText}>Peta</Text>
+                      <Text style={styles.iconActionText}>Map</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -609,13 +609,13 @@ export default function AdminCreateEventScreen() {
                 <View style={styles.rowInputs}>
                   {/* Date Input */}
                   <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.label}>Tarikh</Text>
+                    <Text style={styles.label}>Date</Text>
                     <View style={styles.pickerTriggerInput}>
                       <TextInput
                         style={{ flex: 1, fontSize: 14, color: COLORS.text, paddingVertical: 2, paddingHorizontal: 0 }}
                         value={eventDate}
                         onChangeText={setEventDate}
-                        placeholder="Contoh: 27 Jun 2026"
+                        placeholder="Example: 27 June 2026"
                         placeholderTextColor={COLORS.textMuted}
                       />
                       <TouchableOpacity
@@ -630,13 +630,13 @@ export default function AdminCreateEventScreen() {
 
                   {/* Time Input */}
                   <View style={[styles.inputGroup, { flex: 1, marginLeft: SPACING.md }]}>
-                    <Text style={styles.label}>Masa Mula</Text>
+                    <Text style={styles.label}>Start Time</Text>
                     <View style={styles.pickerTriggerInput}>
                       <TextInput
                         style={{ flex: 1, fontSize: 14, color: COLORS.text, paddingVertical: 2, paddingHorizontal: 0 }}
                         value={startTime}
                         onChangeText={setStartTime}
-                        placeholder="Contoh: 08:00 AM"
+                        placeholder="Example: 08:00 AM"
                         placeholderTextColor={COLORS.textMuted}
                       />
                       <TouchableOpacity
@@ -652,7 +652,7 @@ export default function AdminCreateEventScreen() {
 
                 {/* Stepper: Max Team Size */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Had Maksimum Ahli Kumpulan</Text>
+                  <Text style={styles.label}>Maximum Team Size Limit</Text>
                   <View style={styles.stepperContainer}>
                     <TouchableOpacity
                       style={[styles.stepperButton, maxTeamSize <= 2 && styles.stepperButtonDisabled]}
@@ -668,7 +668,7 @@ export default function AdminCreateEventScreen() {
 
                     <View style={styles.stepperValueContainer}>
                       <Text style={styles.stepperValueText}>{maxTeamSize}</Text>
-                      <Text style={styles.stepperValueLabel}>Orang / Kumpulan</Text>
+                      <Text style={styles.stepperValueLabel}>Members / Team</Text>
                     </View>
 
                     <TouchableOpacity
@@ -687,13 +687,13 @@ export default function AdminCreateEventScreen() {
               </Card>
 
               {/* Web Pre-Registration Configuration Card (Stage 17) */}
-              <Card role="admin" title="Konfigurasi Pre-Pendaftaran Web (Stage 17)" borderAccent="top">
+              <Card role="admin" title="Web Pre-Registration Configuration" borderAccent="top">
                 {/* URL Slug Input & Preview */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Pautan Alamat Form Web (URL Slug)</Text>
+                  <Text style={styles.label}>Web Form Address Link (URL Slug)</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Contoh: explorace-tasik-titiwangsa-2026"
+                    placeholder="Example: explorace-tasik-titiwangsa-2026"
                     value={isCustomSlug ? urlSlug : effectiveSlug}
                     onChangeText={(text) => {
                       setIsCustomSlug(true);
@@ -703,16 +703,16 @@ export default function AdminCreateEventScreen() {
                     placeholderTextColor={COLORS.textMuted}
                   />
                   <Text style={styles.slugPreviewText}>
-                    🌐 Pautan Borang: xplorequest-cab6c.web.app/registration-form/{effectiveSlug || 'nama-acara'}
+                    🌐 Form Link: xplorequest-cab6c.web.app/registration-form/{effectiveSlug || 'event-name'}
                   </Text>
                 </View>
 
                 {/* Entry Fee Input */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Yuran Pendaftaran Kumpulan (RM)</Text>
+                  <Text style={styles.label}>Team Registration Fee (RM)</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Contoh: 50"
+                    placeholder="Example: 50"
                     keyboardType="numeric"
                     value={entryFee}
                     onChangeText={setEntryFee}
@@ -722,10 +722,10 @@ export default function AdminCreateEventScreen() {
 
                 {/* Bank Details Input */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Maklumat Akaun Bank Pembayaran</Text>
+                  <Text style={styles.label}>Payment Bank Account Details</Text>
                   <TextInput
                     style={[styles.textInput, { height: 70, textAlignVertical: 'top' }]}
-                    placeholder="Nama Bank, Nombor Akaun, Nama Penerima"
+                    placeholder="Bank Name, Account Number, Recipient Name"
                     multiline
                     numberOfLines={3}
                     value={paymentBankDetails}
@@ -738,14 +738,14 @@ export default function AdminCreateEventScreen() {
                 <View style={styles.imagePickersRow}>
                   {/* Banner Image Picker */}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.label}>Gambar Banner</Text>
+                    <Text style={styles.label}>Banner Image</Text>
                     <TouchableOpacity
                       style={styles.uploadPickerBtn}
                       onPress={() => handlePickImage('banner')}
                     >
                       <Ionicons name="image-outline" size={20} color={COLORS.admin.primary} />
                       <Text style={styles.uploadPickerText}>
-                        {bannerUri ? 'Tukar Banner' : 'Muat Naik Banner'}
+                        {bannerUri ? 'Change Banner' : 'Upload Banner'}
                       </Text>
                     </TouchableOpacity>
                     {bannerUri && (
@@ -755,14 +755,14 @@ export default function AdminCreateEventScreen() {
 
                   {/* Payment QR Image Picker */}
                   <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                    <Text style={styles.label}>QR Pembayaran</Text>
+                    <Text style={styles.label}>Payment QR</Text>
                     <TouchableOpacity
                       style={styles.uploadPickerBtn}
                       onPress={() => handlePickImage('payment_qr')}
                     >
                       <Ionicons name="qr-code-outline" size={20} color={COLORS.admin.primary} />
                       <Text style={styles.uploadPickerText}>
-                        {paymentQrUri ? 'Tukar QR' : 'Muat Naik QR'}
+                        {paymentQrUri ? 'Change QR' : 'Upload QR'}
                       </Text>
                     </TouchableOpacity>
                     {paymentQrUri && (
@@ -774,7 +774,7 @@ export default function AdminCreateEventScreen() {
 
               {/* Submit Action */}
               <PrimaryButton
-                label="Cipta & Lancar Acara"
+                label="Create & Launch Event"
                 onPress={handleSubmit}
                 role="admin"
                 style={styles.actionButton}
@@ -798,12 +798,12 @@ export default function AdminCreateEventScreen() {
             <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.modalCloseBtn}>
               <Ionicons name="close" size={24} color={COLORS.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitleText}>Pilih Lokasi Acara di Peta</Text>
+            <Text style={styles.modalTitleText}>Select Event Location on Map</Text>
             <TouchableOpacity
               onPress={() => setShowMapModal(false)}
               style={styles.modalSaveBtn}
             >
-              <Text style={styles.modalSaveText}>Selesai</Text>
+              <Text style={styles.modalSaveText}>Done</Text>
             </TouchableOpacity>
           </View>
 
@@ -822,7 +822,7 @@ export default function AdminCreateEventScreen() {
             >
               <Marker
                 coordinate={eventCoords}
-                title={locationName || 'Lokasi Acara'}
+                title={locationName || 'Event Location'}
                 draggable
                 onDragEnd={(e) => handleMapPressOrDrag(e.nativeEvent.coordinate)}
               />
@@ -838,7 +838,7 @@ export default function AdminCreateEventScreen() {
                 )}
                 <TextInput
                   style={styles.mapSearchInput}
-                  placeholder="Cari lokasi di Malaysia (contoh: Casa Ria, KLCC...)"
+                  placeholder="Search location in Malaysia (e.g., Casa Ria, KLCC...)"
                   placeholderTextColor={COLORS.textMuted}
                   value={mapSearchQuery}
                   onChangeText={(text) => handleSearchLocationOnMap(text)}
@@ -883,7 +883,7 @@ export default function AdminCreateEventScreen() {
             <View style={styles.mapInstructionChip}>
               <Ionicons name="information-circle-outline" size={16} color="#FFFFFF" />
               <Text style={styles.mapInstructionText}>
-                Gunakan carian di atas atau tekan pada peta untuk menetapkan koordinat lokasi acara.
+                Use search above or tap on map to set event location coordinates.
               </Text>
             </View>
           </View>
@@ -897,7 +897,7 @@ export default function AdminCreateEventScreen() {
             <View style={styles.modalHeaderRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="calendar" size={18} color={COLORS.admin.primary} />
-                <Text style={styles.modalCardTitle}>Pilih Tarikh Acara</Text>
+                <Text style={styles.modalCardTitle}>Select Event Date</Text>
               </View>
               <TouchableOpacity onPress={() => setShowDateModal(false)}>
                 <Ionicons name="close" size={22} color={COLORS.textMuted} />
@@ -907,13 +907,13 @@ export default function AdminCreateEventScreen() {
             {/* Direct Manual Date Input */}
             <View style={{ width: '100%', marginTop: SPACING.md }}>
               <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginBottom: 4 }}>
-                MASUKKAN TARIKH MANUAL
+                ENTER MANUAL DATE
               </Text>
               <TextInput
                 style={styles.textInput}
                 value={eventDate}
                 onChangeText={setEventDate}
-                placeholder="Taip tarikh (Contoh: 27 Jun 2026)"
+                placeholder="Type date (Example: 27 June 2026)"
                 placeholderTextColor={COLORS.textMuted}
               />
             </View>
@@ -934,7 +934,7 @@ export default function AdminCreateEventScreen() {
 
               {/* Day Headers */}
               <View style={styles.calDaysHeader}>
-                {['Ah', 'Is', 'Se', 'Ra', 'Kh', 'Ju', 'Sa'].map((day, idx) => (
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, idx) => (
                   <Text key={idx} style={styles.calDayHeaderCell}>{day}</Text>
                 ))}
               </View>
@@ -968,7 +968,7 @@ export default function AdminCreateEventScreen() {
 
             {/* Preset Suggestions Chips */}
             <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, alignSelf: 'flex-start', marginTop: SPACING.xs }}>
-              PILIHAN PANTAS
+              QUICK PRESETS
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%', marginVertical: SPACING.xs }}>
               <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -985,7 +985,7 @@ export default function AdminCreateEventScreen() {
             </ScrollView>
 
             <PrimaryButton
-              label="Sahkan Tarikh"
+              label="Confirm Date"
               onPress={() => setShowDateModal(false)}
               role="admin"
               style={{ width: '100%', marginTop: SPACING.xs }}
@@ -1001,7 +1001,7 @@ export default function AdminCreateEventScreen() {
             <View style={styles.modalHeaderRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="time" size={18} color={COLORS.admin.primary} />
-                <Text style={styles.modalCardTitle}>Pilih Masa Mula</Text>
+                <Text style={styles.modalCardTitle}>Select Start Time</Text>
               </View>
               <TouchableOpacity onPress={() => setShowTimeModal(false)}>
                 <Ionicons name="close" size={22} color={COLORS.textMuted} />
@@ -1011,13 +1011,13 @@ export default function AdminCreateEventScreen() {
             {/* Direct Manual Time Input */}
             <View style={{ width: '100%', marginTop: SPACING.md }}>
               <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginBottom: 4 }}>
-                MASUKKAN MASA MANUAL
+                ENTER MANUAL TIME
               </Text>
               <TextInput
                 style={styles.textInput}
                 value={startTime}
                 onChangeText={setStartTime}
-                placeholder="Taip masa (Contoh: 08:00 AM)"
+                placeholder="Type time (Example: 08:00 AM)"
                 placeholderTextColor={COLORS.textMuted}
               />
             </View>
@@ -1025,7 +1025,7 @@ export default function AdminCreateEventScreen() {
             {/* Interactive Time Dial Grid */}
             <View style={styles.timePickerContainer}>
               <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginBottom: 4 }}>
-                PILIH JAM:
+                SELECT HOUR:
               </Text>
               <View style={styles.timePillsRow}>
                 {['06', '07', '08', '09', '10', '11', '12'].map((h) => (
@@ -1040,7 +1040,7 @@ export default function AdminCreateEventScreen() {
               </View>
 
               <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginTop: SPACING.xs, marginBottom: 4 }}>
-                PILIH MINIT:
+                SELECT MINUTE:
               </Text>
               <View style={styles.timePillsRow}>
                 {['00', '15', '30', '45'].map((m) => (
@@ -1055,7 +1055,7 @@ export default function AdminCreateEventScreen() {
               </View>
 
               <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginTop: SPACING.xs, marginBottom: 4 }}>
-                PAGI / PETANG:
+                AM / PM:
               </Text>
               <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
                 {(['AM', 'PM'] as const).map((p) => (
@@ -1071,7 +1071,7 @@ export default function AdminCreateEventScreen() {
             </View>
 
             <PrimaryButton
-              label="Sahkan Masa"
+              label="Confirm Time"
               onPress={() => setShowTimeModal(false)}
               role="admin"
               style={{ width: '100%', marginTop: SPACING.md }}

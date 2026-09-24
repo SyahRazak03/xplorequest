@@ -95,20 +95,20 @@ export async function checkinAttendanceService(
   const db = getFirestore();
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, callerUid, callerRole, callerEventId);
 
   const team = await findTeamById(eventId, input.teamId);
   if (!team) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
   }
 
   if (team.status !== 'approved') {
     throw new AppError(
       ErrorCode.FORBIDDEN,
-      'Pendaftaran kumpulan belum diluluskan oleh urus setia.'
+      'Team registration has not been approved by organizers.'
     );
   }
 
@@ -172,7 +172,7 @@ export async function triggerStaggeredStartService(
     // 1. Fetch Event and enforce idempotency
     const eventSnap = await tx.get(eventRef);
     if (!eventSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
     }
 
     const eventData = eventSnap.data() || {};
@@ -182,7 +182,7 @@ export async function triggerStaggeredStartService(
     if (eventData['isStarted']) {
       throw new AppError(
         ErrorCode.RACE_ALREADY_STARTED,
-        'Perlumbaan untuk acara ini telah pun dimulakan.'
+        'Race for this event has already started.'
       );
     }
 
@@ -196,7 +196,7 @@ export async function triggerStaggeredStartService(
     if (allCheckpoints.length === 0) {
       throw new AppError(
         ErrorCode.BAD_REQUEST,
-        'Tiada pos kawalan dikonfigurasi untuk acara ini. Sila tetapkan pos kawalan dahulu.'
+        'No checkpoints configured for this event. Please set up checkpoints first.'
       );
     }
 
@@ -204,7 +204,7 @@ export async function triggerStaggeredStartService(
     if (startCandidateCheckpoints.length === 0) {
       throw new AppError(
         ErrorCode.UNPROCESSABLE_ENTITY,
-        'Tiada pos kawalan permulaan (isStart: true) dikonfigurasi untuk acara ini. Sila tetapkan sekurang-kurangnya satu pos kawalan permulaan sebelum memulakan perlumbaan.'
+        'No starting checkpoint (isStart: true) configured for this event. Please set at least one starting checkpoint before starting the race.'
       );
     }
 
@@ -231,7 +231,7 @@ export async function triggerStaggeredStartService(
     if (eligibleTeams.length === 0 && !forceStart) {
       throw new AppError(
         ErrorCode.BAD_REQUEST,
-        'Tiada kumpulan hadir untuk memulakan perlumbaan. Sekurang-kurangnya satu kumpulan mesti mendaftar kehadiran.'
+        'No present teams to start the race. At least one team must be marked present.'
       );
     }
 
@@ -342,7 +342,7 @@ export async function assignLateArrivalService(
     // 1. Verify Event is live
     const eventSnap = await tx.get(eventRef);
     if (!eventSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
     }
 
     const eventData = eventSnap.data() || {};
@@ -351,14 +351,14 @@ export async function assignLateArrivalService(
     if (!eventData['isStarted']) {
       throw new AppError(
         ErrorCode.RACE_NOT_STARTED,
-        'Perlumbaan belum bermula. Sila gunakan pelepasan mula biasa.'
+        'Race has not started yet. Please use standard race start.'
       );
     }
 
     if (eventData['isFinished']) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Acara ini telah tamat.'
+        'This event has ended.'
       );
     }
 
@@ -366,21 +366,21 @@ export async function assignLateArrivalService(
     const teamDocRef = teamsColRef.doc(teamId);
     const teamSnap = await tx.get(teamDocRef);
     if (!teamSnap.exists) {
-      throw new AppError(ErrorCode.NOT_FOUND, 'Kumpulan tidak ditemui.');
+      throw new AppError(ErrorCode.NOT_FOUND, 'Team not found.');
     }
 
     const teamData = teamSnap.data() as TeamDocument;
     if (teamData.status !== 'approved') {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Pendaftaran kumpulan belum diluluskan oleh urus setia.'
+        'Team registration has not been approved by organizers.'
       );
     }
 
     if (teamData.finishedAt || teamData.isDNF) {
       throw new AppError(
         ErrorCode.CONFLICT,
-        'Kumpulan ini telah menamatkan perlumbaan.'
+        'This team has completed the race.'
       );
     }
 
@@ -395,7 +395,7 @@ export async function assignLateArrivalService(
     if (startCandidateCheckpoints.length === 0) {
       throw new AppError(
         ErrorCode.UNPROCESSABLE_ENTITY,
-        'Tiada pos kawalan permulaan (isStart: true) dikonfigurasi untuk acara ini.'
+        'No starting checkpoint (isStart: true) configured for this event.'
       );
     }
 

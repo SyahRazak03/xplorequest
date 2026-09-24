@@ -54,7 +54,7 @@ export default function ParticipantAttendanceScanScreen() {
     setShowCameraScanner(false);
 
     if (!currentTeam) {
-      Alert.alert('Ralat', 'Maklumat pasukan tidak ditemui dalam sesi log masuk.');
+      Alert.alert('Error', 'Team information not found in active login session.');
       return;
     }
 
@@ -66,8 +66,8 @@ export default function ParticipantAttendanceScanScreen() {
     // Verify team ID lock
     if (scannedTeamId && scannedTeamId !== '*' && scannedTeamId !== currentTeam.id && scannedTeamId !== currentTeam.name) {
       Alert.alert(
-        'Kod QR Tidak Sah ⚠️',
-        `Kod QR ini dijana khas untuk pasukan lain (ID: ${scannedTeamId}). Sila minta Urus Setia memaparkan Kod QR Pelepasan yang khusus untuk pasukan "${currentTeam.name}".`
+        'Invalid QR Code ⚠️',
+        `This QR code was generated for another team (ID: ${scannedTeamId}). Please ask the Crew to show the Start QR code specifically for team "${currentTeam.name}".`
       );
       return;
     }
@@ -113,7 +113,7 @@ export default function ParticipantAttendanceScanScreen() {
             activeOpacity={0.7}
           >
             <Ionicons name="arrow-back" size={18} color="#6B21A8" />
-            <Text style={styles.dashedBackButtonText}>Tukar Akaun / Kembali</Text>
+            <Text style={styles.dashedBackButtonText}>Switch Account / Back</Text>
           </TouchableOpacity>
 
           {/* Logo Box */}
@@ -126,7 +126,7 @@ export default function ParticipantAttendanceScanScreen() {
           </View>
 
           {/* Header Title */}
-          <Text style={styles.checkinTitle}>Daftar Masuk Hari Acara</Text>
+          <Text style={styles.checkinTitle}>Event Day Attendance Check-In</Text>
 
           {/* Authenticated Team Account Card */}
           {currentTeam && (
@@ -134,29 +134,29 @@ export default function ParticipantAttendanceScanScreen() {
               <View style={styles.teamHeaderRow}>
                 <View>
                   <Text style={styles.teamNameText}>{currentTeam.name}</Text>
-                  <Text style={styles.teamIdText}>ID Pasukan: {currentTeam.id}</Text>
+                  <Text style={styles.teamIdText}>Team ID: {currentTeam.id}</Text>
                 </View>
-                <Badge label="AKAUN AKTIF" state="success" />
+                <Badge label="ACTIVE ACCOUNT" state="success" />
               </View>
 
               <View style={styles.cardDivider} />
 
               <View style={styles.detailsGrid}>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Ketua Pasukan:</Text>
-                  <Text style={styles.detailValue}>{currentTeam.leaderName || 'Diisi dalam Borang Web'}</Text>
+                  <Text style={styles.detailLabel}>Team Leader:</Text>
+                  <Text style={styles.detailValue}>{currentTeam.leaderName || 'Submitted via Web Form'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>No. Telefon:</Text>
+                  <Text style={styles.detailLabel}>Phone Number:</Text>
                   <Text style={styles.detailValue}>{currentTeam.phone || 'N/A'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Jumlah Ahli:</Text>
-                  <Text style={styles.detailValue}>{currentTeam.memberCount || 4} Orang</Text>
+                  <Text style={styles.detailLabel}>Total Members:</Text>
+                  <Text style={styles.detailValue}>{currentTeam.memberCount || 4} Members</Text>
                 </View>
                 {currentTeam.membersList ? (
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Senarai Ahli:</Text>
+                    <Text style={styles.detailLabel}>Member List:</Text>
                     <Text style={[styles.detailValue, { flex: 1, textAlign: 'right', marginLeft: 8 }]}>
                       {currentTeam.membersList}
                     </Text>
@@ -168,7 +168,7 @@ export default function ParticipantAttendanceScanScreen() {
 
           {/* Scanner Box Card with Dashed Border */}
           <View style={styles.checkinDashedCard}>
-            <Text style={styles.scanHeaderTitle}>Imbas QR Urus Setia</Text>
+            <Text style={styles.scanHeaderTitle}>Scan Crew QR Code</Text>
             
             <View style={styles.purpleScanIconCircle}>
               <Ionicons name="scan-outline" size={48} color="#FFFFFF" />
@@ -191,7 +191,7 @@ export default function ParticipantAttendanceScanScreen() {
       <RealCameraQRScanner
         visible={showCameraScanner}
         title="Scan Attendance QR"
-        subtitle="Halakan kamera ke Kod QR Kehadiran Urus Setia di Checkpoint Permulaan"
+        subtitle="Point camera at the Start Checkpoint Attendance QR Code from Crew"
         onClose={() => setShowCameraScanner(false)}
         onScanSuccess={handleScanSuccess}
       />

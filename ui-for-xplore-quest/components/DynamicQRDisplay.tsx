@@ -134,8 +134,8 @@ export const DynamicQRDisplay: React.FC<DynamicQRDisplayProps> = ({
               <View style={styles.expiredIconWrapper}>
                 <Ionicons name="alert-circle" size={32} color={COLORS.danger} />
               </View>
-              <Text style={styles.expiredText}>Kod Tamat Tempoh</Text>
-              <Text style={styles.expiredSubtext}>Sila jana kod baru</Text>
+              <Text style={styles.expiredText}>Code Expired</Text>
+              <Text style={styles.expiredSubtext}>Please generate a new code</Text>
             </View>
           )}
         </View>
@@ -150,12 +150,12 @@ export const DynamicQRDisplay: React.FC<DynamicQRDisplayProps> = ({
             activeOpacity={0.8}
           >
             <Ionicons name="refresh-outline" size={18} color={COLORS.textLight} />
-            <Text style={styles.refreshButtonText}>Jana Semula QR Kod</Text>
+            <Text style={styles.refreshButtonText}>Regenerate QR Code</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.timerBadge}>
             <Ionicons name="time-outline" size={16} color={COLORS.crew.primary} />
-            <Text style={styles.timerText}>Tamat dalam {timeLeft}s</Text>
+            <Text style={styles.timerText}>Expires in {timeLeft}s</Text>
           </View>
         )}
       </View>

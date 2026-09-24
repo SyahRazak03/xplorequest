@@ -16,8 +16,8 @@ export const LiveCameraScanner: React.FC<LiveCameraScannerProps> = ({
   visible,
   onClose,
   onScan,
-  title = 'Imbas Kod QR',
-  subtitle = 'Halakan kamera ke Kod QR penanda / pos kawalan',
+  title = 'Scan QR Code',
+  subtitle = 'Point camera at the checkpoint QR code',
 }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -51,14 +51,14 @@ export const LiveCameraScanner: React.FC<LiveCameraScannerProps> = ({
         {!permission ? (
           <View style={styles.permissionContainer}>
             <ActivityIndicator size="large" color={COLORS.participant.primary} />
-            <Text style={styles.permissionText}>Memuatkan kebenaran kamera...</Text>
+            <Text style={styles.permissionText}>Loading camera permissions...</Text>
           </View>
         ) : !permission.granted ? (
           <View style={styles.permissionContainer}>
             <Ionicons name="camera-outline" size={64} color={COLORS.textMuted} />
-            <Text style={styles.permissionText}>Kebenaran kamera diperlukan untuk mengimbas Kod QR.</Text>
+            <Text style={styles.permissionText}>Camera permission is required to scan QR codes.</Text>
             <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
-              <Text style={styles.permissionBtnText}>Benarkan Kamera</Text>
+              <Text style={styles.permissionBtnText}>Grant Camera Permission</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -79,7 +79,7 @@ export const LiveCameraScanner: React.FC<LiveCameraScannerProps> = ({
               {scanned && (
                 <View style={styles.scannedBadge}>
                   <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-                  <Text style={styles.scannedText}>Kod QR Berjaya Diimbas!</Text>
+                  <Text style={styles.scannedText}>QR Code Scanned Successfully!</Text>
                 </View>
               )}
             </View>

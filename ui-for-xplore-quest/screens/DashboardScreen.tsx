@@ -66,27 +66,27 @@ export default function DashboardScreen() {
     switch (role as any) {
       case 'participant':
         return [
-          { label: 'Pendaftaran & Log Masuk Kumpulan', done: true },
-          { label: 'Klu Checkpoint & Sempadan Geofencing', done: false, stage: 'Stage 2' },
-          { label: 'Pintasan Checkpoint Congested (Skip Logic)', done: false, stage: 'Stage 2' },
-          { label: 'Imbasan QR Marshal Dinamik 30s', done: false, stage: 'Stage 3' },
-          { label: 'Pelepasan Garisan Penamat', done: false, stage: 'Stage 4' },
+          { label: 'Team Registration & Login', done: true },
+          { label: 'Checkpoint Clues & Geofence Boundaries', done: false, stage: 'Stage 2' },
+          { label: 'Congested Checkpoint Bypass (Skip Logic)', done: false, stage: 'Stage 2' },
+          { label: 'Dynamic 30s Crew QR Scan', done: false, stage: 'Stage 3' },
+          { label: 'Finish Line Clearance', done: false, stage: 'Stage 4' },
         ];
       case 'crew':
         return [
-          { label: 'Log Masuk & Pendaftaran Pos Kawalan', done: true },
-          { label: 'Senarai Ketibaan & Beratur Pasukan', done: false, stage: 'Stage 3' },
-          { label: 'Penjanaan QR Kod Dinamik Kunci-Pasukan', done: false, stage: 'Stage 3' },
-          { label: 'Muat Naik Bukti Bergambar (Kamera Snap)', done: false, stage: 'Stage 4' },
-          { label: 'Override Manual & Denda Tambahan', done: false, stage: 'Stage 4' },
+          { label: 'Login & Checkpoint Registration', done: true },
+          { label: 'Team Arrival List & Queue', done: false, stage: 'Stage 3' },
+          { label: 'Team-Locked Dynamic QR Generation', done: false, stage: 'Stage 3' },
+          { label: 'Photo Proof Upload (Camera Snap)', done: false, stage: 'Stage 4' },
+          { label: 'Manual Override & Additional Penalties', done: false, stage: 'Stage 4' },
         ];
       case 'admin':
         return [
-          { label: 'Log Masuk Urus Setia / Admin', done: true },
-          { label: 'Penghasilan Geofence & Parameter Acara', done: false, stage: 'Stage 0.5' },
-          { label: 'Kelulusan Mula & Keluar Pasukan Baru', done: false, stage: 'Stage 2' },
-          { label: 'Paparan Leaderboard & Masa Semasa', done: false, stage: 'Stage 5' },
-          { label: 'Pengauditan DNF Automatik & Penalti', done: false, stage: 'Stage 5' },
+          { label: 'Secretariat / Admin Login', done: true },
+          { label: 'Geofence Creation & Event Parameters', done: false, stage: 'Stage 0.5' },
+          { label: 'Start Line Approval & Team Release', done: false, stage: 'Stage 2' },
+          { label: 'Leaderboard Display & Real-Time Clock', done: false, stage: 'Stage 5' },
+          { label: 'Automatic DNF Audit & Penalties', done: false, stage: 'Stage 5' },
         ];
       default:
         return [];
@@ -96,13 +96,13 @@ export default function DashboardScreen() {
   const getRoleLabel = () => {
     switch (role as any) {
       case 'participant':
-        return 'Ketua Pasukan';
+        return 'Team Leader';
       case 'crew':
-        return 'Krew Marshal';
+        return 'Crew Marshal';
       case 'admin':
-        return 'Penganjur Admin';
+        return 'Organizer Admin';
       default:
-        return 'Pelawat';
+        return 'Guest';
     }
   };
 
@@ -118,8 +118,8 @@ export default function DashboardScreen() {
           <View style={styles.userProfileRow}>
             <Avatar initials={getInitials(user?.name)} role={role || 'participant'} size="lg" />
             <View style={styles.userMeta}>
-              <Text style={styles.welcomeText}>Selamat Kembali,</Text>
-              <Text style={styles.userName}>{user?.name || 'Pengguna'}</Text>
+              <Text style={styles.welcomeText}>Welcome Back,</Text>
+              <Text style={styles.userName}>{user?.name || 'User'}</Text>
               <Text style={styles.userEmail}>{user?.email || 'admin@xplorequest.com'}</Text>
             </View>
           </View>
@@ -139,10 +139,10 @@ export default function DashboardScreen() {
               onPress={() => navigation.navigate('AdminCreateEvent' as any)}
             >
               <Ionicons name="add-circle-outline" size={20} color={COLORS.textLight} />
-              <Text style={styles.createEventButtonText}>Cipta Acara Baru (ADM-01)</Text>
+              <Text style={styles.createEventButtonText}>Create New Event</Text>
             </TouchableOpacity>
 
-            <Text style={styles.sectionTitle}>Senarai Acara Anda</Text>
+            <Text style={styles.sectionTitle}>Your Event List</Text>
 
             {events.map((event) => (
               <TouchableOpacity
@@ -170,7 +170,7 @@ export default function DashboardScreen() {
                     <View style={styles.cardDivider} />
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
                       <Text style={{ fontSize: 11, color: COLORS.admin.primary, fontWeight: 'bold' }}>
-                        Urus Acara & Modul Geofence/CP
+                        Manage Event & Geofence/CP Modules
                       </Text>
                       <Ionicons name="chevron-forward" size={14} color={COLORS.admin.primary} />
                     </View>
@@ -181,11 +181,11 @@ export default function DashboardScreen() {
           </View>
         ) : (
           /* Participant or default Active Event Details */
-          <Card role={role || 'participant'} borderAccent="left" title="Acara Aktif Anda">
+          <Card role={role || 'participant'} borderAccent="left" title="Your Active Event">
             <View style={styles.eventInfoContainer}>
               <View style={styles.infoRow}>
                 <Ionicons name="trophy-outline" size={18} color={theme.colors.primary} />
-                <Text style={styles.eventTitle}>{activeEvent?.name || 'Tiada Acara Aktif'}</Text>
+                <Text style={styles.eventTitle}>{activeEvent?.name || 'No Active Event'}</Text>
               </View>
               <View style={styles.infoRowSecondary}>
                 <Ionicons name="calendar-outline" size={16} color={COLORS.textMuted} />
@@ -213,7 +213,7 @@ export default function DashboardScreen() {
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
-            <Text style={styles.logoutButtonText}>Log Keluar</Text>
+            <Text style={styles.logoutButtonText}>Log Out</Text>
           </TouchableOpacity>
         </View>
 

@@ -127,7 +127,7 @@
   // Fetch Event Data from Backend
   async function fetchEventDetails(slug) {
     if (!slug) {
-      showError('Acara Tidak Ditemui', 'Sila gunakan pautan borang pendaftaran yang sah (contoh: /registration-form/slug-acara).');
+      showError('Event Not Found', 'Please use a valid registration form link (e.g., /registration-form/event-slug).');
       return;
     }
 
@@ -142,8 +142,8 @@
       const payload = await response.json();
 
       if (!response.ok || !payload.success) {
-        const errorMsg = payload.error?.message || 'Acara tidak wujud atau telah diarkibkan.';
-        showError('Acara Tidak Ditemui', errorMsg);
+        const errorMsg = payload.error?.message || 'Event does not exist or has been archived.';
+        showError('Event Not Found', errorMsg);
         return;
       }
 
@@ -151,24 +151,24 @@
       renderEventDetails(eventData);
     } catch (err) {
       console.error('Failed to fetch event:', err);
-      showError('Ralat Rangkaian', 'Gagal berhubung dengan pelayan. Sila periksa sambungan internet anda dan cuba lagi.');
+      showError('Network Error', 'Failed to connect to the server. Please check your internet connection and try again.');
     }
   }
 
   function renderEventDetails(event) {
     eventNameEl.textContent = event.name;
-    eventDateEl.textContent = event.date || 'Akan diumumkan';
-    eventLocationEl.textContent = event.locationName || 'Akan diumumkan';
+    eventDateEl.textContent = event.date || 'To be announced';
+    eventLocationEl.textContent = event.locationName || 'To be announced';
     
     // Fee formatting
     if (event.entryFee && event.entryFee > 0) {
       eventFeeEl.textContent = `RM ${event.entryFee.toFixed(2)}`;
     } else {
-      eventFeeEl.textContent = 'PERCUMA';
+      eventFeeEl.textContent = 'FREE';
     }
 
     const maxTeamSize = event.maxTeamSize || 4;
-    eventMaxTeamEl.textContent = `${maxTeamSize} orang / kumpulan`;
+    eventMaxTeamEl.textContent = `${maxTeamSize} members / team`;
 
     // Banner image
     if (event.bannerImageUrl) {
@@ -192,14 +192,14 @@
         const pd = event.paymentDetails;
         let formattedText = '';
         if (pd.bankName) formattedText += `Bank: ${pd.bankName}\n`;
-        if (pd.accountNumber) formattedText += `Nombor Akaun: ${pd.accountNumber}\n`;
-        if (pd.accountHolderName) formattedText += `Pemegang Akaun: ${pd.accountHolderName}\n`;
-        if (pd.note) formattedText += `\nNota: ${pd.note}`;
+        if (pd.accountNumber) formattedText += `Account Number: ${pd.accountNumber}\n`;
+        if (pd.accountHolderName) formattedText += `Account Holder: ${pd.accountHolderName}\n`;
+        if (pd.note) formattedText += `\nNote: ${pd.note}`;
         bankDetailsText.textContent = formattedText.trim();
       } else if (hasLegacyDetails) {
         bankDetailsText.textContent = event.paymentBankDetails;
       } else if (hasQrImage) {
-        bankDetailsText.textContent = 'Sila rujuk gambar QR pembayaran di bawah.';
+        bankDetailsText.textContent = 'Please refer to the payment QR image below.';
       }
 
       if (hasQrImage) {
@@ -209,7 +209,7 @@
     } else {
       // Empty State: Neither text details nor QR image are set
       paymentDetailsBox.classList.remove('hidden');
-      bankDetailsText.textContent = 'Maklumat akaun bank belum dikonfigurasi oleh penganjur. Sila hubungi penganjur untuk maklumat bayaran.';
+      bankDetailsText.textContent = 'Bank account details have not been configured by the organizer yet. Please contact the organizer for payment details.';
     }
 
     // Render Member Input fields (maxTeamSize - 1)
@@ -230,8 +230,8 @@
       const groupDiv = document.createElement('div');
       groupDiv.className = 'form-group';
       groupDiv.innerHTML = `
-        <label for="member_${i}">Nama Ahli ${memberIndex} <span class="req">*</span></label>
-        <input type="text" id="member_${i}" class="member-input" placeholder="Nama penuh mengikut MyKad" required maxlength="100" />
+        <label for="member_${i}">Member ${memberIndex} Full Name <span class="req">*</span></label>
+        <input type="text" id="member_${i}" class="member-input" placeholder="Full name as per ID document" required maxlength="100" />
         <span class="field-error" id="member_${i}_error"></span>
       `;
       membersInputsContainer.appendChild(groupDiv);
@@ -257,14 +257,14 @@
     // Validate type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      receiptFileError.textContent = 'Format fail tidak sah. Sila pilih gambar JPEG, PNG, atau WebP.';
+      receiptFileError.textContent = 'Invalid file format. Please select a JPEG, PNG, or WebP image.';
       receiptFileInput.value = '';
       return;
     }
 
     // Validate size (< 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      receiptFileError.textContent = 'Saiz fail melebihi 5MB. Sila pilih gambar yang lebih kecil.';
+      receiptFileError.textContent = 'File size exceeds 5MB. Please select a smaller image.';
       receiptFileInput.value = '';
       return;
     }
@@ -306,22 +306,22 @@
     const leaderWhatsAppInput = document.getElementById('leaderWhatsApp');
 
     if (!teamNameInput.value.trim()) {
-      document.getElementById('teamNameError').textContent = 'Nama kumpulan diperlukan.';
+      document.getElementById('teamNameError').textContent = 'Team name is required.';
       isValid = false;
     }
 
     if (!leaderNameInput.value.trim()) {
-      document.getElementById('leaderNameError').textContent = 'Nama ketua kumpulan diperlukan.';
+      document.getElementById('leaderNameError').textContent = 'Team leader name is required.';
       isValid = false;
     }
 
     const phoneRegex = /^(\+?60|0)1[0-46-9][0-9]{7,8}$/;
     const phoneVal = leaderWhatsAppInput.value.trim();
     if (!phoneVal) {
-      document.getElementById('leaderWhatsAppError').textContent = 'Nombor WhatsApp ketua diperlukan.';
+      document.getElementById('leaderWhatsAppError').textContent = 'Leader WhatsApp number is required.';
       isValid = false;
     } else if (!phoneRegex.test(phoneVal)) {
-      document.getElementById('leaderWhatsAppError').textContent = 'Format nombor telefon Malaysia tidak sah (contoh: 0123456789 atau +60123456789).';
+      document.getElementById('leaderWhatsAppError').textContent = 'Invalid Malaysian phone number format (e.g. 0123456789 or +60123456789).';
       isValid = false;
     }
 
@@ -330,14 +330,14 @@
     memberInputs.forEach((input, index) => {
       if (!input.value.trim()) {
         const errorEl = document.getElementById(`member_${index + 1}_error`);
-        if (errorEl) errorEl.textContent = `Nama Ahli ${index + 2} diperlukan.`;
+        if (errorEl) errorEl.textContent = `Member ${index + 2} name is required.`;
         isValid = false;
       }
     });
 
     // Receipt image check
     if (!receiptBase64 || !receiptContentType) {
-      receiptFileError.textContent = 'Sila muat naik resit pembayaran.';
+      receiptFileError.textContent = 'Please upload your payment receipt.';
       isValid = false;
     }
 
@@ -374,7 +374,7 @@
 
     // UI Loading state
     btnSubmit.disabled = true;
-    btnSubmitText.textContent = 'Menghantar Pendaftaran...';
+    btnSubmitText.textContent = 'Submitting Registration...';
     btnSpinner.classList.remove('hidden');
 
     try {
@@ -392,10 +392,10 @@
       const resData = await response.json();
 
       if (!response.ok || !resData.success) {
-        const errMsg = resData.error?.message || 'Gagal menghantar pendaftaran. Sila cuba lagi.';
-        alert(`Ralat: ${errMsg}`);
+        const errMsg = resData.error?.message || 'Failed to submit registration. Please try again.';
+        alert(`Error: ${errMsg}`);
         btnSubmit.disabled = false;
-        btnSubmitText.textContent = 'Hantar Pendaftaran Kumpulan';
+        btnSubmitText.textContent = 'Submit Pre-Registration';
         btnSpinner.classList.add('hidden');
         return;
       }
@@ -404,9 +404,9 @@
       renderSuccessState(resData.data);
     } catch (err) {
       console.error('Submission error:', err);
-      alert('Ralat Rangkaian: Gagal menghantar pendaftaran. Sila pastikan sambungan internet anda stabil.');
+      alert('Network Error: Failed to submit registration. Please ensure your internet connection is stable.');
       btnSubmit.disabled = false;
-      btnSubmitText.textContent = 'Hantar Pendaftaran Kumpulan';
+      btnSubmitText.textContent = 'Submit Pre-Registration';
       btnSpinner.classList.add('hidden');
     }
   });
@@ -417,7 +417,7 @@
     document.getElementById('summarySubmissionId').textContent = data.submissionId;
     
     const submittedDate = new Date(data.submittedAt || Date.now());
-    document.getElementById('summarySubmittedAt').textContent = submittedDate.toLocaleString('ms-MY');
+    document.getElementById('summarySubmittedAt').textContent = submittedDate.toLocaleString('en-US');
 
     successState.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });

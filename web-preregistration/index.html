@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Borang Pra-Pendaftaran Acara | XploreQuest</title>
-  <meta name="description" content="Pendaftaran rasmi kumpulan untuk cabaran XploreQuest." />
+  <title>Event Pre-Registration Form | XploreQuest</title>
+  <meta name="description" content="Official team pre-registration for XploreQuest challenge events." />
 
   <!-- Google Fonts: Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -156,14 +156,14 @@
     <!-- Loading State -->
     <div id="loadingState" class="card loading-card">
       <div class="spinner"></div>
-      <p>Memuatkan maklumat acara...</p>
+      <p>Loading event details...</p>
     </div>
 
     <!-- Error State -->
     <div id="errorState" class="card error-card hidden">
       <div class="error-icon">⚠️</div>
-      <h2 id="errorTitle">Acara Tidak Ditemui</h2>
-      <p id="errorMessage">Borang pendaftaran tidak dapat dimuatkan. Sila pastikan URL anda betul.</p>
+      <h2 id="errorTitle">Event Not Found</h2>
+      <p id="errorMessage">The registration form could not be loaded. Please ensure your link is valid.</p>
     </div>
 
     <!-- Form Content Container (Hidden until loaded) -->
@@ -174,36 +174,36 @@
           <img id="eventBannerImg" src="" alt="" class="event-banner-img" />
         </div>
         <div class="event-header-info">
-          <span class="badge badge-pulse">Pendaftaran Dibuka</span>
-          <h1 id="eventName">Nama Acara</h1>
+          <span class="badge badge-pulse">Registration Open</span>
+          <h1 id="eventName">Event Name</h1>
 
           <div class="event-meta-grid">
             <div class="meta-item">
               <span class="meta-icon">📅</span>
               <div>
-                <span class="meta-label">Tarikh Acara</span>
+                <span class="meta-label">Event Date</span>
                 <span id="eventDate" class="meta-val">-</span>
               </div>
             </div>
             <div class="meta-item">
               <span class="meta-icon">📍</span>
               <div>
-                <span class="meta-label">Lokasi</span>
+                <span class="meta-label">Location</span>
                 <span id="eventLocation" class="meta-val">-</span>
               </div>
             </div>
             <div class="meta-item">
               <span class="meta-icon">🏷️</span>
               <div>
-                <span class="meta-label">Yuran Pendaftaran</span>
+                <span class="meta-label">Entry Fee</span>
                 <span id="eventFee" class="meta-val highlight">-</span>
               </div>
             </div>
             <div class="meta-item">
               <span class="meta-icon">👥</span>
               <div>
-                <span class="meta-label">Maksimum Ahli</span>
-                <span id="eventMaxTeam" class="meta-val">- orang / kumpulan</span>
+                <span class="meta-label">Max Team Size</span>
+                <span id="eventMaxTeam" class="meta-val">- members / team</span>
               </div>
             </div>
           </div>
@@ -214,27 +214,27 @@
       <form id="preRegForm" novalidate>
         <!-- Section 1: Team & Leader Details -->
         <section class="card form-card">
-          <h2 class="card-title">1. Maklumat Kumpulan & Ketua</h2>
-          <p class="card-subtitle">Isi butiran kumpulan dan ketua pendaftaran.</p>
+          <h2 class="card-title">1. Team & Leader Details</h2>
+          <p class="card-subtitle">Fill in your team and leader registration details.</p>
 
           <div class="form-group">
-            <label for="teamName">Nama Kumpulan <span class="req">*</span></label>
-            <input type="text" id="teamName" name="teamName" placeholder="Contoh: Harimau Malaya" required
+            <label for="teamName">Team Name <span class="req">*</span></label>
+            <input type="text" id="teamName" name="teamName" placeholder="e.g., Tiger Squad" required
               maxlength="100" />
             <span class="field-error" id="teamNameError"></span>
           </div>
 
           <div class="form-grid">
             <div class="form-group">
-              <label for="leaderName">Nama Ketua Kumpulan <span class="req">*</span></label>
-              <input type="text" id="leaderName" name="leaderName" placeholder="Nama penuh mengikut MyKad" required
+              <label for="leaderName">Team Leader Full Name <span class="req">*</span></label>
+              <input type="text" id="leaderName" name="leaderName" placeholder="Full name as per ID document" required
                 maxlength="100" />
               <span class="field-error" id="leaderNameError"></span>
             </div>
 
             <div class="form-group">
-              <label for="leaderWhatsApp">Nombor WhatsApp Ketua <span class="req">*</span></label>
-              <input type="tel" id="leaderWhatsApp" name="leaderWhatsApp" placeholder="0123456789 atau +60123456789"
+              <label for="leaderWhatsApp">Leader WhatsApp Number <span class="req">*</span></label>
+              <input type="tel" id="leaderWhatsApp" name="leaderWhatsApp" placeholder="0123456789 or +60123456789"
                 required />
               <span class="field-error" id="leaderWhatsAppError"></span>
             </div>
@@ -243,8 +243,8 @@
 
         <!-- Section 2: Team Members -->
         <section class="card form-card">
-          <h2 class="card-title">2. Ahli Kumpulan</h2>
-          <p class="card-subtitle">Ketua dikira sebagai Ahli 1. Tambah maklumat ahli tambahan di bawah.</p>
+          <h2 class="card-title">2. Team Members</h2>
+          <p class="card-subtitle">The Team Leader is Member 1. Add additional members below.</p>
           <div id="membersInputsContainer" class="members-inputs-grid">
             <!-- Dynamically generated inputs based on maxTeamSize -->
           </div>
@@ -252,32 +252,32 @@
 
         <!-- Section 3: Payment & Receipt Upload -->
         <section class="card form-card">
-          <h2 class="card-title">3. Pembayaran & Muat Naik Resit</h2>
-          <p class="card-subtitle">Sila buat pindahan bayaran dan muat naik bukti resit transaksi.</p>
+          <h2 class="card-title">3. Payment & Receipt Upload</h2>
+          <p class="card-subtitle">Please complete the payment transfer and upload your transaction receipt proof.</p>
 
           <!-- Bank & Payment Details -->
           <div id="paymentDetailsBox" class="payment-info-box hidden">
-            <h3 class="info-heading">💳 Maklumat Akaun Pembayaran</h3>
+            <h3 class="info-heading">💳 Payment Account Information</h3>
             <pre id="bankDetailsText" class="bank-details-text"></pre>
             <div id="paymentQrWrapper" class="qr-wrapper hidden">
-              <p class="qr-label">Kod QR Pembayaran (DuitNow):</p>
-              <img id="paymentQrImg" src="" alt="Kod QR Pembayaran" class="payment-qr-img" />
+              <p class="qr-label">Payment QR Code (DuitNow):</p>
+              <img id="paymentQrImg" src="" alt="Payment QR Code" class="payment-qr-img" />
             </div>
           </div>
 
           <div class="form-group file-upload-group">
-            <label for="receiptFile">Muat Naik Resit Transaksi (JPG, PNG, WebP &lt; 5MB) <span
+            <label for="receiptFile">Upload Transaction Receipt (JPG, PNG, WebP &lt; 5MB) <span
                 class="req">*</span></label>
             <div class="file-dropzone" id="fileDropzone">
               <input type="file" id="receiptFile" accept="image/jpeg,image/png,image/webp" required />
               <div class="dropzone-content" id="dropzoneContent">
                 <span class="upload-icon">📄</span>
-                <p>Klik atau seret fail resit ke sini</p>
-                <span class="file-hint">Format imej JPEG, PNG, atau WebP sahaja. Maksimum 5MB.</span>
+                <p>Click or drag your receipt file here</p>
+                <span class="file-hint">JPEG, PNG, or WebP image formats only. Maximum 5MB.</span>
               </div>
               <div class="image-preview-wrapper hidden" id="previewWrapper">
-                <img id="imagePreview" src="" alt="Pratonton Resit" />
-                <button type="button" class="btn-remove-image" id="btnRemoveImage" title="Padam imej">✕</button>
+                <img id="imagePreview" src="" alt="Receipt Preview" />
+                <button type="button" class="btn-remove-image" id="btnRemoveImage" title="Delete image">✕</button>
               </div>
             </div>
             <span class="field-error" id="receiptFileError"></span>
@@ -287,7 +287,7 @@
         <!-- Submit Button -->
         <div class="form-actions">
           <button type="submit" id="btnSubmit" class="btn-submit">
-            <span id="btnSubmitText">Hantar Pendaftaran Kumpulan</span>
+            <span id="btnSubmitText">Submit Pre-Registration</span>
             <div id="btnSpinner" class="spinner-sm hidden"></div>
           </button>
         </div>
@@ -297,34 +297,33 @@
     <!-- Success Confirmation State -->
     <div id="successState" class="card success-card hidden">
       <div class="success-icon">🎉</div>
-      <h2>Pendaftaran Berjaya Dihantar!</h2>
-      <p class="success-subtitle">Permohonan anda telah diterima dan kini dalam status semakan.</p>
+      <h2>Pre-Registration Successfully Submitted!</h2>
+      <p class="success-subtitle">Your application has been received and is currently under review.</p>
 
       <div class="summary-box">
         <div class="summary-row">
-          <span>Kumpulan:</span>
+          <span>Team:</span>
           <strong id="summaryTeamName">-</strong>
         </div>
         <div class="summary-row">
-          <span>ID Pendaftaran:</span>
+          <span>Registration ID:</span>
           <strong id="summarySubmissionId" class="code-badge">-</strong>
         </div>
         <div class="summary-row">
           <span>Status:</span>
-          <span class="badge badge-pending">DALAM SEMAKAN (PENDING)</span>
+          <span class="badge badge-pending">UNDER REVIEW (PENDING)</span>
         </div>
         <div class="summary-row">
-          <span>Tarikh Hantar:</span>
+          <span>Submitted At:</span>
           <span id="summarySubmittedAt">-</span>
         </div>
       </div>
 
       <div class="instructions-box">
-        <p>📌 <strong>Langkah Seterusnya:</strong></p>
+        <p>📌 <strong>Next Steps:</strong></p>
         <ul>
-          <li>Penganjur akan memproses dan menyemak resit pembayaran anda.</li>
-          <li>Setelah diluluskan, kumpulan anda akan didaftarkan secara automatik dan anda akan menerima pemberitahuan
-            melalui WhatsApp.</li>
+          <li>The organizer will process and verify your payment receipt.</li>
+          <li>Once approved, your team will be registered automatically and you will receive a WhatsApp notification.</li>
         </ul>
       </div>
     </div>

@@ -45,7 +45,7 @@ export async function verifyAppCheck(
     return next(
       new AppError(
         ErrorCode.UNAUTHORIZED,
-        'Firebase App Check token (X-Firebase-AppCheck) diperlukan.'
+        'Firebase App Check token (X-Firebase-AppCheck) is required.'
       )
     );
   }
@@ -54,11 +54,11 @@ export async function verifyAppCheck(
     await admin.appCheck().verifyToken(appCheckToken);
     return next();
   } catch (err) {
-    logger.warn('Kegagalan pengesahan Firebase App Check token:', err);
+    logger.warn('Firebase App Check token verification failure:', err);
     return next(
       new AppError(
         ErrorCode.UNAUTHORIZED,
-        'Firebase App Check token tidak sah atau telah tamat tempoh.'
+        'Firebase App Check token is invalid or expired.'
       )
     );
   }

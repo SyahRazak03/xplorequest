@@ -104,8 +104,8 @@ export function subscribeToPreRegistrations(
           const apiItems: PreRegistrationItem[] = json.data.map((d: any) => ({
             id: d.id,
             eventId: d.eventId || eventId,
-            teamName: d.teamName || 'Pasukan',
-            leaderName: d.leaderName || 'Ketua',
+            teamName: d.teamName || 'Team',
+            leaderName: d.leaderName || 'Leader',
             leaderPhone: d.leaderWhatsApp || d.leaderPhone || '',
             memberNames: Array.isArray(d.memberNames) ? d.memberNames : [],
             memberCount: d.memberCount || 1 + (Array.isArray(d.memberNames) ? d.memberNames.length : 0),
@@ -281,7 +281,7 @@ export async function rejectPreRegistration(
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`,
           },
-          body: JSON.stringify({ reason: reason || 'Pendaftaran ditolak oleh penganjur.' }),
+          body: JSON.stringify({ reason: reason || 'Registration rejected by organizer.' }),
         }
       );
     } catch (err) {
@@ -294,7 +294,7 @@ export async function rejectPreRegistration(
     const preRegDocRef = doc(db, 'events', eventId, 'preRegistrations', preRegId);
     await updateDoc(preRegDocRef, {
       status: 'rejected',
-      rejectionReason: reason || 'Pendaftaran ditolak oleh penganjur.',
+      rejectionReason: reason || 'Registration rejected by organizer.',
       updatedAt: new Date().toISOString(),
     });
   } catch (fsErr) {

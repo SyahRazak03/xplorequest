@@ -146,7 +146,7 @@ export default function AdminRulesConfigScreen() {
         ) : (
           <View style={styles.disabledLabelWrapper}>
             <Ionicons name="close-circle-outline" size={14} color={COLORS.textMuted} />
-            <Text style={styles.disabledLabelText}>Peraturan ini ditutup (Tidak Aktif)</Text>
+            <Text style={styles.disabledLabelText}>This rule is disabled (Inactive)</Text>
           </View>
         )}
       </View>
@@ -164,8 +164,8 @@ export default function AdminRulesConfigScreen() {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Peraturan & Denda Acara</Text>
-          <Text style={styles.headerSubtitle}>Tetapan had masa, denda kelewatan & pemarkahan (ADM-04)</Text>
+          <Text style={styles.headerTitle}>Event Rules & Penalties</Text>
+          <Text style={styles.headerSubtitle}>Time limit settings, late penalties & scoring</Text>
         </View>
       </View>
 
@@ -174,9 +174,9 @@ export default function AdminRulesConfigScreen() {
         <Card role="admin" borderAccent="left">
           <View style={styles.masterSwitchRow}>
             <View style={styles.masterSwitchTextWrapper}>
-              <Text style={styles.masterSwitchTitle}>Sistem Pemarkahan (Point System)</Text>
+              <Text style={styles.masterSwitchTitle}>Point System</Text>
               <Text style={styles.masterSwitchSubtitle}>
-                Hidupkan untuk menggunakan pemarkahan di setiap checkpoint. Matikan untuk meletakkan kedudukan berdasarkan masa semata-mata.
+                Enable to use scoring at each checkpoint. Disable for time-only ranking.
               </Text>
             </View>
             <Switch
@@ -189,27 +189,27 @@ export default function AdminRulesConfigScreen() {
         </Card>
 
         {/* Main Config Card */}
-        <Card role="admin" title="Parameter Had Masa & Pemarkahan" borderAccent="top">
+        <Card role="admin" title="Time Limit & Scoring Parameters" borderAccent="top">
           {/* Max Race Time (Always Required) */}
           {renderStepper(
-            'Had Masa Maksimum Acara',
+            'Maximum Event Time Limit',
             maxRaceTime,
             () => setMaxRaceTime(prev => Math.min(600, prev + 10)),
             () => setMaxRaceTime(prev => Math.max(30, prev - 10)),
             'Min',
-            'Tempoh maksimum had masa keseluruhan sebelum DNF.'
+            'Maximum total duration before DNF.'
           )}
 
           <View style={styles.rowDivider} />
 
           {/* Task Time Limit per CP */}
           {renderStepperWithToggle(
-            'Had Masa Tugasan Pos Kawalan',
+            'Checkpoint Task Time Limit',
             taskTimeLimit,
             () => setTaskTimeLimit(prev => Math.min(120, prev + 5)),
             () => setTaskTimeLimit(prev => Math.max(2, prev - 5)),
             'Min',
-            'Had masa diperuntukkan bagi menyelesaikan tugasan di CP.',
+            'Time limit allocated to complete task at CP.',
             taskTimeLimitEnabled,
             setTaskTimeLimitEnabled
           )}
@@ -218,12 +218,12 @@ export default function AdminRulesConfigScreen() {
 
           {/* Late Penalty */}
           {renderStepperWithToggle(
-            'Kadar Denda Lewat (Penalti Masa)',
+            'Late Penalty Rate (Time Penalty)',
             latePenaltyMin,
             () => setLatePenaltyMin(prev => Math.min(60, prev + 1)),
             () => setLatePenaltyMin(prev => Math.max(1, prev - 1)),
             'Min',
-            'Denda minit tambahan ditambahkan per minit kelewatan penamat.',
+            'Additional penalty minutes added per minute of late finish.',
             latePenaltyEnabled,
             setLatePenaltyEnabled
           )}
@@ -234,12 +234,12 @@ export default function AdminRulesConfigScreen() {
 
               {/* Point Penalty */}
               {renderStepperWithToggle(
-                'Penalti Tolak Mata (Skip Tugasan)',
+                'Point Penalty (Task Skip)',
                 pointPenaltyPts,
                 () => setPointPenaltyPts(prev => Math.min(500, prev + 10)),
                 () => setPointPenaltyPts(prev => Math.max(10, prev - 10)),
                 'Pts',
-                'Mata dipotong bagi kumpulan yang melangkau / melanggar klu.',
+                'Points deducted for teams skipping task / violating clue.',
                 pointPenaltyEnabled,
                 setPointPenaltyEnabled
               )}
@@ -248,12 +248,12 @@ export default function AdminRulesConfigScreen() {
 
               {/* Bonus early points */}
               {renderStepperWithToggle(
-                'Mata Bonus Penamat Awal',
+                'Early Finish Bonus Points',
                 bonusPoints,
                 () => setBonusPoints(prev => Math.min(500, prev + 10)),
                 () => setBonusPoints(prev => Math.max(10, prev - 10)),
                 'Pts',
-                'Ganjaran mata tambahan sekiranya menamatkan acara awal.',
+                'Extra bonus points reward for early finish.',
                 bonusPointsEnabled,
                 setBonusPointsEnabled
               )}
@@ -263,18 +263,18 @@ export default function AdminRulesConfigScreen() {
 
 
         {/* Live Simulator Summary Card */}
-        <Card role="admin" style={styles.simulatorCard} title="Simulator Senario Pemarkahan Nyata" borderAccent="left">
+        <Card role="admin" style={styles.simulatorCard} title="Live Scoring Scenario Simulator" borderAccent="left">
           <Text style={styles.simulatorDescription}>
-            Berikut adalah unjuran simulasi sistem pemarkahan digital berdasarkan parameter peraturan yang anda pilih:
+            Here is the digital scoring system projection based on your selected rule parameters:
           </Text>
 
           <View style={styles.scenarioBox}>
             <View style={styles.scenarioHeader}>
               <Ionicons name="information-circle-outline" size={16} color={COLORS.admin.primary} />
-              <Text style={styles.scenarioHeaderText}>SENARIO SIMULASI PEMARKAHAN</Text>
+              <Text style={styles.scenarioHeaderText}>SCENARIO SCORING SIMULATION</Text>
             </View>
             <Text style={styles.scenarioScenarioText}>
-              Sebuah pasukan menamatkan acara <Text style={styles.boldText}>lewat 10 minit</Text> dan terpaksa <Text style={styles.boldText}>melangkau 1 tugasan</Text> pos kawalan.
+              A team finishes the event <Text style={styles.boldText}>10 minutes late</Text> and had to <Text style={styles.boldText}>skip 1 checkpoint task</Text>.
             </Text>
           </View>
 
@@ -282,13 +282,13 @@ export default function AdminRulesConfigScreen() {
             {latePenaltyEnabled && (
               <>
                 <View style={styles.calcRow}>
-                  <Text style={styles.calcLabel}>Denda Kelewatan Minit:</Text>
+                  <Text style={styles.calcLabel}>Late Penalty Minutes:</Text>
                   <Text style={[styles.calcValue, { color: COLORS.danger }]}>
-                    +{calculatedPenaltyMinutes} Minit
+                    +{calculatedPenaltyMinutes} Mins
                   </Text>
                 </View>
                 <Text style={styles.calcSubText}>
-                  (10 minit lewat × denda {latePenaltyMin} minit tambahan)
+                  (10 mins late × {latePenaltyMin} additional penalty mins)
                 </Text>
               </>
             )}
@@ -296,13 +296,13 @@ export default function AdminRulesConfigScreen() {
             {pointsSystemEnabled && pointPenaltyEnabled && (
               <>
                 <View style={styles.calcRow}>
-                  <Text style={styles.calcLabel}>Penalti Pemotongan Mata:</Text>
+                  <Text style={styles.calcLabel}>Point Deduction Penalty:</Text>
                   <Text style={[styles.calcValue, { color: COLORS.danger }]}>
-                    -{calculatedPenaltyPoints} Mata
+                    -{calculatedPenaltyPoints} Points
                   </Text>
                 </View>
                 <Text style={styles.calcSubText}>
-                  (1 tugasan dilangkau × penalti {pointPenaltyPts} mata)
+                  (1 task skipped × {pointPenaltyPts} point penalty)
                 </Text>
               </>
             )}
@@ -310,12 +310,12 @@ export default function AdminRulesConfigScreen() {
 
           <View style={styles.formulaSummaryBanner}>
             <Text style={styles.formulaSummaryText}>
-              Pasukan ini akan menerima denda terkumpul sebanyak{' '}
-              <Text style={styles.boldText}>+{calculatedPenaltyMinutes} minit</Text> pada masa tamat rasmi
+              This team will receive a cumulative penalty of{' '}
+              <Text style={styles.boldText}>+{calculatedPenaltyMinutes} minutes</Text> on the official finish time
               {pointsSystemEnabled ? (
                 <Text>
-                  {' '}dan ditolak{' '}
-                  <Text style={styles.boldText}>-{calculatedPenaltyPoints} mata</Text> daripada jumlah skor.
+                  {' '}and deducted{' '}
+                  <Text style={styles.boldText}>-{calculatedPenaltyPoints} points</Text> from total score.
                 </Text>
               ) : (
                 '.'
@@ -327,7 +327,7 @@ export default function AdminRulesConfigScreen() {
 
         {/* Save Button */}
         <PrimaryButton
-          label="Simpan Peraturan Acara"
+          label="Save Event Rules"
           onPress={handleSave}
           role="admin"
           style={styles.saveBtn}
@@ -340,11 +340,11 @@ export default function AdminRulesConfigScreen() {
         visible={modalVisible}
         variant="success"
         icon="checkmark-circle-outline"
-        title="Konfigurasi Disimpan 🎉"
-        message="Peraturan, sistem pemarkahan, dan denda masa nyata berjaya dikemaskini."
+        title="Configuration Saved 🎉"
+        message="Rules, scoring system, and real-time penalties updated successfully."
         buttons={[
           {
-            text: 'KEMBALI',
+            text: 'BACK',
             style: 'default',
             onPress: () => {
               setModalVisible(false);

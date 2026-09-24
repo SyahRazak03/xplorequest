@@ -20,10 +20,10 @@ import { AppError, ErrorCode } from '../utils/errors';
 
 export const RegisterPushTokenSchema = z.object({
   pushToken: z
-    .string({ required_error: 'Token pemberitahuan (pushToken) diperlukan.' })
-    .min(1, 'Token pemberitahuan (pushToken) tidak boleh kosong.')
+    .string({ required_error: 'Push notification token (pushToken) is required.' })
+    .min(1, 'Push notification token (pushToken) cannot be empty.')
     .refine((val) => Expo.isExpoPushToken(val), {
-      message: 'Format Expo push token tidak sah. Token mesti dalam format ExponentPushToken[...].',
+      message: 'Invalid Expo push token format. Token must be in ExponentPushToken[...] format.',
     }),
 });
 
@@ -51,9 +51,9 @@ export const TeamStatusSchema = z.enum(['pending', 'approved', 'rejected']);
  */
 const joinCodeField = z
   .string()
-  .min(4, 'Kod penyertaan mestilah sekurang-kurangnya 4 aksara.')
-  .max(10, 'Kod penyertaan tidak boleh melebihi 10 aksara.')
-  .regex(/^[A-Z0-9]+$/, 'Kod penyertaan hanya boleh mengandungi huruf besar dan nombor.')
+  .min(4, 'Join code must be at least 4 characters.')
+  .max(10, 'Join code cannot exceed 10 characters.')
+  .regex(/^[A-Z0-9]+$/, 'Join code can only contain uppercase letters and numbers.')
   .transform((v) => v.toUpperCase());
 
 // ── Event Schemas ─────────────────────────────────────────────────────────────
@@ -69,73 +69,73 @@ const joinCodeField = z
 export const CreateEventSchema = z.object({
   name: z
     .string()
-    .min(2, 'Nama acara mestilah sekurang-kurangnya 2 aksara.')
-    .max(120, 'Nama acara tidak boleh melebihi 120 aksara.')
+    .min(2, 'Event name must be at least 2 characters.')
+    .max(120, 'Event name cannot exceed 120 characters.')
     .trim(),
 
   joinCode: joinCodeField.optional(),
 
   date: z
     .string()
-    .min(3, 'Tarikh acara tidak sah.')
-    .max(50, 'Tarikh acara terlalu panjang.')
+    .min(3, 'Invalid event date.')
+    .max(50, 'Event date is too long.')
     .trim(),
 
   startTime: z
     .string()
-    .min(1, 'Masa mula tidak sah.')
-    .max(20, 'Masa mula terlalu panjang.')
+    .min(1, 'Invalid start time.')
+    .max(20, 'Start time is too long.')
     .trim()
     .optional(),
 
   maxDurationSeconds: z
-    .number({ invalid_type_error: 'maxDurationSeconds mestilah nombor.' })
-    .int('maxDurationSeconds mestilah integer.')
-    .min(60, 'Had masa mestilah sekurang-kurangnya 60 saat.')
-    .max(86400, 'Had masa tidak boleh melebihi 86 400 saat (24 jam).'),
+    .number({ invalid_type_error: 'maxDurationSeconds must be a number.' })
+    .int('maxDurationSeconds must be an integer.')
+    .min(60, 'Time limit must be at least 60 seconds.')
+    .max(86400, 'Time limit cannot exceed 86,400 seconds (24 hours).'),
 
   locationName: z
     .string()
-    .min(2, 'Nama lokasi mestilah sekurang-kurangnya 2 aksara.')
-    .max(200, 'Nama lokasi tidak boleh melebihi 200 aksara.')
+    .min(2, 'Location name must be at least 2 characters.')
+    .max(200, 'Location name cannot exceed 200 characters.')
     .trim(),
 
   totalCheckpoints: z
-    .number({ invalid_type_error: 'totalCheckpoints mestilah nombor.' })
-    .int('totalCheckpoints mestilah integer.')
-    .min(1, 'Acara mesti mempunyai sekurang-kurangnya 1 pos kawalan.')
-    .max(50, 'Acara tidak boleh mempunyai lebih daripada 50 pos kawalan.'),
+    .number({ invalid_type_error: 'totalCheckpoints must be a number.' })
+    .int('totalCheckpoints must be an integer.')
+    .min(1, 'Event must have at least 1 checkpoint.')
+    .max(50, 'Event cannot have more than 50 checkpoints.'),
 
   maxTeamSize: z
-    .number({ invalid_type_error: 'maxTeamSize mestilah nombor.' })
-    .int('maxTeamSize mestilah integer.')
-    .min(2, 'Saiz minimum kumpulan ialah 2 orang.')
-    .max(6, 'Saiz maksimum kumpulan ialah 6 orang.')
+    .number({ invalid_type_error: 'maxTeamSize must be a number.' })
+    .int('maxTeamSize must be an integer.')
+    .min(2, 'Minimum team size is 2 members.')
+    .max(6, 'Maximum team size is 6 members.')
     .optional()
     .default(4),
 
   urlSlug: z
     .string()
-    .min(2, 'Slug URL mestilah sekurang-kurangnya 2 aksara.')
-    .max(100, 'Slug URL tidak boleh melebihi 100 aksara.')
-    .regex(/^[a-z0-9-]+$/, 'Slug URL hanya boleh mengandungi huruf kecil, nombor, dan sempang (-).')
+    .min(2, 'URL slug must be at least 2 characters.')
+    .max(100, 'URL slug cannot exceed 100 characters.')
+    .regex(/^[a-z0-9-]+$/, 'URL slug can only contain lowercase letters, numbers, and hyphens (-).')
     .optional(),
 
   entryFee: z
-    .number({ invalid_type_error: 'Yuran pendaftaran mestilah nombor.' })
-    .min(0, 'Yuran pendaftaran tidak boleh negatif.')
+    .number({ invalid_type_error: 'Entry fee must be a number.' })
+    .min(0, 'Entry fee cannot be negative.')
     .optional()
     .default(0),
 
   paymentBankDetails: z
     .string()
-    .max(1000, 'Maklumat bank tidak boleh melebihi 1000 aksara.')
+    .max(1000, 'Bank details cannot exceed 1000 characters.')
     .optional()
     .default(''),
 
-  paymentQrImageUrl: z.string().url('URL gambar QR pembayaran tidak sah.').nullable().optional(),
+  paymentQrImageUrl: z.string().url('Invalid payment QR image URL.').nullable().optional(),
 
-  bannerImageUrl: z.string().url('URL gambar banner tidak sah.').nullable().optional(),
+  bannerImageUrl: z.string().url('Invalid banner image URL.').nullable().optional(),
 
   paymentDetails: z.lazy(() => PaymentDetailsSchema).nullable().optional(),
 });
@@ -145,26 +145,26 @@ export const CreateEventSchema = z.object({
 export const PaymentDetailsSchema = z.object({
   bankName: z
     .string()
-    .max(100, 'Nama bank tidak boleh melebihi 100 aksara.')
+    .max(100, 'Bank name cannot exceed 100 characters.')
     .trim()
     .optional()
     .default(''),
   accountHolderName: z
     .string()
-    .max(100, 'Nama pemegang akaun tidak boleh melebihi 100 aksara.')
+    .max(100, 'Account holder name cannot exceed 100 characters.')
     .trim()
     .optional()
     .default(''),
   accountNumber: z
     .string()
-    .max(50, 'Nombor akaun tidak boleh melebihi 50 aksara.')
-    .regex(/^[0-9\-\s]*$/, 'Nombor akaun hanya boleh mengandungi nombor, sempang, dan ruang.')
+    .max(50, 'Account number cannot exceed 50 characters.')
+    .regex(/^[0-9\-\s]*$/, 'Account number can only contain numbers, hyphens, and spaces.')
     .trim()
     .optional()
     .default(''),
   note: z
     .string()
-    .max(500, 'Nota tidak boleh melebihi 500 aksara.')
+    .max(500, 'Note cannot exceed 500 characters.')
     .trim()
     .optional()
     .default(''),
@@ -184,49 +184,49 @@ export const UpdateEventSchema = CreateEventSchema.partial();
 export const CreateTeamSchema = z.object({
   name: z
     .string()
-    .min(1, 'Nama kumpulan diperlukan.')
-    .max(100, 'Nama kumpulan tidak boleh melebihi 100 aksara.')
+    .min(1, 'Team name is required.')
+    .max(100, 'Team name cannot exceed 100 characters.')
     .trim(),
-  leaderName: z.string().max(100, 'Nama ketua tidak boleh melebihi 100 aksara.').trim().optional(),
-  membersList: z.string().max(500, 'Senarai ahli tidak boleh melebihi 500 aksara.').trim().optional(),
+  leaderName: z.string().max(100, 'Leader name cannot exceed 100 characters.').trim().optional(),
+  membersList: z.string().max(500, 'Members list cannot exceed 500 characters.').trim().optional(),
   phone: z
     .string()
-    .max(20, 'Nombor telefon tidak boleh melebihi 20 aksara.')
-    .regex(/^[0-9+\-\s()]*$/, 'Nombor telefon tidak sah.')
+    .max(20, 'Phone number cannot exceed 20 characters.')
+    .regex(/^[0-9+\-\s()]*$/, 'Invalid phone number.')
     .optional(),
   memberCount: z
-    .number({ invalid_type_error: 'memberCount mestilah nombor.' })
-    .int('memberCount mestilah integer.')
-    .min(1, 'Jumlah ahli mestilah sekurang-kurangnya 1 orang.')
-    .max(6, 'Jumlah ahli tidak boleh melebihi 6 orang.'),
-  joinCode: z.string().min(4, 'Kod penyertaan tidak sah.').max(10).optional(),
+    .number({ invalid_type_error: 'memberCount must be a number.' })
+    .int('memberCount must be an integer.')
+    .min(1, 'Member count must be at least 1.')
+    .max(6, 'Member count cannot exceed 6.'),
+  joinCode: z.string().min(4, 'Invalid join code.').max(10).optional(),
 });
 
 export const UpdateTeamSchema = z.object({
   name: z
     .string()
-    .min(1, 'Nama kumpulan diperlukan.')
-    .max(100, 'Nama kumpulan tidak boleh melebihi 100 aksara.')
+    .min(1, 'Team name is required.')
+    .max(100, 'Team name cannot exceed 100 characters.')
     .trim()
     .optional(),
-  leaderName: z.string().max(100, 'Nama ketua tidak boleh melebihi 100 aksara.').trim().optional(),
-  membersList: z.string().max(500, 'Senarai ahli tidak boleh melebihi 500 aksara.').trim().optional(),
+  leaderName: z.string().max(100, 'Leader name cannot exceed 100 characters.').trim().optional(),
+  membersList: z.string().max(500, 'Members list cannot exceed 500 characters.').trim().optional(),
   phone: z
     .string()
-    .max(20, 'Nombor telefon tidak boleh melebihi 20 aksara.')
-    .regex(/^[0-9+\-\s()]*$/, 'Nombor telefon tidak sah.')
+    .max(20, 'Phone number cannot exceed 20 characters.')
+    .regex(/^[0-9+\-\s()]*$/, 'Invalid phone number.')
     .optional(),
   memberCount: z
-    .number({ invalid_type_error: 'memberCount mestilah nombor.' })
-    .int('memberCount mestilah integer.')
-    .min(1, 'Jumlah ahli mestilah sekurang-kurangnya 1 orang.')
-    .max(6, 'Jumlah ahli tidak boleh melebihi 6 orang.')
+    .number({ invalid_type_error: 'memberCount must be a number.' })
+    .int('memberCount must be an integer.')
+    .min(1, 'Member count must be at least 1.')
+    .max(6, 'Member count cannot exceed 6.')
     .optional(),
 });
 
 export const TeamStatusUpdateSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected'], {
-    errorMap: () => ({ message: "Status mestilah 'pending', 'approved', atau 'rejected'." }),
+    errorMap: () => ({ message: "Status must be 'pending', 'approved', or 'rejected'." }),
   }),
 });
 
@@ -240,31 +240,31 @@ export const BoundaryVertexSchema = z.object({
 export const SaveBoundarySchema = z.object({
   boundary: z
     .array(BoundaryVertexSchema)
-    .min(3, 'Poligon sempadan memerlukan sekurang-kurangnya 3 bucu.'),
+    .min(3, 'Boundary polygon requires at least 3 vertices.'),
 });
 
 export const CreateCheckpointSchema = z.object({
   name: z
     .string()
-    .min(1, 'Nama pos kawalan diperlukan.')
-    .max(120, 'Nama pos kawalan tidak boleh melebihi 120 aksara.')
+    .min(1, 'Checkpoint name is required.')
+    .max(120, 'Checkpoint name cannot exceed 120 characters.')
     .trim(),
-  latitude: z.number().min(-90, 'Latitud tidak sah.').max(90, 'Latitud tidak sah.'),
-  longitude: z.number().min(-180, 'Longitud tidak sah.').max(180, 'Longitud tidak sah.'),
-  clueText: z.string().min(1, 'Klu diperlukan.').max(1000, 'Klu tidak boleh melebihi 1000 aksara.').trim(),
-  taskDescription: z.string().min(1, 'Tugasan diperlukan.').max(2000, 'Tugasan tidak boleh melebihi 2000 aksara.').trim(),
+  latitude: z.number().min(-90, 'Invalid latitude.').max(90, 'Invalid latitude.'),
+  longitude: z.number().min(-180, 'Invalid longitude.').max(180, 'Invalid longitude.'),
+  clueText: z.string().min(1, 'Clue text is required.').max(1000, 'Clue text cannot exceed 1000 characters.').trim(),
+  taskDescription: z.string().min(1, 'Task description is required.').max(2000, 'Task description cannot exceed 2000 characters.').trim(),
   scorePoints: z
-    .number({ invalid_type_error: 'scorePoints mestilah nombor.' })
-    .int('scorePoints mestilah integer.')
-    .nonnegative('Mata ganjaran tidak boleh negatif.')
-    .max(10000, 'Mata ganjaran maksimum ialah 10,000.')
+    .number({ invalid_type_error: 'scorePoints must be a number.' })
+    .int('scorePoints must be an integer.')
+    .nonnegative('Score points cannot be negative.')
+    .max(10000, 'Maximum score points is 10,000.')
     .optional()
     .default(100),
   geofenceRadiusMeters: z
-    .number({ invalid_type_error: 'geofenceRadiusMeters mestilah nombor.' })
-    .int('geofenceRadiusMeters mestilah integer.')
-    .min(10, 'Radius geofence mestilah sekurang-kurangnya 10 meter.')
-    .max(150, 'Radius geofence tidak boleh melebihi 150 meter.')
+    .number({ invalid_type_error: 'geofenceRadiusMeters must be a number.' })
+    .int('geofenceRadiusMeters must be an integer.')
+    .min(10, 'Geofence radius must be at least 10 meters.')
+    .max(150, 'Geofence radius cannot exceed 150 meters.')
     .optional()
     .default(50),
   isStart: z.boolean().optional().default(false),
@@ -278,13 +278,13 @@ export const UpdateCheckpointSchema = CreateCheckpointSchema.partial();
 
 export const ReorderCheckpointsSchema = z.object({
   checkpointIds: z
-    .array(z.string().min(1, 'ID pos kawalan tidak sah.'))
-    .min(1, 'Sekurang-kurangnya satu ID pos kawalan diperlukan.'),
+    .array(z.string().min(1, 'Invalid checkpoint ID.'))
+    .min(1, 'At least one checkpoint ID is required.'),
 });
 
 export const AttendanceCheckinSchema = z.object({
-  teamId: z.string().min(1, 'ID kumpulan diperlukan.').trim(),
-  note: z.string().max(200, 'Nota tidak boleh melebihi 200 aksara.').optional(),
+  teamId: z.string().min(1, 'Team ID is required.').trim(),
+  note: z.string().max(200, 'Note cannot exceed 200 characters.').optional(),
 });
 
 export const StartRaceSchema = z.object({
@@ -293,7 +293,7 @@ export const StartRaceSchema = z.object({
 
 export const LateAssignSchema = z.object({
   preferredCheckpointId: z.string().optional(),
-  note: z.string().max(200, 'Nota tidak boleh melebihi 200 aksara.').optional(),
+  note: z.string().max(200, 'Note cannot exceed 200 characters.').optional(),
 });
 
 export const ALLOWED_QR_TTL_SECONDS = [10, 15, 30, 45, 60, 120] as const;
@@ -305,7 +305,7 @@ export const GenerateCheckpointQrSchema = z.object({
     .number()
     .int()
     .refine((val) => (ALLOWED_QR_TTL_SECONDS as readonly number[]).includes(val), {
-      message: 'TTL mestilah salah satu daripada: 10, 15, 30, 45, 60, atau 120 saat.',
+      message: 'TTL must be one of: 10, 15, 30, 45, 60, or 120 seconds.',
     })
     .optional()
     .default(30),
@@ -317,27 +317,27 @@ export const GenerateAttendanceQrSchema = z.object({
 });
 
 export const ScanCheckpointQrSchema = z.object({
-  payload: z.string().min(1, 'Payload kod QR diperlukan.').trim(),
-  latitude: z.number().min(-90, 'Latitud tidak sah.').max(90, 'Latitud tidak sah.'),
-  longitude: z.number().min(-180, 'Longitud tidak sah.').max(180, 'Longitud tidak sah.'),
+  payload: z.string().min(1, 'QR code payload is required.').trim(),
+  latitude: z.number().min(-90, 'Invalid latitude.').max(90, 'Invalid latitude.'),
+  longitude: z.number().min(-180, 'Invalid longitude.').max(180, 'Invalid longitude.'),
   accuracy: z.number().optional(),
 });
 
 export const SkipCheckpointSchema = z.object({
-  reason: z.string().max(250, 'Sebab langkau tidak boleh melebihi 250 aksara.').trim().optional(),
+  reason: z.string().max(250, 'Skip reason cannot exceed 250 characters.').trim().optional(),
 });
 
 export const FinishRaceScanSchema = z.object({
-  payload: z.string().min(1, 'Payload kod QR penamat diperlukan.').trim(),
-  latitude: z.number().min(-90, 'Latitud tidak sah.').max(90, 'Latitud tidak sah.'),
-  longitude: z.number().min(-180, 'Longitud tidak sah.').max(180, 'Longitud tidak sah.'),
+  payload: z.string().min(1, 'Finish QR code payload is required.').trim(),
+  latitude: z.number().min(-90, 'Invalid latitude.').max(90, 'Invalid latitude.'),
+  longitude: z.number().min(-180, 'Invalid longitude.').max(180, 'Invalid longitude.'),
   accuracy: z.number().optional(),
 });
 
 export const UploadPhotoProofSchema = z.object({
-  imageBase64: z.string().min(1, 'Data imej base64 diperlukan.'),
+  imageBase64: z.string().min(1, 'Base64 image data is required.'),
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
-    errorMap: () => ({ message: 'Format imej mestilah image/jpeg, image/png, atau image/webp.' }),
+    errorMap: () => ({ message: 'Image format must be image/jpeg, image/png, or image/webp.' }),
   }),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
@@ -345,16 +345,16 @@ export const UploadPhotoProofSchema = z.object({
 
 export const UploadEventAssetSchema = z.object({
   assetType: z.enum(['banner', 'payment_qr'], {
-    errorMap: () => ({ message: "Jenis aset mestilah 'banner' atau 'payment_qr'." }),
+    errorMap: () => ({ message: "Asset type must be 'banner' or 'payment_qr'." }),
   }),
-  imageBase64: z.string().min(1, 'Data imej base64 diperlukan.'),
+  imageBase64: z.string().min(1, 'Base64 image data is required.'),
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
-    errorMap: () => ({ message: 'Format imej mestilah image/jpeg, image/png, atau image/webp.' }),
+    errorMap: () => ({ message: 'Image format must be image/jpeg, image/png, or image/webp.' }),
   }),
 });
 
 export const ManualOverrideSchema = z.object({
-  reason: z.string().min(5, 'Sebab pelepasan manual sekurang-kurangnya 5 aksara.').max(250).trim(),
+  reason: z.string().min(5, 'Manual release reason must be at least 5 characters.').max(250).trim(),
   crewLatitude: z.number().min(-90).max(90).optional(),
   crewLongitude: z.number().min(-180).max(180).optional(),
   skipGeofenceReason: z.string().max(250).trim().optional(),
@@ -365,30 +365,30 @@ export const ApplyPenaltySchema = z.object({
   penaltyType: z.enum(['points', 'time', 'both']),
   pointPenalty: z.number().int().min(0).max(1000).optional().default(0),
   timePenaltyMinutes: z.number().int().min(0).max(240).optional().default(0),
-  reason: z.string().min(5, 'Sebab penalti sekurang-kurangnya 5 aksara.').max(250).trim(),
+  reason: z.string().min(5, 'Penalty reason must be at least 5 characters.').max(250).trim(),
   checkpointId: z.string().max(50).trim().optional(),
 });
 
 export const UpdateRaceRulesSchema = z.object({
-  maxRaceTime: z.number().int('Masa perlumbaan mestilah integer.').min(60, 'Masa perlumbaan sekurang-kurangnya 60 saat.').max(86400).optional(),
-  taskTimeLimit: z.number().int('Masa tugasan mestilah integer.').min(30, 'Masa tugasan sekurang-kurangnya 30 saat.').max(7200).optional(),
-  latePenaltyMin: z.number().int().min(0, 'Penalti masa tidak boleh negatif.').max(240).optional(),
-  pointPenaltyPts: z.number().int().min(0, 'Penalti mata tidak boleh negatif.').max(1000).optional(),
-  bonusPoints: z.number().int().min(0, 'Mata bonus tidak boleh negatif.').max(1000).optional(),
+  maxRaceTime: z.number().int('Race duration must be an integer.').min(60, 'Race duration must be at least 60 seconds.').max(86400).optional(),
+  taskTimeLimit: z.number().int('Task time limit must be an integer.').min(30, 'Task time limit must be at least 30 seconds.').max(7200).optional(),
+  latePenaltyMin: z.number().int().min(0, 'Time penalty cannot be negative.').max(240).optional(),
+  pointPenaltyPts: z.number().int().min(0, 'Point penalty cannot be negative.').max(1000).optional(),
+  bonusPoints: z.number().int().min(0, 'Bonus points cannot be negative.').max(1000).optional(),
   pointsSystemEnabled: z.boolean().optional(),
   latePenaltyEnabled: z.boolean().optional(),
   taskTimeLimitEnabled: z.boolean().optional(),
   pointPenaltyEnabled: z.boolean().optional(),
   bonusPointsEnabled: z.boolean().optional(),
-  maxVelocityKmh: z.number().min(5, 'Had kelajuan minimum ialah 5 km/j.').max(150, 'Had kelajuan maksimum ialah 150 km/j.').optional(),
+  maxVelocityKmh: z.number().min(5, 'Minimum velocity limit is 5 km/h.').max(150, 'Maximum velocity limit is 150 km/h.').optional(),
   maxSkipsPerTeam: z.number().int().min(0).max(10).optional(),
   latePenaltyPerMinute: z.number().min(0).max(100).optional(),
 });
 
 export const RegisterUserSchema = z.object({
   name: z.string().min(1).max(100).trim(),
-  email: z.string().email('E-mel tidak sah.').max(254),
-  password: z.string().min(6, 'Kata laluan terlalu pendek.').max(128),
+  email: z.string().email('Invalid email address.').max(254),
+  password: z.string().min(6, 'Password is too short.').max(128),
   role: UserRoleSchema,
 });
 
@@ -399,8 +399,8 @@ export const JoinEventSchema = z.object({
 export const SyncQueueItemSchema = z.object({
   idempotencyKey: z
     .string()
-    .min(8, 'Key kebolehulangan sekurang-kurangnya 8 aksara.')
-    .max(128, 'Key kebolehulangan tidak boleh melebihi 128 aksara.')
+    .min(8, 'Idempotency key must be at least 8 characters.')
+    .max(128, 'Idempotency key cannot exceed 128 characters.')
     .trim(),
   operation: z.enum([
     'checkpoint_scan',
@@ -410,9 +410,9 @@ export const SyncQueueItemSchema = z.object({
     'apply_penalty',
     'finish_scan',
   ], {
-    errorMap: () => ({ message: 'Operasi sync tidak sah.' }),
+    errorMap: () => ({ message: 'Invalid sync operation.' }),
   }),
-  clientTimestamp: z.string().datetime({ message: 'Cap masa peranti tidak sah.' }),
+  clientTimestamp: z.string().datetime({ message: 'Invalid client timestamp.' }),
   checkpointId: z.string().max(50).optional(),
   teamId: z.string().max(50).optional(),
   payload: z.record(z.unknown()).optional().default({}),
@@ -421,41 +421,41 @@ export const SyncQueueItemSchema = z.object({
 export const BatchSyncSchema = z.object({
   items: z
     .array(SyncQueueItemSchema)
-    .min(1, 'Sekurang-kurangnya satu item senarai menunggu diperlukan.')
-    .max(100, 'Maksimum 100 item dibenarkan dalam satu kelompok sync.'),
+    .min(1, 'At least one queue item is required.')
+    .max(100, 'Maximum 100 items allowed per sync batch.'),
 });
 
 // ── Web Pre-Registration Schemas (Feature 4B) ─────────────────────────────────
 
 export const MalaysianPhoneSchema = z
-  .string({ required_error: 'Nombor WhatsApp ketua diperlukan.' })
+  .string({ required_error: 'Leader WhatsApp number is required.' })
   .trim()
-  .regex(/^(\+?60|0)1[0-46-9][0-9]{7,8}$/, 'Nombor WhatsApp mestilah nombor telefon Malaysia yang sah (contoh: 0123456789 atau +60123456789).');
+  .regex(/^(\+?60|0)1[0-46-9][0-9]{7,8}$/, 'WhatsApp number must be a valid Malaysian phone number (e.g. 0123456789 or +60123456789).');
 
 export const PreRegisterSchema = z.object({
   teamName: z
-    .string({ required_error: 'Nama kumpulan diperlukan.' })
-    .min(1, 'Nama kumpulan tidak boleh kosong.')
-    .max(100, 'Nama kumpulan tidak boleh melebihi 100 aksara.')
+    .string({ required_error: 'Team name is required.' })
+    .min(1, 'Team name cannot be empty.')
+    .max(100, 'Team name cannot exceed 100 characters.')
     .trim(),
   leaderName: z
-    .string({ required_error: 'Nama ketua kumpulan diperlukan.' })
-    .min(1, 'Nama ketua kumpulan tidak boleh kosong.')
-    .max(100, 'Nama ketua kumpulan tidak boleh melebihi 100 aksara.')
+    .string({ required_error: 'Team leader name is required.' })
+    .min(1, 'Team leader name cannot be empty.')
+    .max(100, 'Team leader name cannot exceed 100 characters.')
     .trim(),
   leaderWhatsApp: MalaysianPhoneSchema,
   memberNames: z
     .array(
       z
         .string()
-        .min(1, 'Nama ahli tidak boleh kosong.')
-        .max(100, 'Nama ahli tidak boleh melebihi 100 aksara.')
+        .min(1, 'Member name cannot be empty.')
+        .max(100, 'Member name cannot exceed 100 characters.')
         .trim()
     )
-    .max(5, 'Jumlah ahli tambahan tidak boleh melebihi 5 orang.'),
-  imageBase64: z.string({ required_error: 'Resit pembayaran diperlukan.' }).min(1, 'Resit pembayaran tidak boleh kosong.'),
+    .max(5, 'Total additional members cannot exceed 5.'),
+  imageBase64: z.string({ required_error: 'Payment receipt is required.' }).min(1, 'Payment receipt cannot be empty.'),
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp'], {
-    errorMap: () => ({ message: 'Format resit mestilah image/jpeg, image/png, atau image/webp.' }),
+    errorMap: () => ({ message: 'Receipt format must be image/jpeg, image/png, or image/webp.' }),
   }),
 });
 
@@ -513,7 +513,7 @@ export function validateBody<T extends z.ZodTypeAny>(
       // Collapse ZodError into a readable first message for the client
       const firstError = result.error.errors[0];
       const fieldPath = firstError?.path.join('.') ?? 'body';
-      const message = firstError?.message ?? 'Input tidak sah.';
+      const message = firstError?.message ?? 'Invalid input.';
 
       next(
         new AppError(

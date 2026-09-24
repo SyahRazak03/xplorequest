@@ -45,17 +45,17 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
   const isActive = status === 'active';
   const isLocked = status === 'locked';
 
-  let badgeLabel = 'Terkunci 🔒';
+  let badgeLabel = 'Locked 🔒';
   let badgeState: 'success' | 'warning' | 'danger' | 'info' = 'danger';
 
   if (isCompleted) {
-    badgeLabel = 'Selesai ✅';
+    badgeLabel = 'Completed ✅';
     badgeState = 'success';
   } else if (isSkipped) {
-    badgeLabel = 'Dilangkau ⚠️';
+    badgeLabel = 'Skipped ⚠️';
     badgeState = 'warning';
   } else if (isActive) {
-    badgeLabel = 'Aktif Sini ▶️';
+    badgeLabel = 'Active Here ▶️';
     badgeState = 'info';
   }
 
@@ -93,10 +93,9 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                 <View style={styles.statusRow}>
                   <Badge label={badgeLabel} state={badgeState} />
                   {rules.pointsSystemEnabled && (
-                    <Badge label={`${checkpoint.scorePoints} Mata`} state={isCompleted ? 'success' : 'info'} />
+                    <Badge label={`${checkpoint.scorePoints} Pts`} state={isCompleted ? 'success' : 'info'} />
                   )}
                 </View>
-
 
                 {/* Clue Visual Illustration */}
                 <View style={[styles.imageContainer, { borderRadius: theme.radius.md, borderColor: theme.colors.border }]}>
@@ -104,7 +103,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                     <View style={styles.lockedOverlay}>
                       <Ionicons name="lock-closed" size={48} color={theme.colors.textMuted} />
                       <Text style={[styles.lockedText, { color: theme.colors.textMuted }]}>
-                        Selesaikan checkpoint sebelum ini untuk membuka petunjuk.
+                        Complete previous checkpoints to unlock this clue.
                       </Text>
                     </View>
                   ) : (
@@ -124,7 +123,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                         <View style={styles.sectionHeaderRow}>
                           <Ionicons name="bulb-outline" size={18} color={theme.colors.accent} />
                           <Text style={[styles.sectionTitle, { color: theme.colors.accent }]}>
-                            Petunjuk Lokasi (Clue)
+                            Location Clue & Hint
                           </Text>
                         </View>
                         <Text style={[styles.descriptionText, { color: theme.colors.text }]}>
@@ -136,7 +135,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                         <View style={styles.sectionHeaderRow}>
                           <Ionicons name="checkbox-outline" size={18} color={theme.colors.primary} />
                           <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>
-                            Tugasan di Checkpoint
+                            Checkpoint Task
                           </Text>
                         </View>
                         <Text style={[styles.descriptionText, { color: theme.colors.text }]}>
@@ -150,7 +149,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                     <View style={styles.lockedMessageArea}>
                       <Ionicons name="information-circle-outline" size={20} color={theme.colors.textMuted} />
                       <Text style={[styles.lockedSubText, { color: theme.colors.textMuted }]}>
-                        Gunakan Peta Interaktif untuk navigasi ke checkpoint semasa terlebih dahulu.
+                        Use the Interactive Map to navigate to your current active checkpoint first.
                       </Text>
                     </View>
                   )}
@@ -163,7 +162,6 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                       style={[styles.actionBtn, { backgroundColor: theme.colors.primary, borderRadius: theme.radius.sm }]}
                       onPress={() => {
                         onClose();
-                        // Delay execution slightly to allow modal to hide smoothly
                         setTimeout(() => {
                           onPressScan();
                         }, 300);
@@ -171,7 +169,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                       activeOpacity={0.8}
                     >
                       <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
-                      <Text style={styles.actionBtnText}>Imbas QR Marshal Bertugas</Text>
+                      <Text style={styles.actionBtnText}>Scan Marshal QR Code</Text>
                     </TouchableOpacity>
                   )}
 
@@ -196,7 +194,7 @@ export const ClueBottomSheet: React.FC<ClueBottomSheetProps> = ({
                     >
                       <Ionicons name="information-circle-outline" size={18} color={theme.colors.primary} />
                       <Text style={[styles.secondaryActionBtnText, { color: theme.colors.primary }]}>
-                        Lihat Butiran & Landmark
+                        View Details & Landmark
                       </Text>
                     </TouchableOpacity>
                   )}

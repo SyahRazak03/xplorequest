@@ -272,23 +272,23 @@ export default function MapScreen({
         {locationPermission === 'denied' ? (
           <View style={[styles.statusBanner, { backgroundColor: COLORS.pending }]}>
             <Ionicons name="location-outline" size={16} color="#FFFFFF" />
-            <Text style={styles.bannerText}>GPS DIMATIKAN — DAYAKAN LOKASI UNTUK NAVIGASI LANGSUNG</Text>
+            <Text style={styles.bannerText}>GPS DISABLED — ENABLE LOCATION FOR LIVE NAVIGATION</Text>
           </View>
         ) : !isInsideGeofence ? (
           <View style={[styles.statusBanner, { backgroundColor: COLORS.danger }]}>
             <Ionicons name="warning" size={16} color="#FFFFFF" />
-            <Text style={styles.bannerText}>KELUAR GEOFENCE ACARA ⚠️</Text>
+            <Text style={styles.bannerText}>OUTSIDE EVENT GEOFENCE ⚠️</Text>
           </View>
         ) : activeArrival ? (
           <View style={[styles.statusBanner, { backgroundColor: COLORS.success }]}>
             <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
-            <Text style={styles.bannerText}>ZON CHECKPOINT AKTIF DIKESAN 📍</Text>
+            <Text style={styles.bannerText}>ACTIVE CHECKPOINT ZONE DETECTED 📍</Text>
           </View>
         ) : (
           <View style={[styles.statusBanner, { backgroundColor: theme.colors.primary }]}>
             <Ionicons name="navigate" size={16} color="#FFFFFF" />
             <Text style={styles.bannerText}>
-              Navigasi Laluan GPS {distanceToActive !== null ? `(${distanceToActive}m ke pos)` : ''}
+              GPS Route Navigation {distanceToActive !== null ? `(${distanceToActive}m to checkpoint)` : ''}
             </Text>
           </View>
         )}
@@ -420,7 +420,7 @@ export default function MapScreen({
             <Marker
               coordinate={userLocation}
               anchor={{ x: 0.5, y: 0.5 }}
-              title="Pasukan Anda"
+              title="Your Team"
             >
               <View style={styles.userLocationMarker}>
                 <View
@@ -437,7 +437,7 @@ export default function MapScreen({
                   />
                 </View>
                 <View style={styles.userBadge}>
-                  <Text style={styles.userBadgeText}>Pasukan Anda</Text>
+                  <Text style={styles.userBadgeText}>Your Team</Text>
                 </View>
               </View>
             </Marker>
@@ -467,7 +467,7 @@ export default function MapScreen({
           >
             <View style={styles.infoCardHeader}>
               <View style={styles.arrivalBadge}>
-                <Text style={styles.arrivalBadgeText}>SAMPAI DI ZON 📍</Text>
+                <Text style={styles.arrivalBadgeText}>ARRIVED AT ZONE 📍</Text>
               </View>
               <Text style={[styles.infoCardTitle, { color: theme.colors.text }]}>
                 {activeCheckpointsList.find((c: Checkpoint) => c.id === currentCpId)?.name}
@@ -476,8 +476,7 @@ export default function MapScreen({
             <Text
               style={[styles.infoCardDesc, { color: theme.colors.textMuted }]}
             >
-              Anda berada di lingkungan geofencing pos kawalan aktif. Sila imbas
-              kod QR Marshal untuk menuntut mata.
+              You are within the active checkpoint geofence. Please scan the Marshal QR code to earn points.
             </Text>
             <TouchableOpacity
               style={[
@@ -488,7 +487,7 @@ export default function MapScreen({
               activeOpacity={0.8}
             >
               <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
-              <Text style={styles.actionButtonText}>Imbas Kod QR Pos</Text>
+              <Text style={styles.actionButtonText}>Scan Checkpoint QR Code</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -500,17 +499,17 @@ export default function MapScreen({
                 color={theme.colors.textMuted}
               />
               <Text style={[styles.infoCardTitle, { color: theme.colors.text }]}>
-                Acara Berjalan: CP{' '}
+                Event Active: CP{' '}
                 {activeCheckpointsList.findIndex((c: Checkpoint) => c.id === currentCpId) + 1}{' '}
-                Aktif
+                Active
               </Text>
             </View>
             <Text
               style={[styles.infoCardDesc, { color: theme.colors.textMuted }]}
             >
-              Navigasi ke pos kawalan aktif berpandukan peta GPS Google di atas.
+              Navigate to active checkpoint using the Google GPS map above.
               {distanceToActive !== null
-                ? ` Jarak semasa: lebih kurang ${distanceToActive} meter.`
+                ? ` Current distance: approx. ${distanceToActive} meters.`
                 : ''}
             </Text>
           </View>
@@ -523,23 +522,23 @@ export default function MapScreen({
           <View
             style={[styles.legendDot, { backgroundColor: COLORS.success }]}
           />
-          <Text style={styles.legendLabel}>Selesai</Text>
+          <Text style={styles.legendLabel}>Completed</Text>
         </View>
         <View style={styles.legendItem}>
           <View
             style={[styles.legendDot, { backgroundColor: theme.colors.primary }]}
           />
-          <Text style={styles.legendLabel}>Semasa</Text>
+          <Text style={styles.legendLabel}>Active</Text>
         </View>
         <View style={styles.legendItem}>
           <View
             style={[styles.legendDot, { backgroundColor: COLORS.pending }]}
           />
-          <Text style={styles.legendLabel}>Dilangkau</Text>
+          <Text style={styles.legendLabel}>Skipped</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#94A3B8' }]} />
-          <Text style={styles.legendLabel}>Terkunci</Text>
+          <Text style={styles.legendLabel}>Locked</Text>
         </View>
       </View>
 

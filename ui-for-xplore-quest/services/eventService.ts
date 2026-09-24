@@ -117,7 +117,7 @@ export async function updatePaymentDetailsService(
   const payload = await response.json();
 
   if (!response.ok || !payload.success) {
-    throw new Error(payload.error?.message || 'Gagal mengemaskini maklumat pembayaran.');
+    throw new Error(payload.error?.message || 'Failed to update payment information.');
   }
 
   return payload.data as EventConfig;

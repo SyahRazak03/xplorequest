@@ -51,14 +51,14 @@ export async function generateCheckpointQrService(
 ): Promise<CheckpointQrResult> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, caller.uid, caller.role, caller.eventId);
 
   const checkpoint = await findCheckpointById(eventId, checkpointId);
   if (!checkpoint) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Pos kawalan tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Checkpoint not found.');
   }
 
   // Enforce Checkpoint Ownership RBAC
@@ -66,7 +66,7 @@ export async function generateCheckpointQrService(
     if (!caller.checkpointId || caller.checkpointId !== checkpointId) {
       throw new AppError(
         ErrorCode.FORBIDDEN,
-        'Akses ditolak: Kru hanya boleh menjana kod QR untuk pos kawalan yang ditugaskan.'
+        'Access denied: Crew can only generate QR codes for their assigned checkpoint.'
       );
     }
   }
@@ -96,7 +96,7 @@ export async function generateCheckpointQrService(
   if (!secrets || !secrets.hmacSecret) {
     throw new AppError(
       ErrorCode.INTERNAL_SERVER_ERROR,
-      'Konfigurasi kunci HMAC acara tidak ditemui.'
+      'Event HMAC key configuration not found.'
     );
   }
 
@@ -154,7 +154,7 @@ export async function generateAttendanceQrService(
 ): Promise<AttendanceQrResult> {
   const event = await findEventById(eventId);
   if (!event) {
-    throw new AppError(ErrorCode.NOT_FOUND, 'Acara tidak ditemui.');
+    throw new AppError(ErrorCode.NOT_FOUND, 'Event not found.');
   }
 
   assertEventOwner(event, caller.uid, caller.role, caller.eventId);
@@ -163,7 +163,7 @@ export async function generateAttendanceQrService(
   if (!secrets || !secrets.hmacSecret) {
     throw new AppError(
       ErrorCode.INTERNAL_SERVER_ERROR,
-      'Konfigurasi kunci HMAC acara tidak ditemui.'
+      'Event HMAC key configuration not found.'
     );
   }
 
