@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +22,8 @@ import { useApp } from '../AppContext';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import PendingBlockedModal from './PendingBlockedModal';
 import CelebrationModal from './CelebrationModal';
-import QRScanSimulationScreen from './QRScanSimulationScreen';
+import RealCameraQRScanner from '../components/RealCameraQRScanner';
+import { updateTeamProgressService } from '../services/teamService';
 import { Card, Badge, StarBurst } from '../components';
 
 const { width } = Dimensions.get('window');
@@ -32,7 +34,11 @@ type FinishLineScreenRouteProp = RouteProp<RootStackParamList, 'FinishLine'>;
 export default function FinishLineScreen() {
   const navigation = useNavigation<FinishLineScreenNavigationProp>();
   const route = useRoute<FinishLineScreenRouteProp>();
-  const { checkpoints: appCheckpoints, activeEvent } = useApp();
+  const { checkpoints: appCheckpoints, activeEvent, teams, user } = useApp();
+
+  const currentTeam = (teams || []).find(
+    (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
+  ) || (teams && teams.length > 0 ? teams[0] : null);
   
   // Extract parameters from route
   const { completedCps = [], skippedCps = [], points = 250, elapsedTime = 5075 } = route.params || {};
@@ -100,11 +106,35 @@ export default function FinishLineScreen() {
     }
   };
 
-  const handleScanSuccess = () => {
-    // Imbasan Berjaya: Hide scanner and show celebration
+  const handleScanSuccess = async (scannedData?: string) => {
+    // 1. Team validation if scanned QR was generated for another team
+    if (scannedData) {
+      const matchedTeamInPayload = (teams || []).find(
+        (t) => scannedData.startsWith(t.id) || scannedData.includes(t.id)
+      );
+      if (matchedTeamInPayload && currentTeam?.id && matchedTeamInPayload.id !== currentTeam.id) {
+        Alert.alert(
+          'Kod QR Ditolak — Dikhaskan Untuk Pasukan Lain!',
+          `Kod QR yang diimbas telah dijana khas untuk ${matchedTeamInPayload.name}.\n\nPasukan anda ialah ${currentTeam.name}. Anda tidak boleh mengimbas Kod QR milik pasukan lain.`
+        );
+        return;
+      }
+    }
+
     setScannerVisible(false);
-    
-    // We add 300 points for CP-TAMAT completion
+
+    // Record finish line completion in Firestore
+    try {
+      const eventId = activeEvent?.id || user?.eventId || 'EV-001';
+      const teamId = currentTeam?.id || user?.teamId || '';
+      const finishPoints = typeof finishCp.scorePoints === 'number' ? finishCp.scorePoints : ((activeEvent as any)?.finishPoints || 0);
+      if (teamId) {
+        await updateTeamProgressService(eventId, teamId, finishCp.id, 'COMPLETED', finishPoints);
+      }
+    } catch (err) {
+      console.warn('Finish line save progress notice:', err);
+    }
+
     setTimeout(() => {
       setCelebrationVisible(true);
     }, 400);
@@ -113,8 +143,9 @@ export default function FinishLineScreen() {
 
   const navigateToResults = () => {
     setCelebrationVisible(false);
+    const finishPoints = typeof finishCp.scorePoints === 'number' ? finishCp.scorePoints : ((activeEvent as any)?.finishPoints || 0);
     navigation.navigate('PersonalResults', {
-      finalPoints: points + 300, // Include CP score points
+      finalPoints: points + finishPoints,
       elapsedTime: localTimer,
     });
   };
@@ -142,7 +173,7 @@ export default function FinishLineScreen() {
     longitude: defaultEventLng,
     clueText: 'Garisan Penamat',
     taskDescription: 'Daftar Masuk Garisan Penamat',
-    scorePoints: 300,
+    scorePoints: (activeEvent as any)?.finishPoints || 200,
     statusPerTeam: {},
     isFinish: true,
   };
@@ -252,12 +283,15 @@ export default function FinishLineScreen() {
         onClose={() => setBlockedModalVisible(false)}
       />
 
-      {/* Camera/QR Scanner Simulation screen */}
-      <QRScanSimulationScreen
+      {/* Real Camera QR Scanner Modal */}
+      <RealCameraQRScanner
         visible={scannerVisible}
-        checkpoint={finishCp}
+        title={`Imbas Kod QR ${finishCp.name}`}
+        subtitle="Halakan kamera pada Kod QR Garisan Penamat"
         onClose={() => setScannerVisible(false)}
-        onScanSuccess={handleScanSuccess}
+        onScanSuccess={(scannedData: string) => {
+          handleScanSuccess(scannedData);
+        }}
       />
 
 

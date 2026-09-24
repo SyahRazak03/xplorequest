@@ -130,12 +130,22 @@ export default function CheckpointDetailScreen({
                   Selesaikan checkpoint aktif terlebih dahulu untuk mendedahkan foto landmark.
                 </Text>
               </View>
-            ) : (
+            ) : checkpoint.imageUrl && checkpoint.imageUrl.trim() !== '' ? (
               <Image
-                source={require('../assets/clue_landmark.png')}
+                source={{ uri: checkpoint.imageUrl }}
                 style={styles.landmarkImage}
                 resizeMode="cover"
               />
+            ) : (
+              <View style={[styles.lockedVisualOverlay, { backgroundColor: '#F8FAFC' }]}>
+                <Ionicons name="image-outline" size={48} color={theme.colors.textMuted} />
+                <Text style={[styles.lockedText, { color: theme.colors.textMuted, fontSize: 13, marginTop: 6 }]}>
+                  Tiada Foto Landmark
+                </Text>
+                <Text style={[styles.lockedDesc, { color: theme.colors.textMuted, fontSize: 11 }]}>
+                  Penganjur tidak memuat naik foto khusus untuk pos ini. Sila rujuk petunjuk di bawah.
+                </Text>
+              </View>
             )}
           </View>
 

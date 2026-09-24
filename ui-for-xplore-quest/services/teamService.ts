@@ -6,7 +6,7 @@
  */
 
 import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
-import { getFirestore, collection, doc, updateDoc, onSnapshot, Firestore } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, updateDoc, onSnapshot, Firestore } from 'firebase/firestore';
 import type { Team } from '../types';
 
 const firebaseConfig: FirebaseOptions = {
@@ -48,6 +48,8 @@ export async function fetchEventTeams(eventId: string, token?: string): Promise<
         phone: d.phone || undefined,
         isPresent: d.isPresent === true,
         attendanceStatus: d.attendanceStatus || (d.isPresent ? 'present' : 'absent'),
+        points: typeof d.points === 'number' ? d.points : (typeof d.totalPoints === 'number' ? d.totalPoints : 0),
+        totalPoints: typeof d.totalPoints === 'number' ? d.totalPoints : (typeof d.points === 'number' ? d.points : 0),
       }));
     }
   } catch (err) {
@@ -97,6 +99,8 @@ export function subscribeToEventTeams(
             phone: d.phone || undefined,
             isPresent: d.isPresent === true,
             attendanceStatus: d.attendanceStatus || (d.isPresent ? 'present' : 'absent'),
+            points: typeof d.points === 'number' ? d.points : (typeof d.totalPoints === 'number' ? d.totalPoints : 0),
+            totalPoints: typeof d.totalPoints === 'number' ? d.totalPoints : (typeof d.points === 'number' ? d.points : 0),
           }));
           onUpdate(apiTeams);
         }
@@ -130,6 +134,8 @@ export function subscribeToEventTeams(
             phone: data['phone'],
             isPresent: data['isPresent'] === true,
             attendanceStatus: data['attendanceStatus'] || (data['isPresent'] ? 'present' : 'absent'),
+            points: typeof data['points'] === 'number' ? data['points'] : (typeof data['totalPoints'] === 'number' ? data['totalPoints'] : 0),
+            totalPoints: typeof data['totalPoints'] === 'number' ? data['totalPoints'] : (typeof data['points'] === 'number' ? data['points'] : 0),
           };
         });
         onUpdate(teams);
@@ -190,6 +196,8 @@ export async function registerTeam(
 export async function checkinTeamAttendance(
   eventId: string,
   teamId: string,
+  startCpId: string = 'CP-START',
+  startPoints: number = 0,
   token?: string
 ): Promise<void> {
   const adminToken = token || 'token-admin-casaria';
@@ -203,7 +211,7 @@ export async function checkinTeamAttendance(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${adminToken}`,
         },
-        body: JSON.stringify({ teamId }),
+        body: JSON.stringify({ teamId, startCpId, startPoints }),
       });
     } catch (err) {
       console.warn('Backend API checkinTeamAttendance notice:', err);
@@ -213,13 +221,99 @@ export async function checkinTeamAttendance(
   try {
     const db = getFirebaseFirestore();
     const teamDocRef = doc(db, 'events', eventId, 'teams', teamId);
+    const snap = await getDoc(teamDocRef);
+    let currentCompleted: string[] = [];
+    let currentPoints = 0;
+
+    if (snap.exists()) {
+      const data = snap.data();
+      currentCompleted = Array.isArray(data['completedCheckpointIds']) ? data['completedCheckpointIds'] : [];
+      currentPoints = typeof data['points'] === 'number' ? data['points'] : (typeof data['totalPoints'] === 'number' ? data['totalPoints'] : 0);
+    }
+
+    const alreadyCompleted = currentCompleted.includes(startCpId);
+    const newCompleted = alreadyCompleted ? currentCompleted : [...currentCompleted, startCpId];
+    const newPoints = alreadyCompleted ? currentPoints : (currentPoints + (startPoints || 0));
+
     await updateDoc(teamDocRef, {
       isPresent: true,
       attendanceStatus: 'present',
+      completedCheckpointIds: newCompleted,
+      points: newPoints,
+      totalPoints: newPoints,
       checkedInAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
   } catch (fsErr) {
     console.warn('Firestore direct checkinTeamAttendance notice:', fsErr);
+  }
+}
+
+/**
+ * Updates completedCheckpointIds, currentCheckpointId, and points for a team in Firestore.
+ */
+export async function updateTeamProgressService(
+  eventId: string,
+  teamId: string,
+  completedCpId: string,
+  nextCpId: string,
+  pointsEarned: number,
+  token?: string
+): Promise<void> {
+  const adminToken = token || 'token-admin-casaria';
+  const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
+
+  if (API_BASE) {
+    try {
+      await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams/${encodeURIComponent(teamId)}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ completedCpId, nextCpId, pointsEarned }),
+      });
+    } catch {
+      // Best effort backend sync
+    }
+  }
+
+  try {
+    const db = getFirebaseFirestore();
+    const teamDocRef = doc(db, 'events', eventId, 'teams', teamId);
+    const snap = await getDoc(teamDocRef);
+
+    let currentCompleted: string[] = [];
+    let currentPoints = 0;
+
+    if (snap.exists()) {
+      const data = snap.data();
+      currentCompleted = Array.isArray(data['completedCheckpointIds']) ? data['completedCheckpointIds'] : [];
+      currentPoints = typeof data['points'] === 'number' ? data['points'] : (typeof data['totalPoints'] === 'number' ? data['totalPoints'] : 0);
+    }
+
+    const alreadyCompleted = currentCompleted.includes(completedCpId);
+    const newCompleted = alreadyCompleted
+      ? currentCompleted
+      : [...currentCompleted, completedCpId];
+    
+    // Only add points if checkpoint was not previously completed by this team
+    const newPoints = alreadyCompleted
+      ? currentPoints
+      : currentPoints + (pointsEarned || 0);
+
+    const updatePayload: any = {
+      completedCheckpointIds: newCompleted,
+      points: newPoints,
+      totalPoints: newPoints,
+      updatedAt: new Date().toISOString(),
+    };
+    if (nextCpId) {
+      updatePayload.currentCheckpointId = nextCpId;
+    }
+
+    await updateDoc(teamDocRef, updatePayload);
+  } catch (fsErr) {
+    console.warn('Firestore direct updateTeamProgressService notice:', fsErr);
   }
 }

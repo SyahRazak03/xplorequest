@@ -27,12 +27,32 @@ type PersonalResultsScreenRouteProp = RouteProp<RootStackParamList, 'PersonalRes
 export default function PersonalResultsScreen() {
   const navigation = useNavigation<PersonalResultsScreenNavigationProp>();
   const route = useRoute<PersonalResultsScreenRouteProp>();
-  const { logout, rules } = useApp();
-
+  const { logout, rules, teams, user, checkpoints } = useApp();
 
   const { finalPoints = 550, elapsedTime = 5080 } = route.params || {};
 
   const theme = getThemeForRole('participant');
+
+  const currentTeam = (teams || []).find(
+    (t) => (user?.teamId && t.id === user.teamId) || (user?.name && (t.name === user.name || t.leaderName === user.name))
+  ) || (teams && teams.length > 0 ? teams[0] : null);
+
+  // Dynamic Leaderboard Rank Calculation
+  const sortedTeams = [...(teams || [])].sort((a, b) => {
+    const ptsA = typeof a.points === 'number' ? a.points : (a.totalPoints || 0);
+    const ptsB = typeof b.points === 'number' ? b.points : (b.totalPoints || 0);
+    if (ptsB !== ptsA) return ptsB - ptsA;
+    const timeA = (a as any).completionTimeSeconds || 999999;
+    const timeB = (b as any).completionTimeSeconds || 999999;
+    return timeA - timeB;
+  });
+
+  const currentTeamIndex = currentTeam ? sortedTeams.findIndex((t) => t.id === currentTeam.id) : -1;
+  const teamRank = currentTeamIndex >= 0 ? currentTeamIndex + 1 : 1;
+  const totalTeams = teams && teams.length > 0 ? teams.length : 1;
+
+  const totalCps = checkpoints && checkpoints.length > 0 ? checkpoints.length : 4;
+  const completedCount = currentTeam?.completedCheckpointIds?.length || totalCps;
 
   const formatFullTime = (secs: number) => {
     const h = Math.floor(secs / 3600);
@@ -55,8 +75,7 @@ export default function PersonalResultsScreen() {
   };
 
   // Math metrics for summary
-  const totalCps = 8;
-  const avgPaceSecs = Math.round(elapsedTime / totalCps);
+  const avgPaceSecs = Math.round(elapsedTime / (completedCount || 1));
   const avgPaceMin = Math.floor(avgPaceSecs / 60);
   const avgPaceSec = avgPaceSecs % 60;
 
@@ -80,7 +99,9 @@ export default function PersonalResultsScreen() {
         <View style={styles.statsCard}>
           <View style={styles.rankRow}>
             <Text style={styles.rankLabel}>KEDUDUKAN (SEMENTARA)</Text>
-            <Text style={[styles.rankValue, { color: theme.colors.accent }]}>TEMPAT KE-3 / 15</Text>
+            <Text style={[styles.rankValue, { color: theme.colors.accent }]}>
+              TEMPAT KE-{teamRank} / {totalTeams}
+            </Text>
           </View>
 
           <View style={styles.divider} />
@@ -126,7 +147,7 @@ export default function PersonalResultsScreen() {
                 <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.success} />
                 <Text style={styles.analyticLabel}>Kadar Penyelesaian CP</Text>
               </View>
-              <Text style={styles.analyticValue}>100% (8/8 CP)</Text>
+              <Text style={styles.analyticValue}>100% ({completedCount}/{totalCps} CP)</Text>
             </View>
 
             <View style={styles.analyticRow}>

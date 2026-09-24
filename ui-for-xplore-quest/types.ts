@@ -47,6 +47,10 @@ export interface Team {
   phone?: string;
   isPresent?: boolean;
   attendanceStatus?: 'absent' | 'present' | 'late';
+  isRaceStarted?: boolean;
+  raceStartedAt?: number;
+  points?: number;
+  totalPoints?: number;
 }
 
 export interface Checkpoint {
@@ -58,6 +62,7 @@ export interface Checkpoint {
   taskDescription: string;
   scorePoints: number;
   geofenceRadiusMeters?: number;
+  imageUrl?: string;
   statusPerTeam: Record<string, CheckpointStatus>;
   isStart?: boolean;
   isFinish?: boolean;

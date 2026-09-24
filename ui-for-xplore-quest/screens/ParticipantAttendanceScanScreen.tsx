@@ -25,7 +25,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Participant
 
 export default function ParticipantAttendanceScanScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { user, activeEvent, teams, isRaceStarted, logout } = useApp();
+  const { user, activeEvent, teams, checkpoints, isRaceStarted, logout } = useApp();
   const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   // Derive authenticated team account details from AppContext / Firestore
@@ -75,7 +75,10 @@ export default function ParticipantAttendanceScanScreen() {
     // Persist attendance check-in to Firestore backend
     try {
       const eventId = activeEvent?.id || user?.eventId || 'EV-001';
-      await checkinTeamAttendance(eventId, currentTeam.id);
+      const startCP = (checkpoints || []).find((c: any) => c.isStart || c.type === 'start') || checkpoints?.[0];
+      const startCpId = startCP?.id || 'CP-START';
+      const startPoints = startCP?.scorePoints || 0;
+      await checkinTeamAttendance(eventId, currentTeam.id, startCpId, startPoints);
     } catch (err) {
       console.warn('Scan checkin notice:', err);
     }

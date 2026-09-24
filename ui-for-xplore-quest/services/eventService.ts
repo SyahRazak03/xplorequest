@@ -237,3 +237,112 @@ export async function updateEventRulesService(
     }
   }
 }
+
+/**
+ * Updates event status in Firestore and Backend API to `isStarted: true` / `status: 'active'`.
+ */
+export async function startRaceService(eventId: string, token?: string): Promise<void> {
+  const startedAt = Date.now();
+
+  // 1. Try Backend API first
+  if (token) {
+    try {
+      await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ startedAt }),
+      });
+    } catch {
+      // Best effort backend sync
+    }
+  }
+
+  // 2. Direct Firestore updates
+  try {
+    const db = getFirebaseFirestore();
+    const { doc, updateDoc, setDoc } = require('firebase/firestore');
+
+    // Update teams subcollection _raceState doc (Allowed for crew/participants)
+    const subColStateRef = doc(db, 'events', eventId, 'teams', '_raceState');
+    await setDoc(subColStateRef, {
+      isStarted: true,
+      status: 'active',
+      startedAt,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    // Try root event doc update (Silently catch permission error if non-admin)
+    try {
+      const docRef = doc(db, 'events', eventId);
+      await updateDoc(docRef, {
+        isStarted: true,
+        status: 'active',
+        startedAt,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch {
+      // Ignored if client lacks root doc permission
+    }
+  } catch (err) {
+    console.warn('Firestore race state notice:', err);
+  }
+}
+
+/**
+ * Subscribes to real-time status changes of an event (e.g., isStarted, status, startedAt).
+ */
+export function subscribeToEventState(
+  eventId: string,
+  onUpdate: (eventState: { isStarted: boolean; startedAt?: number }) => void
+): () => void {
+  try {
+    const db = getFirebaseFirestore();
+    const { doc, onSnapshot } = require('firebase/firestore');
+
+    const subColStateRef = doc(db, 'events', eventId, 'teams', '_raceState');
+    const rootDocRef = doc(db, 'events', eventId);
+
+    const unsubSub = onSnapshot(
+      subColStateRef,
+      (snapshot: any) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (data.isStarted || data.status === 'active') {
+            onUpdate({
+              isStarted: true,
+              startedAt: data.startedAt,
+            });
+          }
+        }
+      },
+      () => {}
+    );
+
+    const unsubRoot = onSnapshot(
+      rootDocRef,
+      (snapshot: any) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (data.isStarted || data.status === 'active') {
+            onUpdate({
+              isStarted: true,
+              startedAt: data.startedAt,
+            });
+          }
+        }
+      },
+      () => {}
+    );
+
+    return () => {
+      try { unsubSub(); } catch {}
+      try { unsubRoot(); } catch {}
+    };
+  } catch (err) {
+    console.warn('Failed to subscribe to event state:', err);
+    return () => {};
+  }
+}

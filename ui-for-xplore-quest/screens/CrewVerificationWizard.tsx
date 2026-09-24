@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
@@ -22,6 +23,7 @@ import { Team, Checkpoint } from '../types';
 import { PrimaryButton, SecondaryButton, Card, DynamicQRDisplay, Badge, CustomModalDialog } from '../components';
 
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
+import { updateTeamProgressService } from '../services/teamService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'CrewVerificationWizard'>;
 type RouteProps = RouteProp<RootStackParamList, 'CrewVerificationWizard'>;
@@ -89,19 +91,37 @@ export default function CrewVerificationWizard() {
     }
   };
 
-  const handleSnapPhoto = () => {
-    // Camera snapshot verified
-    setPhotoProof('photo-proof-captured');
-    setPhotoConfirmed(false);
+  const handleSnapPhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Kebenaran Diperlukan', 'Aplikasi memerlukan kebenaran mengakses kamera untuk merakam foto bukti.');
+        return;
+      }
 
-    // Run slide-in animation
-    slideAnim.setValue(-150);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      tension: 50,
-      friction: 7,
-      useNativeDriver: true,
-    }).start();
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        allowsEditing: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setPhotoProof(result.assets[0].uri);
+        setPhotoConfirmed(false);
+
+        // Run slide-in animation
+        slideAnim.setValue(-150);
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }).start();
+      }
+    } catch (err: any) {
+      console.warn('ImagePicker launchCamera error:', err);
+      Alert.alert('Ralat Kamera', 'Gagal merakam foto daripada kamera peranti.');
+    }
   };
 
   const handleConfirmPhoto = () => {
@@ -120,17 +140,27 @@ export default function CrewVerificationWizard() {
     setQrGenerated(true);
   };
 
+  // Auto-finish wizard when participant scans the QR code and updates Firestore
+  useEffect(() => {
+    if (!team?.id || !checkpoint?.id || !qrGenerated) return;
+    const liveTeam = (appTeams || []).find((t) => t.id === team.id);
+    if (liveTeam && Array.isArray(liveTeam.completedCheckpointIds) && liveTeam.completedCheckpointIds.includes(checkpoint.id)) {
+      handleFinishWizard();
+    }
+  }, [appTeams, team?.id, checkpoint?.id, qrGenerated]);
+
   const handleFinishWizard = () => {
+    const eventId = activeEvent?.id || user?.eventId || 'event-01';
+    if (team?.id && checkpoint?.id) {
+      updateTeamProgressService(eventId, team.id, checkpoint.id, '', checkpoint.scorePoints || 0);
+    }
+
     if (isOffline) {
       setSyncQueueCount(prev => prev + 1);
       setOfflineModalVisible(true);
     } else {
       // Pass the completed team ID back to the Dashboard screen
-      navigation.navigate({
-        name: 'Dashboard',
-        params: { completedTeamId: team.id },
-        merge: true,
-      } as any);
+      navigation.navigate('Dashboard', { completedTeamId: team.id });
     }
   };
 
@@ -263,7 +293,7 @@ export default function CrewVerificationWizard() {
                 ]}
               >
                 <Image
-                  source={require('../assets/team_photo_proof.png')}
+                  source={photoProof && (photoProof.startsWith('file:') || photoProof.startsWith('content:') || photoProof.startsWith('http')) ? { uri: photoProof } : require('../assets/team_photo_proof.png')}
                   style={styles.photoProofImage}
                   resizeMode="cover"
                 />
@@ -371,21 +401,13 @@ export default function CrewVerificationWizard() {
             text: 'SELESAI',
             style: 'default',
             onPress: () => {
-              navigation.navigate({
-                name: 'Dashboard',
-                params: { completedTeamId: team.id },
-                merge: true,
-              } as any);
+              navigation.navigate('Dashboard', { completedTeamId: team.id });
             },
           },
         ]}
         onDismiss={() => {
           setOfflineModalVisible(false);
-          navigation.navigate({
-            name: 'Dashboard',
-            params: { completedTeamId: team.id },
-            merge: true,
-          } as any);
+          navigation.navigate('Dashboard', { completedTeamId: team.id });
         }}
       />
     </SafeAreaView>

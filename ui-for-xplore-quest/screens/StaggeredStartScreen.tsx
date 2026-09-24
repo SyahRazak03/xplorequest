@@ -66,14 +66,14 @@ export default function StaggeredStartScreen() {
       ];
 
   // 1. Separate start, finish, and intermediate normal checkpoints
-  const startCP = rawCheckpoints.find((cp: any) => cp.isStart || cp.type === 'start') || rawCheckpoints[0];
-  const finishCP = rawCheckpoints.find((cp: any) => cp.isFinish || cp.type === 'finish') || rawCheckpoints[rawCheckpoints.length - 1];
+  const startCP = rawCheckpoints.find((cp: any) => cp.isStart || cp.type === 'start');
+  const finishCP = rawCheckpoints.find((cp: any) => cp.isFinish || cp.type === 'finish');
   
   // Normal checkpoints are intermediate ones (excluding start & finish)
   const normalCPs = rawCheckpoints.filter((cp: any) => 
-    cp.id !== startCP.id && cp.id !== finishCP.id && !cp.isStart && !cp.isFinish
+    (!startCP || cp.id !== startCP.id) && (!finishCP || cp.id !== finishCP.id) && !cp.isStart && !cp.isFinish
   );
-  const safeNormalCPs = normalCPs.length > 0 ? normalCPs : [startCP];
+  const safeNormalCPs = normalCPs.length > 0 ? normalCPs : rawCheckpoints;
 
   // 2. Calculate assigned normal starting checkpoint for current team
   const assignedNormalIndex = safeTeamIndex % safeNormalCPs.length;
@@ -174,7 +174,7 @@ export default function StaggeredStartScreen() {
           <View style={styles.explainerBanner}>
             <Ionicons name="information-circle-outline" size={20} color={COLORS.participant.primary} style={styles.explainerIcon} />
             <Text style={styles.explainerText}>
-              <Text style={{ fontWeight: '700' }}>{startCP.name}</Text> (Pos Mula) telah disahkan hadir. Perlumbaan anda akan bermula dari <Text style={{ fontWeight: '700' }}>{checkpointNameText}</Text> untuk mengelakkan kesesakan!
+              <Text style={{ fontWeight: '700' }}>{startCP?.name || 'Garisan Mula'}</Text> (Pos Mula) telah disahkan hadir. Perlumbaan anda akan bermula dari <Text style={{ fontWeight: '700' }}>{checkpointNameText}</Text> untuk mengelakkan kesesakan!
             </Text>
           </View>
         </Card>

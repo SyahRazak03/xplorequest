@@ -22,21 +22,30 @@ import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../AppContext';
 import { Checkpoint, CheckpointStatus } from '../types';
 import { getThemeForRole, COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import { Card, Badge, ProgressBar, CheckpointListItem, ToastNotification, OfflineStatusChip } from '../components';
+import { Card, Badge, ProgressBar, CheckpointListItem, ToastNotification, OfflineStatusChip, VerificationSuccessModal } from '../components';
+import { updateTeamProgressService, subscribeToEventTeams } from '../services/teamService';
 
 import CheckpointDetailScreen from './CheckpointDetailScreen';
 import MapScreen from './MapScreen';
-import QRScanSimulationScreen from './QRScanSimulationScreen';
+import RealCameraQRScanner from '../components/RealCameraQRScanner';
 
 const { width } = Dimensions.get('window');
 
 type TabType = 'dashboard' | 'map' | 'scan' | 'profile';
 
 export default function ParticipantDashboardScreen() {
-  const { user, theme, logout, rules, isRaceStarted, raceStartTime, checkpoints, activeEvent, teams } = useApp();
+  const { user, theme, logout, rules, isRaceStarted, raceStartTime, checkpoints, activeEvent, teams, setTeams } = useApp();
 
   const activeTheme = getThemeForRole('participant');
   const navigation = useNavigation<any>();
+
+  const handleLogout = () => {
+    logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'RoleSelect' }],
+    });
+  };
 
   // Find logged-in participant's team
   const currentTeam = (teams || []).find(
@@ -55,14 +64,31 @@ export default function ParticipantDashboardScreen() {
         { id: 'CP-END', name: 'Garisan Penamat', latitude: 3.175, longitude: 101.73, clueText: 'Pelepasan Tamat', taskDescription: 'Daftar Masuk Penamat', scorePoints: 20, statusPerTeam: {}, isFinish: true },
       ];
 
-  const startCP = rawCheckpoints.find((cp: Checkpoint) => cp.isStart || (cp as any).type === 'start') || rawCheckpoints[0];
-  const finishCP = rawCheckpoints.find((cp: Checkpoint) => cp.isFinish || (cp as any).type === 'finish') || rawCheckpoints[rawCheckpoints.length - 1];
+  const startCP = rawCheckpoints.find((cp: Checkpoint) => cp.isStart || (cp as any).type === 'start');
+  const finishCP = rawCheckpoints.find((cp: Checkpoint) => cp.isFinish || (cp as any).type === 'finish');
   const normalCPs = rawCheckpoints.filter((cp: Checkpoint) => 
-    cp.id !== startCP?.id && cp.id !== finishCP?.id && !cp.isStart && !cp.isFinish
+    (!startCP || cp.id !== startCP.id) && (!finishCP || cp.id !== finishCP.id) && !cp.isStart && !cp.isFinish
   );
 
   const assignedNormalIndex = normalCPs.length > 0 ? (safeTeamIndex % normalCPs.length) : 0;
   const assignedNormalCP = normalCPs.length > 0 ? normalCPs[assignedNormalIndex] : null;
+
+  const getOrderedCheckpoints = () => {
+    if (normalCPs.length === 0) return rawCheckpoints;
+
+    const orderedNormal = [
+      ...normalCPs.slice(assignedNormalIndex),
+      ...normalCPs.slice(0, assignedNormalIndex),
+    ];
+
+    const result: Checkpoint[] = [];
+    if (startCP) result.push(startCP);
+    result.push(...orderedNormal);
+    if (finishCP) result.push(finishCP);
+    return result;
+  };
+
+  const orderedCheckpoints = getOrderedCheckpoints();
 
   // -------------------------------------------------------------
   // 1. Race States
@@ -74,19 +100,78 @@ export default function ParticipantDashboardScreen() {
   const [currentCpId, setCurrentCpId] = useState<string>('');
   const [points, setPoints] = useState(0);
 
-  // Auto mark Start Checkpoint as completed (Attendance QR scanned)
+  // Mark Start Checkpoint as completed ONLY if team has scanned attendance (isPresent / attendanceStatus === 'present')
   useEffect(() => {
-    if (startCP && !completedCps.includes(startCP.id)) {
+    const isCheckedIn = currentTeam?.isPresent === true || currentTeam?.attendanceStatus === 'present';
+    if (startCP && isCheckedIn && !completedCps.includes(startCP.id)) {
       setCompletedCps(prev => Array.from(new Set([...prev, startCP.id])));
     }
-  }, [startCP?.id]);
+  }, [startCP?.id, currentTeam?.isPresent, currentTeam?.attendanceStatus]);
 
-  // Auto set active checkpoint to team's assigned initial normal CP
+  // Hydrate completedCps, currentCpId, and points from currentTeam (persisted in Firestore)
   useEffect(() => {
-    if (assignedNormalCP && !currentCpId && !completedCps.includes(assignedNormalCP.id)) {
-      setCurrentCpId(assignedNormalCP.id);
+    if (!currentTeam) return;
+
+    if (Array.isArray(currentTeam.completedCheckpointIds) && currentTeam.completedCheckpointIds.length > 0) {
+      setCompletedCps(prev => Array.from(new Set([...prev, ...currentTeam.completedCheckpointIds])));
     }
-  }, [assignedNormalCP?.id, currentCpId]);
+
+    if (currentTeam.currentCheckpointId && currentTeam.currentCheckpointId !== 'CP-START' && currentTeam.currentCheckpointId !== startCP?.id) {
+      setCurrentCpId(currentTeam.currentCheckpointId);
+    }
+
+    const teamPts = typeof currentTeam.points === 'number'
+      ? currentTeam.points
+      : (typeof currentTeam.totalPoints === 'number' ? currentTeam.totalPoints : 0);
+    setPoints(teamPts);
+  }, [currentTeam?.completedCheckpointIds, currentTeam?.currentCheckpointId, currentTeam?.points, currentTeam?.totalPoints, startCP?.id]);
+
+  // Auto set active checkpoint to team's assigned uncompleted CP in their cyclical route
+  useEffect(() => {
+    const isCurrentDoneOrStart = !currentCpId || 
+      currentCpId === startCP?.id || 
+      currentCpId === 'CP-START' || 
+      completedCps.includes(currentCpId);
+
+    if (isCurrentDoneOrStart) {
+      const nextActive = orderedCheckpoints.find(
+        (cp) => cp.id !== startCP?.id && cp.id !== 'CP-START' && !completedCps.includes(cp.id)
+      );
+      if (nextActive) {
+        setCurrentCpId(nextActive.id);
+      } else if (finishCP) {
+        setCurrentCpId(finishCP.id);
+      }
+    }
+  }, [
+    currentCpId,
+    completedCps,
+    startCP?.id,
+    finishCP?.id,
+    assignedNormalCP?.id,
+    orderedCheckpoints,
+  ]);
+
+  // Real-time Firestore subscription for event teams to keep currentTeam strictly in sync
+  useEffect(() => {
+    const eventId = activeEvent?.id || user?.eventId || 'event-01';
+    let isMounted = true;
+
+    const unsubscribe = subscribeToEventTeams(
+      eventId,
+      (fetchedTeams) => {
+        if (!isMounted) return;
+        if (fetchedTeams && fetchedTeams.length > 0) {
+          setTeams(fetchedTeams);
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [activeEvent?.id, user?.eventId]);
 
   // Checkpoint Detail Modal states
   const [selectedCpForDetail, setSelectedCpForDetail] = useState<Checkpoint | null>(null);
@@ -103,6 +188,11 @@ export default function ParticipantDashboardScreen() {
     setToastVisible(true);
   };
   
+  // Verification Success Modal states
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [successCpName, setSuccessCpName] = useState('');
+  const [successPointsEarned, setSuccessPointsEarned] = useState(0);
+
   // QR Scan simulation modal states
   const [scanModalVisible, setScanModalVisible] = useState(false);
   const [qrSimVisible, setQrSimVisible] = useState(false);
@@ -145,22 +235,6 @@ export default function ParticipantDashboardScreen() {
   // -------------------------------------------------------------
   // 3. Scan & Skip Logic Helpers (Cyclical Route Calculation)
   // -------------------------------------------------------------
-  const getOrderedCheckpoints = () => {
-    if (normalCPs.length === 0) return rawCheckpoints;
-
-    const orderedNormal = [
-      ...normalCPs.slice(assignedNormalIndex),
-      ...normalCPs.slice(0, assignedNormalIndex),
-    ];
-
-    const result: Checkpoint[] = [];
-    if (startCP) result.push(startCP);
-    result.push(...orderedNormal);
-    if (finishCP) result.push(finishCP);
-    return result;
-  };
-
-  const orderedCheckpoints = getOrderedCheckpoints();
 
   const canFinish = orderedCheckpoints
     .filter(cp => cp.id !== finishCP?.id && !cp.isFinish && cp.id !== 'CP-TAMAT')
@@ -226,7 +300,7 @@ export default function ParticipantDashboardScreen() {
 
   const handleSimulateScan = (targetCpId?: string) => {
     const cpIdToScan = targetCpId || currentCpId;
-    if (cpIdToScan === 'CP-TAMAT') {
+    if (cpIdToScan === 'CP-TAMAT' || cpIdToScan === finishCP?.id) {
       if (!canFinish) {
         Alert.alert(
           'Akses Dihalang',
@@ -242,6 +316,28 @@ export default function ParticipantDashboardScreen() {
       });
       return;
     }
+
+    // 1. Check if checkpoint is already completed
+    if (completedCps.includes(cpIdToScan)) {
+      const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
+      Alert.alert(
+        'Pos Kawalan Sudah Selesai',
+        `Pasukan anda telah menyempurnakan ${targetCp?.name || 'pos kawalan ini'}.`
+      );
+      return;
+    }
+
+    // 2. Strict Sequence Validation: Reject if scanning a checkpoint out of assigned sequence order
+    if (currentCpId && cpIdToScan !== currentCpId) {
+      const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
+      const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
+      Alert.alert(
+        'Imbasan Ditolak — Pos Kawalan Tidak Mengikut Urutan!',
+        `Pasukan anda ditugaskan untuk menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu mengikut laluan pelepasan anda.\n\nSila selesaikan ${activeCp?.name || 'pos kawalan aktif'} sebelum mencuba pos ${targetCp?.name || ''}.`
+      );
+      return;
+    }
+
     const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) {
       Alert.alert('Cabaran Tamat', 'Tiada checkpoint aktif untuk diimbas.');
@@ -252,11 +348,49 @@ export default function ParticipantDashboardScreen() {
     setQrSimVisible(true);
   };
 
-  const handleScanCompleted = (cpIdToScan: string) => {
+  const handleScanCompleted = (cpIdToScan: string, scannedData?: string) => {
+    // Validate scanned QR payload if real camera scan data is provided
+    if (scannedData) {
+      // 1. Team-Specific Validation: Verify QR code was generated for logged-in team
+      const matchedTeamInPayload = (teams || []).find(
+        (t) => scannedData.startsWith(t.id) || scannedData.includes(t.id)
+      );
+      if (matchedTeamInPayload && currentTeam?.id && matchedTeamInPayload.id !== currentTeam.id) {
+        Alert.alert(
+          'Kod QR Ditolak — Dikhaskan Untuk Pasukan Lain!',
+          `Kod QR yang diimbas telah dijana khas untuk ${matchedTeamInPayload.name}.\n\nPasukan anda ialah ${currentTeam.name}. Anda tidak boleh mengimbas Kod QR milik pasukan lain.`
+        );
+        return;
+      }
+
+      // 2. Checkpoint-Specific Validation: Verify QR code matches active checkpoint
+      const matchedCpInPayload = rawCheckpoints.find(
+        (cp) => scannedData.includes(cp.id) || (cp.name && scannedData.includes(cp.name))
+      );
+      if (matchedCpInPayload && matchedCpInPayload.id !== currentCpId) {
+        const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
+        Alert.alert(
+          'Imbasan Kod QR Ditolak!',
+          `Kod QR yang diimbas adalah untuk ${matchedCpInPayload.name}.\n\nPasukan anda dikehendaki menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu mengikut laluan pelepasan.`
+        );
+        return;
+      }
+    }
+
+    // Enforce active checkpoint match
+    if (currentCpId && cpIdToScan !== currentCpId) {
+      const activeCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === currentCpId);
+      Alert.alert(
+        'Imbasan Ditolak — Pos Kawalan Tidak Mengikut Urutan!',
+        `Pasukan anda dikehendaki menyempurnakan ${activeCp?.name || 'pos kawalan aktif'} terlebih dahulu.`
+      );
+      return;
+    }
+
     const targetCp = orderedCheckpoints.find((cp: Checkpoint) => cp.id === cpIdToScan);
     if (!targetCp) return;
 
-    const pointsEarned = targetCp.scorePoints;
+    const pointsEarned = targetCp.scorePoints || 0;
     setPoints((prev) => prev + pointsEarned);
     
     // Add to completed list
@@ -271,23 +405,36 @@ export default function ParticipantDashboardScreen() {
     setSkippedCps((prev) => prev.filter((id) => id !== cpIdToScan));
     
     const currentCpIndex = orderedCheckpoints.findIndex((cp: Checkpoint) => cp.id === cpIdToScan);
+    let calculatedNextCpId = currentCpId;
 
     if (cpIdToScan === currentCpId) {
       if (currentCpIndex < orderedCheckpoints.length - 1) {
         const nextCp = orderedCheckpoints[currentCpIndex + 1];
+        calculatedNextCpId = nextCp.id;
         setCurrentCpId(nextCp.id);
         const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
         triggerToast(`Imbasan berjaya! CP-${displayIndex} selesai. Aktif: ${nextCp.name}`, 'success');
       } else {
         // Finished the entire race!
+        calculatedNextCpId = '';
         setCurrentCpId('');
         triggerToast(`Tamat Cabaran! Tahniah pasukan anda berjaya menyelesaikan cabaran!`, 'success');
       }
     } else {
-      // Tapped a pending checkpoint to complete it
       const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
       triggerToast(`Imbasan berjaya! CP-${displayIndex} diselesaikan daripada status tertunda.`, 'success');
     }
+
+    // Live sync to Firestore
+    const eventId = activeEvent?.id || user?.eventId || 'event-01';
+    if (currentTeam?.id) {
+      updateTeamProgressService(eventId, currentTeam.id, cpIdToScan, calculatedNextCpId, pointsEarned);
+    }
+
+    // Show Verification Success Modal
+    setSuccessCpName(targetCp.name);
+    setSuccessPointsEarned(pointsEarned);
+    setSuccessModalVisible(true);
 
     // Auto navigate to dashboard tab
     setActiveTab('dashboard');
@@ -303,37 +450,7 @@ export default function ParticipantDashboardScreen() {
     if (manualCode.toUpperCase() === `PASS${cpIdToScan.replace('-', '')}`) {
       setManualCode('');
       setScanModalVisible(false);
-      
-      const pointsEarned = targetCp.scorePoints;
-      setPoints((prev) => prev + pointsEarned);
-      
-      // Add to completed list
-      setCompletedCps((prev) => {
-        if (!prev.includes(cpIdToScan)) {
-          return [...prev, cpIdToScan];
-        }
-        return prev;
-      });
-
-      // Remove from skipped list
-      setSkippedCps((prev) => prev.filter((id) => id !== cpIdToScan));
-      
-      const currentCpIndex = orderedCheckpoints.findIndex((cp: Checkpoint) => cp.id === cpIdToScan);
-
-      if (cpIdToScan === currentCpId) {
-        if (currentCpIndex < orderedCheckpoints.length - 1) {
-          const nextCp = orderedCheckpoints[currentCpIndex + 1];
-          setCurrentCpId(nextCp.id);
-          const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
-          triggerToast(`Kod sah! CP-${displayIndex} selesai. Aktif: ${nextCp.name}`, 'success');
-        } else {
-          setCurrentCpId('');
-          triggerToast(`Tamat Cabaran! Tahniah pasukan anda berjaya menyelesaikan cabaran!`, 'success');
-        }
-      } else {
-        const displayIndex = checkpoints.filter((cp: Checkpoint) => !cp.isStart && !cp.isFinish).indexOf(targetCp) + 1;
-        triggerToast(`Kod sah! CP-${displayIndex} diselesaikan daripada status tertunda.`, 'success');
-      }
+      handleScanCompleted(cpIdToScan);
     } else {
       Alert.alert('Kod Tidak Sah', 'Sila minta kod laluan manual yang betul daripada Marshal bertugas.');
     }
@@ -727,7 +844,7 @@ export default function ParticipantDashboardScreen() {
             </View>
             <View style={styles.profileMeta}>
               <Text style={[styles.profileTeamName, { color: activeTheme.colors.text }]}>
-                {user?.name === 'Syamil' ? 'Pasukan Harimau' : 'Wira Titiwangsa'}
+                {currentTeam?.name || user?.name || 'Pasukan Peserta'}
               </Text>
               <Text style={[styles.profileSubText, { color: activeTheme.colors.textMuted }]}>
                 Ketua Kumpulan: {user?.name || 'Syamil'}
@@ -746,59 +863,72 @@ export default function ParticipantDashboardScreen() {
               Tiada data kedudukan kumpulan lagi.
             </Text>
           ) : (
-            teams.map((team: any, idx: number) => {
-              const isUserTeam = team.name === ((user as any)?.teamName || 'Pasukan Harimau');
-              return (
-                <View
-                  key={team.id || idx}
-                  style={[
-                    styles.leaderboardRow,
-                    { borderBottomColor: activeTheme.colors.border },
-                    isUserTeam && {
-                      backgroundColor: activeTheme.colors.primaryLight,
-                      borderRadius: activeTheme.radius.sm,
-                      paddingHorizontal: 8,
-                    },
-                  ]}
-                >
-                  <View style={styles.leaderboardLeft}>
-                    <Text
-                      style={[
-                        styles.rankText,
-                        { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
-                        idx === 0 && { color: '#EAB308', fontWeight: 'bold' },
-                      ]}
-                    >
-                      #{idx + 1}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.teamNameText,
-                        { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
-                        isUserTeam && { fontWeight: 'bold' },
-                      ]}
-                    >
-                      {team.name}
-                    </Text>
-                  </View>
-
-                  <View style={styles.leaderboardRight}>
-                    {rules.pointsSystemEnabled && (
-                      <Text style={[styles.pointsText, { color: activeTheme.colors.text }]}>
-                        {team.totalPoints || 0} Pts
+            [...teams]
+              .map((t: any) => {
+                const isUserTeam = currentTeam?.id === t.id || t.name === currentTeam?.name || t.name === user?.name;
+                const completedIds = Array.isArray(t.completedCheckpointIds) ? t.completedCheckpointIds : [];
+                const calcPts = completedIds.reduce((sum: number, cpId: string) => {
+                  const cp = (rawCheckpoints || []).find((c: any) => c.id === cpId);
+                  return sum + (cp?.scorePoints || 0);
+                }, 0);
+                const ptsField = typeof t.points === 'number' ? t.points : (typeof t.totalPoints === 'number' ? t.totalPoints : 0);
+                const displayPts = Math.max(calcPts, ptsField);
+                return { ...t, displayPts, isUserTeam };
+              })
+              .sort((a, b) => b.displayPts - a.displayPts)
+              .map((team: any, idx: number) => {
+                const isUserTeam = team.isUserTeam;
+                return (
+                  <View
+                    key={team.id || idx}
+                    style={[
+                      styles.leaderboardRow,
+                      { borderBottomColor: activeTheme.colors.border },
+                      isUserTeam && {
+                        backgroundColor: activeTheme.colors.primaryLight,
+                        borderRadius: activeTheme.radius.sm,
+                        paddingHorizontal: 8,
+                      },
+                    ]}
+                  >
+                    <View style={styles.leaderboardLeft}>
+                      <Text
+                        style={[
+                          styles.rankText,
+                          { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
+                          idx === 0 && { color: '#EAB308', fontWeight: 'bold' },
+                        ]}
+                      >
+                        #{idx + 1}
                       </Text>
-                    )}
+                      <Text
+                        style={[
+                          styles.teamNameText,
+                          { color: isUserTeam ? activeTheme.colors.primary : activeTheme.colors.text },
+                          isUserTeam && { fontWeight: 'bold' },
+                        ]}
+                      >
+                        {team.name}
+                      </Text>
+                    </View>
+
+                    <View style={styles.leaderboardRight}>
+                      {rules.pointsSystemEnabled && (
+                        <Text style={[styles.pointsText, { color: activeTheme.colors.text }]}>
+                          {team.displayPts} Pts
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              );
-            })
+                );
+              })
           )}
         </Card>
 
         {/* Logout Button */}
         <TouchableOpacity
           style={[styles.logoutBtn, { borderColor: COLORS.danger, borderWidth: 1 }]}
-          onPress={logout}
+          onPress={handleLogout}
           activeOpacity={0.7}
         >
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
@@ -1030,12 +1160,25 @@ export default function ParticipantDashboardScreen() {
         onDismiss={() => setToastVisible(false)}
       />
 
-      {/* QR Scan Simulator Modal */}
-      <QRScanSimulationScreen
+      {/* Real Camera QR Scanner Modal */}
+      <RealCameraQRScanner
         visible={qrSimVisible}
-        checkpoint={checkpoints.find((cp: Checkpoint) => cp.id === (cpIdBeingScanned || currentCpId)) || null}
+        title={`Imbas Kod QR ${cpIdBeingScanned || currentCpId}`}
+        subtitle="Halakan kamera pada Kod QR Krew di checkpoint"
         onClose={() => setQrSimVisible(false)}
-        onScanSuccess={handleScanCompleted}
+        onScanSuccess={(scannedData: string) => {
+          setQrSimVisible(false);
+          const cpIdToScan = cpIdBeingScanned || currentCpId;
+          handleScanCompleted(cpIdToScan, scannedData);
+        }}
+      />
+
+      {/* Verification Success Modal */}
+      <VerificationSuccessModal
+        visible={successModalVisible}
+        checkpointName={successCpName || 'Pos Kawalan'}
+        pointsEarned={successPointsEarned}
+        onClose={() => setSuccessModalVisible(false)}
       />
     </SafeAreaView>
   );

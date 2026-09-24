@@ -43,7 +43,7 @@ interface LeaderboardTeam {
 
 export default function AdminLeaderboardScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { rules, isRaceStarted, teams: appTeams, activeEvent } = useApp();
+  const { rules, isRaceStarted, teams: appTeams, activeEvent, checkpoints } = useApp();
 
   const [loading, setLoading] = useState(true);
 
@@ -65,6 +65,62 @@ export default function AdminLeaderboardScreen() {
 
   // Flash notification state for live changes
   const [tickerMessage, setTickerMessage] = useState<string | null>(null);
+
+  // Helper to calculate total team points
+  const getTeamPoints = (team: any) => {
+    const completedIds = Array.isArray(team.completedCheckpointIds) ? team.completedCheckpointIds : [];
+    const calcPts = completedIds.reduce((sum: number, cpId: string) => {
+      const cp = (checkpoints || []).find((c: any) => c.id === cpId);
+      return sum + (cp?.scorePoints || 0);
+    }, 0);
+    const ptsField = typeof team.points === 'number' ? team.points : (typeof team.totalPoints === 'number' ? team.totalPoints : 0);
+    return Math.max(calcPts, ptsField);
+  };
+
+  // Sync real-time appTeams to leaderboardData whenever appTeams or checkpoints change
+  useEffect(() => {
+    if (!appTeams || appTeams.length === 0) return;
+
+    const normalCps = (checkpoints || []).filter(c => !c.isStart && !c.isFinish);
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setLeaderboardData(prev => {
+      const newList: LeaderboardTeam[] = appTeams.map((t) => {
+        const existing = prev.find(p => p.teamId === t.id);
+        const pts = getTeamPoints(t);
+        const completedCount = (t.completedCheckpointIds || []).length;
+        const isFinished = normalCps.length > 0 && completedCount >= normalCps.length;
+
+        let lastChange: 'up' | 'down' | null = existing?.lastChange || null;
+        if (existing && existing.points !== pts) {
+          lastChange = pts > existing.points ? 'up' : 'down';
+        }
+
+        return {
+          teamId: t.id,
+          teamName: t.name,
+          points: pts,
+          totalTimeFormatted: (t as any).totalTimeFormatted || '--:--',
+          penaltiesMinutes: (t as any).penaltiesMinutes || 0,
+          status: (t as any).status === 'dnf'
+            ? 'dnf'
+            : isFinished
+            ? 'finished'
+            : isRaceStarted
+            ? 'active'
+            : 'registered',
+          lastChange,
+          elapsedMinutes: existing?.elapsedMinutes || 0,
+        };
+      });
+
+      return newList.sort((a, b) => {
+        if (a.status === 'dnf' && b.status !== 'dnf') return 1;
+        if (b.status === 'dnf' && a.status !== 'dnf') return -1;
+        return b.points - a.points;
+      });
+    });
+  }, [appTeams, checkpoints, isRaceStarted]);
 
   // Monitor elapsed minutes of active teams to trigger DNF when exceeding maxRaceTime
   useEffect(() => {
@@ -121,95 +177,15 @@ export default function AdminLeaderboardScreen() {
     ).start();
   }, []);
 
-  // 2. Simulated real-time sorting/ticking updates (only when race has started)
-  useEffect(() => {
-    if (!isRaceStarted) return;
-
-    const liveInterval = setInterval(() => {
-      // Choose 2 random indexes (excluding DNF statuses for points fluctuation)
-      const nonDnfIndices: number[] = [];
-      leaderboardData.forEach((team, idx) => {
-        if (team.status !== 'dnf') {
-          nonDnfIndices.push(idx);
-        }
-      });
-
-      if (nonDnfIndices.length < 2) return;
-
-      const idx1 = nonDnfIndices[Math.floor(Math.random() * nonDnfIndices.length)];
-      let idx2 = nonDnfIndices[Math.floor(Math.random() * nonDnfIndices.length)];
-      while (idx1 === idx2) {
-        idx2 = nonDnfIndices[Math.floor(Math.random() * nonDnfIndices.length)];
-      }
-
-      // Determine score changes (+10, +20, -10, etc.)
-      const changeOptions = [10, 20, -10, -20];
-      const change1 = changeOptions[Math.floor(Math.random() * changeOptions.length)];
-      const change2 = changeOptions[Math.floor(Math.random() * changeOptions.length)];
-
-      // Configure layout animation for smooth row reordering
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-
-      setLeaderboardData(prev => {
-        const updated = prev.map((team, idx) => {
-          let pts = team.points;
-          let change: 'up' | 'down' | null = null;
-
-          if (idx === idx1) {
-            pts = Math.max(0, pts + change1);
-            change = change1 > 0 ? 'up' : 'down';
-          } else if (idx === idx2) {
-            pts = Math.max(0, pts + change2);
-            change = change2 > 0 ? 'up' : 'down';
-          } else {
-            change = null;
-          }
-
-          return {
-            ...team,
-            points: pts,
-            lastChange: change,
-          };
-        });
-
-        // Re-sort descending by points
-        return updated.sort((a, b) => {
-          if (a.status === 'dnf' && b.status !== 'dnf') return 1;
-          if (b.status === 'dnf' && a.status !== 'dnf') return -1;
-          return b.points - a.points;
-        });
-      });
-
-      // Show temporary ticker message
-      const team1 = leaderboardData[idx1];
-      const team2 = leaderboardData[idx2];
-      setTickerMessage(
-        `Skor Terkini: ${team1.teamName} (${change1 > 0 ? '+' : ''}${change1}) & ${team2.teamName} (${change2 > 0 ? '+' : ''}${change2})`
-      );
-
-      // Hide ticker message after 3 seconds
-      setTimeout(() => {
-        setTickerMessage(null);
-      }, 3000);
-
-    }, 5000);
-
-    return () => clearInterval(liveInterval);
-  }, [leaderboardData]);
-
-  // Derive list of teams that have scanned attendance at Start Checkpoint
-  const attendedTeams = appTeams.filter((t) => t.isPresent || t.attendanceStatus === 'present');
-
-  const rawList: LeaderboardTeam[] = attendedTeams.map((t) => ({
+  const activeList: LeaderboardTeam[] = leaderboardData.length > 0 ? leaderboardData : (appTeams || []).map((t) => ({
     teamId: t.id,
     teamName: t.name,
-    points: (t as any).points ?? 0,
+    points: getTeamPoints(t),
     totalTimeFormatted: (t as any).totalTimeFormatted || '--:--',
     penaltiesMinutes: (t as any).penaltiesMinutes || 0,
     status: (t.status === 'approved' ? (isRaceStarted ? 'active' : 'registered') : (t.status as any)) || 'registered',
+    lastChange: null,
   }));
-
-  const activeList = isRaceStarted && leaderboardData.length > 0 ? leaderboardData : rawList;
 
   // Filter logic
   const filteredData = activeList.filter((team) => {

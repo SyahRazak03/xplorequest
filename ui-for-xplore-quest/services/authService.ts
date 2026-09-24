@@ -36,6 +36,8 @@ import {
   signInWithCustomToken,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   updateProfile,
   signOut,
   Auth,
@@ -162,6 +164,11 @@ export async function adminRegister(
       const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       if (userCredential.user) {
         await updateProfile(userCredential.user, { displayName: name });
+        try {
+          await sendEmailVerification(userCredential.user);
+        } catch (sendErr) {
+          console.warn('[authService] Could not send verification email:', sendErr);
+        }
         const idToken = await userCredential.user.getIdToken();
         return {
           uid: userCredential.user.uid,
@@ -173,18 +180,18 @@ export async function adminRegister(
       }
     } catch (fbErr: any) {
       if (fbErr.code === 'auth/email-already-in-use') {
-        throw new Error('E-mel ini telah didaftarkan. Sila log masuk dengan e-mel ini.');
+        throw new Error('This email address is already registered. Please log in with this email account.');
       }
       if (fbErr.code === 'auth/weak-password') {
-        throw new Error('Kata laluan terlalu lemah. Sila guna sekurang-kurangnya 6 aksara.');
+        throw new Error('Password is too weak. Please use at least 6 characters.');
       }
       if (fbErr.code === 'auth/invalid-email') {
-        throw new Error('Format e-mel tidak sah.');
+        throw new Error('Invalid email address format.');
       }
       if (fbErr.code === 'auth/invalid-api-key') {
-        throw new Error('Ralat Firebase API Key (invalid-api-key). Sila periksa Web API Key dalam Firebase Console & Google Cloud Console.');
+        throw new Error('Firebase API Key error (invalid-api-key). Please check your Web API Key configuration.');
       }
-      throw new Error(fbErr.message || 'Pendaftaran akaun penganjur gagal.');
+      throw new Error(fbErr.message || 'Organizer account registration failed.');
     }
 
     throw backendErr;
@@ -193,7 +200,7 @@ export async function adminRegister(
 
 /**
  * Authenticates an admin user with email + password.
- * REJECTS any unregistered email or incorrect password.
+ * Checks and ENFORCES email verification before allowing login.
  */
 export async function adminLogin(email: string, password: string): Promise<AuthResult> {
   const firebaseAuth = getFirebaseAuth();
@@ -215,6 +222,13 @@ export async function adminLogin(email: string, password: string): Promise<AuthR
       idToken = await firebaseAuth.currentUser?.getIdToken() || 'admin-session-token';
     }
 
+    if (firebaseAuth.currentUser) {
+      await firebaseAuth.currentUser.reload();
+      if (!firebaseAuth.currentUser.emailVerified) {
+        throw new Error('Email not verified. Please check your inbox and click the verification link before logging in.');
+      }
+    }
+
     return {
       uid: data.uid,
       role: 'admin',
@@ -232,30 +246,39 @@ export async function adminLogin(email: string, password: string): Promise<AuthR
     try {
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
       if (userCredential.user) {
+        // Reload user to get fresh emailVerified status
+        await userCredential.user.reload();
+        if (!userCredential.user.emailVerified) {
+          throw new Error('Email not verified. Please check your inbox and click the verification link before logging in.');
+        }
+
         const idToken = await userCredential.user.getIdToken();
         return {
           uid: userCredential.user.uid,
           role: 'admin',
-          name: userCredential.user.displayName || email.split('@')[0] || 'Penganjur Acara',
+          name: userCredential.user.displayName || email.split('@')[0] || 'Event Organizer',
           email: userCredential.user.email || email,
           idToken,
         };
       }
     } catch (fbErr: any) {
+      if (fbErr.message && fbErr.message.includes('Email not verified')) {
+        throw fbErr;
+      }
       if (
         fbErr.code === 'auth/user-not-found' ||
         fbErr.code === 'auth/wrong-password' ||
         fbErr.code === 'auth/invalid-credential'
       ) {
-        throw new Error('Akaun e-mel ini belum didaftarkan atau kata laluan tidak sah. Sila mendaftar akaun baharu di tab "Daftar" terlebih dahulu.');
+        throw new Error('Invalid email or password. Please check your credentials or register a new account.');
       }
       if (fbErr.code === 'auth/invalid-email') {
-        throw new Error('Format e-mel tidak sah.');
+        throw new Error('Invalid email address format.');
       }
       if (fbErr.code === 'auth/invalid-api-key') {
-        throw new Error('Ralat Firebase API Key (invalid-api-key). Sila periksa Web API Key dalam Firebase Console & Google Cloud Console.');
+        throw new Error('Firebase API Key error (invalid-api-key). Please check your Web API Key configuration.');
       }
-      throw new Error('Akaun e-mel ini belum didaftarkan. Sila mendaftar akaun baharu di tab "Daftar" terlebih dahulu.');
+      throw new Error(fbErr.message || 'Login failed. Please verify your email and credentials.');
     }
 
     throw new Error('Akaun e-mel ini belum didaftarkan. Sila mendaftar akaun baharu di tab "Daftar" terlebih dahulu.');
@@ -272,7 +295,8 @@ export async function crewLogin(
   crewPinCode: string,
   checkpointId: string,
   eventId: string,
-  expectedPin?: string
+  expectedPin?: string,
+  expectedMarshalId?: string | null
 ): Promise<AuthResult> {
   const payload: Record<string, unknown> = { crewPinCode, checkpointId, eventId };
   if (marshalId && marshalId.trim()) {
@@ -302,18 +326,26 @@ export async function crewLogin(
   } catch (err) {
     // Resilient local verification fallback if API endpoint is unreachable or offline
     const validPin = expectedPin || '1234';
-    if (crewPinCode === validPin || crewPinCode === '1234') {
-      return {
-        uid: marshalId ? `MSH-${marshalId}` : `CREW-${Date.now().toString().slice(-4)}`,
-        role: 'crew',
-        name: marshalId ? `Marshal (${marshalId})` : 'Krew Checkpoint',
-        checkpointId,
-        eventId,
-        idToken: 'local-crew-session-token',
-      };
+    if (crewPinCode !== validPin && crewPinCode !== '1234') {
+      throw new Error('PIN Krew tidak sah.');
     }
-    const msg = err instanceof Error ? err.message : 'Log masuk gagal. Sila periksa PIN/Marshal ID.';
-    throw new Error(msg.includes('Network') ? 'PIN Krew tidak sah.' : msg);
+
+    if (marshalId && expectedMarshalId && expectedMarshalId.trim()) {
+      const cleanInput = marshalId.trim().toLowerCase();
+      const cleanExpected = expectedMarshalId.trim().toLowerCase();
+      if (cleanInput !== cleanExpected) {
+        throw new Error('Marshal ID tidak sah atau telah di-jana semula oleh penganjur.');
+      }
+    }
+
+    return {
+      uid: marshalId ? (marshalId.startsWith('MSH-') ? marshalId : `MSH-${marshalId}`) : `CREW-${Date.now().toString().slice(-4)}`,
+      role: 'crew',
+      name: marshalId ? `Marshal (${marshalId})` : 'Krew Checkpoint',
+      checkpointId,
+      eventId,
+      idToken: 'local-crew-session-token',
+    };
   }
 }
 
@@ -426,4 +458,45 @@ export async function getMe(idToken: string): Promise<AuthResult> {
   }
 
   return { ...json.data, idToken };
+}
+
+/**
+ * Resends a verification email to the specified admin account.
+ */
+export async function resendVerificationEmail(email: string, password: string): Promise<void> {
+  const firebaseAuth = getFirebaseAuth();
+  let user = firebaseAuth.currentUser;
+
+  if (!user || user.email?.toLowerCase() !== email.toLowerCase()) {
+    const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+    user = cred.user;
+  }
+
+  if (user) {
+    await sendEmailVerification(user);
+  } else {
+    throw new Error('User account not found. Please register first.');
+  }
+}
+
+/**
+ * Triggers a password reset email via Firebase Auth for the given email address.
+ */
+export async function resetPassword(email: string): Promise<void> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) {
+    throw new Error('Please enter your registered email address.');
+  }
+  const firebaseAuth = getFirebaseAuth();
+  try {
+    await sendPasswordResetEmail(firebaseAuth, cleanEmail);
+  } catch (err: any) {
+    if (err.code === 'auth/user-not-found') {
+      throw new Error('No account found with this email address.');
+    }
+    if (err.code === 'auth/invalid-email') {
+      throw new Error('Invalid email address format.');
+    }
+    throw new Error(err.message || 'Failed to send password reset email.');
+  }
 }

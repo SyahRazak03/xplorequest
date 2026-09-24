@@ -46,23 +46,6 @@ export default function LoginScreen() {
     // but ensures syncd state.
   }, [role]);
 
-  const handleAutofill = () => {
-    // Demo credentials autofill is strictly restricted to non-production development builds
-    const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env['NODE_ENV'] !== 'production';
-    if (!isDev) {
-      Alert.alert('Not Available', 'Demo autofill is disabled in production builds.');
-      return;
-    }
-
-    if (role === 'participant') {
-      setEventCode(activeEvent?.joinCode || activeEvent?.id || 'XT2026');
-      setTeamName('Pasukan Harimau');
-    } else if (role === 'admin') {
-      setAdminEmail(process.env['EXPO_PUBLIC_DEMO_ADMIN_EMAIL'] ?? 'azman@xplorequest.com');
-      setAdminPassword(process.env['EXPO_PUBLIC_DEMO_ADMIN_PASSWORD'] ?? '');
-    }
-  };
-
   const handleLogin = async () => {
     if (role === 'participant') {
       if (!eventCode.trim()) {
@@ -262,25 +245,7 @@ export default function LoginScreen() {
                 loading={loading}
               />
             </View>
-
-            {__DEV__ && (
-              <SecondaryButton
-                label="Isi Auto Akaun Ujian"
-                onPress={handleAutofill}
-                role={role}
-              />
-            )}
           </View>
-
-          {/* Quick Info Box */}
-          {__DEV__ && (
-            <View style={styles.infoBox}>
-              <Ionicons name="information-circle-outline" size={20} color={COLORS.textMuted} />
-              <Text style={styles.infoText}>
-                Butang <Text style={styles.boldText}>Isi Auto Akaun Ujian</Text> disediakan bagi membolehkan pengujian berjalan lancar tanpa menaip kata laluan secara manual.
-              </Text>
-            </View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

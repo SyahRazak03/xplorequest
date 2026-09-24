@@ -28,7 +28,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
-import { adminLogin, adminRegister } from '../services/authService';
+import { adminLogin, adminRegister, resendVerificationEmail, resetPassword } from '../services/authService';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'OrganizerEntry'>;
@@ -71,13 +71,53 @@ export default function OrganizerAuthScreen() {
   const [loading, setLoading] = useState(false);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleResendVerification = async () => {
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      Alert.alert('Email & Password Required', 'Please enter your registered email and password to resend the verification email.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await resendVerificationEmail(loginEmail.trim().toLowerCase(), loginPassword.trim());
+      Alert.alert('Verification Email Sent 📧', 'A new verification email has been sent to your inbox. Please check your spam folder if you do not see it.');
+    } catch (err: any) {
+      Alert.alert('Resend Failed', err.message || 'Could not resend verification email.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!loginEmail.trim()) {
+      Alert.alert(
+        'Email Required',
+        'Please enter your registered organizer email in the Email field, then tap "Forgot password?".'
+      );
+      return;
+    }
+
+    const cleanEmail = loginEmail.toLowerCase().trim();
+    setLoading(true);
+    try {
+      await resetPassword(cleanEmail);
+      Alert.alert(
+        'Password Reset Email Sent 🔑',
+        `A password reset link has been sent to ${cleanEmail}.\n\nPlease check your inbox and follow the instructions to reset your password.`
+      );
+    } catch (err: any) {
+      Alert.alert('Reset Failed', err.message || 'Could not send password reset email.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async () => {
     if (!loginEmail.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan e-mel anda.');
+      Alert.alert('Email Required', 'Please enter your organizer email address.');
       return;
     }
     if (!loginPassword.trim()) {
-      Alert.alert('Ralat', 'Sila masukkan kata laluan.');
+      Alert.alert('Password Required', 'Please enter your password.');
       return;
     }
 
@@ -87,16 +127,25 @@ export default function OrganizerAuthScreen() {
       const authRes = await adminLogin(cleanEmail, loginPassword.trim());
       login('admin', {
         id: authRes.uid,
-        name: authRes.name || cleanEmail.split('@')[0] || 'Penganjur Acara',
+        name: authRes.name || cleanEmail.split('@')[0] || 'Event Organizer',
         email: authRes.email || cleanEmail,
         role: 'admin',
       });
       navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
     } catch (err: unknown) {
-      Alert.alert(
-        'Log Masuk Gagal',
-        'Akaun e-mel ini belum didaftarkan atau kata laluan tidak sah.\n\nSila mendaftar akaun baharu di tab "Daftar" terlebih dahulu.'
-      );
+      const msg = err instanceof Error ? err.message : 'Login failed.';
+      if (msg.includes('Email not verified')) {
+        Alert.alert(
+          'Email Verification Required 📧',
+          'Your email address has not been verified yet. Please check your inbox and click the verification link before logging in.',
+          [
+            { text: 'Resend Email', onPress: handleResendVerification },
+            { text: 'OK' }
+          ]
+        );
+      } else {
+        Alert.alert('Login Failed', msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -104,11 +153,11 @@ export default function OrganizerAuthScreen() {
 
   const handleSignUp = async () => {
     if (!signupName.trim() || !signupOrg.trim() || !signupEmail.trim() || !signupPassword.trim()) {
-      Alert.alert('Borang Tidak Lengkap', 'Sila isi semua medan yang diperlukan.');
+      Alert.alert('Incomplete Form', 'Please fill in all required fields.');
       return;
     }
     if (signupPassword !== signupConfirm) {
-      Alert.alert('Kata Laluan Tidak Sepadan', 'Sahkan semula kata laluan anda.');
+      Alert.alert('Password Mismatch', 'Please confirm your password again.');
       return;
     }
 
@@ -119,28 +168,15 @@ export default function OrganizerAuthScreen() {
       setLoginEmail(cleanEmail);
       setLoginPassword(signupPassword.trim());
       Alert.alert(
-        'Pendaftaran Berjaya! 🎉',
-        'Akaun penganjur anda telah didaftarkan. Sila log masuk dengan e-mel dan kata laluan anda.',
-        [{ text: 'Log Masuk', onPress: () => switchTab('login') }]
+        'Registration Successful! 🎉',
+        'Your organizer account has been created. A verification link has been sent to ' + cleanEmail + '.\n\nPlease check your email inbox and click the link to verify your account before logging in.',
+        [{ text: 'Proceed to Login', onPress: () => switchTab('login') }]
       );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal mendaftar akaun penganjur.';
-      Alert.alert('Pendaftaran Gagal', msg);
+      const msg = err instanceof Error ? err.message : 'Failed to register organizer account.';
+      Alert.alert('Registration Failed', msg);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAutofill = () => {
-    if (activeTab === 'login') {
-      setLoginEmail(process.env['EXPO_PUBLIC_DEMO_ADMIN_EMAIL'] || 'azman@xplorequest.com');
-      setLoginPassword('kunciOrganisasi2026');
-    } else {
-      setSignupName('Ahmad Zulkifli');
-      setSignupOrg('Persatuan Sukan UTM');
-      setSignupEmail('ahmad@utm.my');
-      setSignupPassword('password123');
-      setSignupConfirm('password123');
     }
   };
 
@@ -274,8 +310,8 @@ export default function OrganizerAuthScreen() {
                 </View>
 
                 {/* Forgot password link */}
-                <TouchableOpacity style={styles.forgotRow}>
-                  <Text style={styles.forgotText}>Terlupa kata laluan?</Text>
+                <TouchableOpacity style={styles.forgotRow} onPress={handleForgotPassword} activeOpacity={0.7}>
+                  <Text style={styles.forgotText}>Forgot password?</Text>
                 </TouchableOpacity>
 
                 {/* Login CTA */}
@@ -496,13 +532,6 @@ export default function OrganizerAuthScreen() {
               </>
             )}
 
-            {/* Dev Autofill */}
-            {__DEV__ && (
-              <TouchableOpacity style={styles.autofillBtn} onPress={handleAutofill}>
-                <Ionicons name="flash-outline" size={14} color={COLORS.admin.primary} />
-                <Text style={styles.autofillText}>Isi Auto Akaun Ujian</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
           {/* ── Feature badges ─────────────────────────────────────── */}

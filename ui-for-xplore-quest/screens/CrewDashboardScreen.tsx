@@ -116,7 +116,7 @@ export default function CrewDashboardScreen() {
 
   const queueTeams = liveTeams.filter(
     (t) =>
-      (t.currentCheckpointId === checkpoint.id || (t.skippedCheckpointIds && t.skippedCheckpointIds.includes(checkpoint.id))) &&
+      t.status === 'approved' &&
       !(t.completedCheckpointIds && t.completedCheckpointIds.includes(checkpoint.id))
   );
 

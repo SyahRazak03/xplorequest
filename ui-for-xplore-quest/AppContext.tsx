@@ -62,6 +62,9 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const [teams, setTeams] = useState<Team[]>([]);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   
+  // Derive activeEvent dynamically
+  const activeEvent = events.find(e => e.id === selectedEventId) || null;
+  
   const [rules, setRules] = useState<RaceRules>({
     maxRaceTime: 240,
     taskTimeLimit: 15,
@@ -151,9 +154,40 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   }, [selectedEventId, user?.idToken]);
 
+  // Real-time Firestore listener for event race start status (isStarted / status)
+  React.useEffect(() => {
+    const eventId = activeEvent?.id || selectedEventId || 'EV-001';
+    let isMounted = true;
+    let unsub: (() => void) | null = null;
+
+    import('./services/eventService').then(({ subscribeToEventState }) => {
+      if (!isMounted) return;
+      unsub = subscribeToEventState(eventId, ({ isStarted, startedAt }) => {
+        if (!isMounted) return;
+        if (isStarted) {
+          setIsRaceStarted(true);
+          if (startedAt) {
+            setRaceStartTime(startedAt);
+          }
+        }
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      if (unsub) unsub();
+    };
+  }, [activeEvent?.id, selectedEventId]);
+
   const startRace = () => {
     setIsRaceStarted(true);
     setRaceStartTime(Date.now());
+    const eventId = activeEvent?.id || selectedEventId || 'EV-001';
+    import('./services/eventService').then(({ startRaceService }) => {
+      startRaceService(eventId, user?.idToken).catch((err) => {
+        console.warn('Failed to broadcast race start to Firestore:', err);
+      });
+    });
   };
 
   const resetDemoState = () => {
@@ -182,9 +216,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     setRole(null);
     setUser(null);
   };
-
-  // Derive activeEvent dynamically
-  const activeEvent = events.find(e => e.id === selectedEventId) || null;
 
   // Derive theme from active role; fallback to 'participant' if not logged in/set
   const activeTheme = getThemeForRole(role || 'participant');

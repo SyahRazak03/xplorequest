@@ -27,7 +27,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'CrewSelectC
 
 export default function CrewSelectCheckpointScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { login, activeEvent, events: appEvents, setActiveEvent, checkpoints: appCheckpoints, crewPinCode } = useApp();
+  const { login, activeEvent, events: appEvents, setActiveEvent, checkpoints: appCheckpoints, crewPinCode, attendanceMarshalId } = useApp();
 
   // Selected event state
   const [selectedEventId, setSelectedEventId] = useState<string>(
@@ -106,7 +106,8 @@ export default function CrewSelectCheckpointScreen() {
         pinCode.trim(),
         selectedCheckpointId,
         selectedEventId,
-        crewPinCode
+        crewPinCode,
+        attendanceMarshalId
       );
 
       login('crew', {

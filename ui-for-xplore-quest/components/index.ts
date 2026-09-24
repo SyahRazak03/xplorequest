@@ -19,5 +19,6 @@ export * from './Toast';
 export * from './StarBurst';
 export * from './DashedRoutePath';
 export * from './CustomModalDialog';
+export { default as VerificationSuccessModal } from './VerificationSuccessModal';
 
 
