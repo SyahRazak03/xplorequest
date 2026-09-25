@@ -113,24 +113,32 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   }, [isOffline, selectedEventId, user?.idToken]);
 
-  // Fetch real live events from Firestore on app startup
+  // Fetch real live events from API/Firestore scoped to current user & role
   React.useEffect(() => {
     let isMounted = true;
+    const token = user?.idToken;
+    const uid = user?.id;
+    const currentRole = role || 'participant';
+
     import('./services/eventService').then(({ fetchLiveEvents }) => {
-      fetchLiveEvents().then((liveEvents) => {
+      fetchLiveEvents(token, uid, currentRole).then((liveEvents) => {
         if (!isMounted) return;
+        setEvents(liveEvents || []);
+
         if (liveEvents && liveEvents.length > 0) {
-          setEvents(liveEvents);
-          if (!selectedEventId) {
+          const currentValid = liveEvents.some((e) => e.id === selectedEventId);
+          if (!currentValid || !selectedEventId) {
             setSelectedEventId(liveEvents[0].id);
           }
+        } else {
+          setSelectedEventId(null);
         }
       });
     });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.idToken, user?.id, role]);
 
   // Automatically fetch live checkpoints from Cloud API/Firestore whenever selectedEventId changes
   React.useEffect(() => {
@@ -228,6 +236,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const logout = () => {
     setRole(null);
     setUser(null);
+    setEvents([]);
+    setSelectedEventId(null);
     import('./services/storageService').then(({ clearUserSession }) => {
       clearUserSession();
     });

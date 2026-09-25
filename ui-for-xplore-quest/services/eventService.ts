@@ -19,40 +19,46 @@ function getFirebaseFirestore() {
 /**
  * Fetches real live events directly from backend API or Firestore.
  */
-export async function fetchLiveEvents(token?: string): Promise<EventConfig[]> {
-  try {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${token || 'token-admin-casaria'}`,
-    };
-    const resp = await fetch(`${API_BASE}/events`, { headers });
-    const json = await resp.json();
-    if (resp.ok && json.success && Array.isArray(json.data) && json.data.length > 0) {
-      return json.data.map((d: any) => ({
-        id: d.id,
-        name: d.name || 'Acara',
-        date: d.date || '',
-        locationName: d.locationName || '',
-        joinCode: d.joinCode || '',
-        maxDurationSeconds: d.maxDurationSeconds || 14400,
-        totalCheckpoints: d.totalCheckpoints || 0,
-        urlSlug: d.urlSlug || '',
-        entryFee: d.entryFee || 0,
-        paymentBankDetails: d.paymentBankDetails || '',
-        paymentDetails: d.paymentDetails || undefined,
-        bannerImageUrl: d.bannerImageUrl || undefined,
-        paymentQrImageUrl: d.paymentQrImageUrl || undefined,
-        latitude: d.latitude || undefined,
-        longitude: d.longitude || undefined,
-        geofenceBoundary: Array.isArray(d.geofenceBoundary)
-          ? d.geofenceBoundary.map((v: any) => ({
-              latitude: v.latitude ?? v.x ?? 0,
-              longitude: v.longitude ?? v.y ?? 0,
-            }))
-          : undefined,
-      }));
+export async function fetchLiveEvents(
+  token?: string,
+  userUid?: string,
+  userRole?: string
+): Promise<EventConfig[]> {
+  if (token) {
+    try {
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
+      const resp = await fetch(`${API_BASE}/events`, { headers });
+      const json = await resp.json();
+      if (resp.ok && json.success && Array.isArray(json.data)) {
+        return json.data.map((d: any) => ({
+          id: d.id,
+          name: d.name || 'Acara',
+          date: d.date || '',
+          locationName: d.locationName || '',
+          joinCode: d.joinCode || '',
+          maxDurationSeconds: d.maxDurationSeconds || 14400,
+          totalCheckpoints: d.totalCheckpoints || 0,
+          urlSlug: d.urlSlug || '',
+          entryFee: d.entryFee || 0,
+          paymentBankDetails: d.paymentBankDetails || '',
+          paymentDetails: d.paymentDetails || undefined,
+          bannerImageUrl: d.bannerImageUrl || undefined,
+          paymentQrImageUrl: d.paymentQrImageUrl || undefined,
+          latitude: d.latitude || undefined,
+          longitude: d.longitude || undefined,
+          geofenceBoundary: Array.isArray(d.geofenceBoundary)
+            ? d.geofenceBoundary.map((v: any) => ({
+                latitude: v.latitude ?? v.x ?? 0,
+                longitude: v.longitude ?? v.y ?? 0,
+              }))
+            : undefined,
+        }));
+      }
+    } catch (err) {
+      console.warn('API fetch live events fallback to direct Firestore:', err);
     }
-  } catch (err) {
-    console.warn('API fetch live events fallback to direct Firestore:', err);
   }
 
   try {
@@ -62,6 +68,13 @@ export async function fetchLiveEvents(token?: string): Promise<EventConfig[]> {
     snap.forEach((doc) => {
       const d = doc.data();
       if (!d['isArchived']) {
+        // Multi-tenant isolation: if caller is an organizer (admin), only return events created by this organizer
+        if (userRole === 'admin' && userUid) {
+          if (d['createdBy'] && d['createdBy'] !== userUid) {
+            return;
+          }
+        }
+
         list.push({
           id: doc.id,
           name: d['name'] || 'Acara',
@@ -126,7 +139,11 @@ export async function updatePaymentDetailsService(
 /**
  * Persists a newly created event to Firestore `events/{eventId}` so it can be queried by urlSlug on web pre-registration.
  */
-export async function createLiveEvent(eventConfig: EventConfig, idToken?: string): Promise<EventConfig> {
+export async function createLiveEvent(
+  eventConfig: EventConfig,
+  idToken?: string,
+  ownerUid?: string
+): Promise<EventConfig> {
   if (idToken) {
     try {
       const resp = await fetch(`${API_BASE}/events`, {
@@ -148,6 +165,7 @@ export async function createLiveEvent(eventConfig: EventConfig, idToken?: string
           paymentDetails: eventConfig.paymentDetails || undefined,
           bannerImageUrl: eventConfig.bannerImageUrl || undefined,
           paymentQrImageUrl: eventConfig.paymentQrImageUrl || undefined,
+          createdBy: ownerUid || undefined,
         }),
       });
 
@@ -186,6 +204,7 @@ export async function createLiveEvent(eventConfig: EventConfig, idToken?: string
       paymentDetails: eventConfig.paymentDetails || null,
       bannerImageUrl: eventConfig.bannerImageUrl || null,
       paymentQrImageUrl: eventConfig.paymentQrImageUrl || null,
+      createdBy: ownerUid || null,
       isArchived: false,
       isStarted: false,
       isFinished: false,

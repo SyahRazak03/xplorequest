@@ -411,7 +411,7 @@ export default function AdminCreateEventScreen() {
 
     // Persist event to Firestore database via Cloud API (Admin SDK) so web form urlSlug works live!
     try {
-      const persistedEvent = await createLiveEvent(newEvent, user?.idToken);
+      const persistedEvent = await createLiveEvent(newEvent, user?.idToken, user?.id);
       if (setEvents && persistedEvent) {
         setEvents((prev) => [persistedEvent, ...prev.filter((e) => e.id !== newEvent.id && e.id !== persistedEvent.id)]);
         setActiveEvent(persistedEvent);

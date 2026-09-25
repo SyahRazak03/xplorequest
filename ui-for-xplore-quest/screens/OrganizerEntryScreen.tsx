@@ -127,6 +127,7 @@ export default function OrganizerAuthScreen() {
       const authRes = await adminLogin(cleanEmail, loginPassword.trim());
       login('admin', {
         id: authRes.uid,
+        idToken: authRes.idToken,
         name: authRes.name || cleanEmail.split('@')[0] || 'Event Organizer',
         email: authRes.email || cleanEmail,
         role: 'admin',
