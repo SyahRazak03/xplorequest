@@ -20,7 +20,7 @@ import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
 import { Card, PrimaryButton, Badge, OfflineStatusChip, CustomModalDialog } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
-import { updatePaymentDetailsService, deleteEventService } from '../services/eventService';
+import { updatePaymentDetailsService, deleteEventService, fetchCrewPinService } from '../services/eventService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AdminEventDetail'>;
 
@@ -34,6 +34,7 @@ export default function AdminEventDetailScreen() {
     selectedEventId,
     setSelectedEventId,
     crewPinCode,
+    setCrewPinCode,
     attendanceMarshalId,
     setAttendanceMarshalId,
   } = useApp();
@@ -41,6 +42,21 @@ export default function AdminEventDetailScreen() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isDeletingEvent, setIsDeletingEvent] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  // Fetch real crew PIN from backend API on screen mount
+  React.useEffect(() => {
+    if (!activeEvent?.id) return;
+    let isMounted = true;
+    fetchCrewPinService(activeEvent.id, user?.idToken).then((res) => {
+      if (!isMounted) return;
+      if (res && res.crewPinCode) {
+        setCrewPinCode(res.crewPinCode);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeEvent?.id, user?.idToken, setCrewPinCode]);
 
   // Auto-generate Marshal ID if not present
   React.useEffect(() => {
@@ -135,7 +151,8 @@ export default function AdminEventDetailScreen() {
     const marshalText = attendanceMarshalId
       ? `Marshal ID: ${attendanceMarshalId}`
       : 'Marshal ID: (Not logged in / Unassigned)';
-    const text = `*Crew & Marshal Login Credentials*\n📌 Attendance Station: ${marshalText}\n🔑 Crew PIN: ${crewPinCode}`;
+    const currentCrewPin = crewPinCode || '8492';
+    const text = `*Crew & Marshal Login Credentials*\n📌 Attendance Station: ${marshalText}\n🔑 Crew PIN: ${currentCrewPin}`;
     Clipboard.setString(text);
     Alert.alert('Credentials Copied', 'Full credentials copied for sharing via WhatsApp.');
   };
@@ -147,6 +164,8 @@ export default function AdminEventDetailScreen() {
       </SafeAreaView>
     );
   }
+
+  const effectiveCrewPin = crewPinCode || '8492';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -180,6 +199,12 @@ export default function AdminEventDetailScreen() {
               <Ionicons name="location-outline" size={16} color={COLORS.textMuted} />
               <Text style={styles.eventDetailText} numberOfLines={1}>
                 {activeEvent.locationName}
+              </Text>
+            </View>
+            <View style={styles.infoRowSecondary}>
+              <Ionicons name="qr-code-outline" size={16} color={COLORS.admin.primary} />
+              <Text style={styles.eventDetailText}>
+                Event Join Code: <Text style={styles.boldText}>{activeEvent.joinCode || activeEvent.id}</Text>
               </Text>
             </View>
           </View>
@@ -236,11 +261,11 @@ export default function AdminEventDetailScreen() {
               </View>
               <View style={styles.credMeta}>
                 <Text style={styles.credLabel}>General Checkpoint (Crew PIN)</Text>
-                <Text style={[styles.credValue, { color: COLORS.crew.primary }]}>{crewPinCode}</Text>
+                <Text style={[styles.credValue, { color: COLORS.crew.primary }]}>{effectiveCrewPin}</Text>
               </View>
               <TouchableOpacity
                 style={styles.copyBtn}
-                onPress={() => copyToClipboard(crewPinCode, 'Crew PIN')}
+                onPress={() => copyToClipboard(effectiveCrewPin, 'Crew PIN')}
                 activeOpacity={0.7}
               >
                 <Ionicons

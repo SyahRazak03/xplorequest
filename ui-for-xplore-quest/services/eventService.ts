@@ -221,6 +221,34 @@ export async function createLiveEvent(
 }
 
 /**
+ * Fetches crew PIN code and assigned marshal ID for an event from backend API.
+ */
+export async function fetchCrewPinService(
+  eventId: string,
+  token?: string
+): Promise<{ crewPinCode: string; marshalId?: string }> {
+  if (token && API_BASE) {
+    try {
+      const resp = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/crew-pin`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await resp.json();
+      if (resp.ok && json.success && json.data?.crewPinCode) {
+        return {
+          crewPinCode: json.data.crewPinCode,
+          marshalId: json.data.marshalId,
+        };
+      }
+    } catch (err) {
+      console.warn('Failed to fetch crew PIN from API:', err);
+    }
+  }
+  return { crewPinCode: '8492' };
+}
+
+/**
  * Updates race rules, time limits, and penalties for an event in Firestore.
  */
 export async function updateEventRulesService(

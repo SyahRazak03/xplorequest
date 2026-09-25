@@ -33,7 +33,7 @@ export default function ParticipantJoinScreen() {
   const [authError, setAuthError] = useState('');
 
   // Form Fields State
-  const [eventCode, setEventCode] = useState(activeEvent?.joinCode || activeEvent?.id || 'XT2026');
+  const [eventCode, setEventCode] = useState('');
   const [teamName, setTeamName] = useState('');
 
   // Subscribe to live Firestore teams for current active event
