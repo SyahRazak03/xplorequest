@@ -11,9 +11,6 @@
       "channel": "preview",
       "distribution": "internal",
       "env": {
-        "GOOGLE_MAPS_API_KEY_ANDROID": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps",
-        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDCoJdAfRLQXt-oV46zCvbldNhuy1gsgQE",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "https://xplorequest-cab6c.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "xplorequest-cab6c",
         "EXPO_PUBLIC_FIREBASE_APP_ID": "1:527592954084:web:2453ab982acbc72b8f34f1",
@@ -26,9 +23,6 @@
     "production": {
       "channel": "production",
       "env": {
-        "GOOGLE_MAPS_API_KEY_ANDROID": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps",
-        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps",
-        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDCoJdAfRLQXt-oV46zCvbldNhuy1gsgQE",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "https://xplorequest-cab6c.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "xplorequest-cab6c",
         "EXPO_PUBLIC_FIREBASE_APP_ID": "1:527592954084:web:2453ab982acbc72b8f34f1",

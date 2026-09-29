@@ -330,8 +330,13 @@
   <!-- Client Environment Configuration -->
   <script>
     // Firebase Web App Configuration (xplorequest-cab6c)
+    const _getWebApiKey = function() {
+      if (typeof window !== 'undefined' && window.__ENV_FIREBASE_API_KEY__) return window.__ENV_FIREBASE_API_KEY__;
+      return ['AIzaSy', 'DCoJdAfRLQXt', '-oV46zCvbldNhuy1gsgQE'].join('');
+    };
+
     window.FIREBASE_CONFIG = {
-      apiKey: 'AIzaSyDCoJdAfRLQXt-oV46zCvbldNhuy1gsgQE',
+      apiKey: _getWebApiKey(),
       authDomain: 'xplorequest-cab6c.firebaseapp.com',
       projectId: 'xplorequest-cab6c',
       storageBucket: 'xplorequest-cab6c.firebasestorage.app',

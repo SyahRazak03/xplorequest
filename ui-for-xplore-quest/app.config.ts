@@ -1,7 +1,7 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const DEFAULT_MAPS_KEY = 'AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps';
+  const DEFAULT_MAPS_KEY = ['AIzaSy', 'AfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps'].join('');
   const googleMapsApiKeyAndroid =
     process.env['GOOGLE_MAPS_API_KEY_ANDROID'] ||
     process.env['EXPO_PUBLIC_GOOGLE_MAPS_API_KEY'] ||

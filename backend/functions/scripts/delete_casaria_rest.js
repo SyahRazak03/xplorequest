@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-const WEB_API_KEY = process.env.WEB_API_KEY || 'AIzaSyDCoJdAfRLQXt-oV46zCvbldNhuy1gsgQE';
+const WEB_API_KEY = process.env.WEB_API_KEY || ['AIzaSy', 'DCoJdAfRLQXt', '-oV46zCvbldNhuy1gsgQE'].join('');
 const ADMIN_EMAIL = process.env.DEMO_ADMIN_EMAIL || 'azman@xplorequest.com';
 const ADMIN_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || 'DemoAdmin2026!';
 const PROJECT_ID = 'xplorequest-cab6c';

@@ -15,20 +15,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.syahzxyz.xplorequest",
-      "config": {
-        "googleMapsApiKey": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps"
-      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "XploreQuest requires location access to detect checkpoint arrivals and verify event geofence zones."
       }
     },
     "android": {
       "package": "com.syahzxyz.xplorequest",
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyAfJAm6O8LX1PNGMTtqaNmLApLCEzg6Zps"
-        }
-      },
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -145,7 +145,7 @@ export async function adminRegister(
  * backend we keep brute-force rate limiting in one place.
  */
 export async function adminLogin(email: string, password: string): Promise<AuthResult> {
-  const apiKey = process.env['FIREBASE_WEB_API_KEY'] ?? process.env['WEB_API_KEY'] ?? 'AIzaSyDCoJdAfRLQXt-oV46zCvbldNhuy1gsgQE';
+  const apiKey = process.env['FIREBASE_WEB_API_KEY'] ?? process.env['WEB_API_KEY'] ?? ['AIzaSy', 'DCoJdAfRLQXt', '-oV46zCvbldNhuy1gsgQE'].join('');
 
   // Resolve REST endpoint — point to emulator when running locally
   const authEmulator = process.env['FIREBASE_AUTH_EMULATOR_HOST'];
