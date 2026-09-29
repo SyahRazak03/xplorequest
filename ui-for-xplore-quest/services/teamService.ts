@@ -24,14 +24,12 @@ function getFirebaseFirestore(): Firestore {
 const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
 
 export async function fetchEventTeams(eventId: string, token?: string): Promise<Team[]> {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
   if (!API_BASE) return [];
   try {
-    const res = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams`, {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-      },
-    });
+    const headers: Record<string, string> = {};
+    if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+    const res = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams`, { headers });
     const json = await res.json();
     if (json.success && Array.isArray(json.data)) {
       return json.data.map((d: any) => ({
@@ -73,10 +71,10 @@ export function subscribeToEventTeams(
   onError?: (err: Error) => void,
   token?: string
 ): () => void {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
 
   // 1. Initial REST API Fetch from Backend Cloud Functions
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams`, {
       headers: {
         Authorization: `Bearer ${adminToken}`,
@@ -200,10 +198,10 @@ export async function checkinTeamAttendance(
   startPoints: number = 0,
   token?: string
 ): Promise<void> {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
   const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
 
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     try {
       await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/attendance/checkin`, {
         method: 'POST',
@@ -260,10 +258,10 @@ export async function updateTeamProgressService(
   pointsEarned: number,
   token?: string
 ): Promise<void> {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
   const API_BASE = (process.env['EXPO_PUBLIC_API_BASE_URL'] ?? '').replace(/\/$/, '');
 
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     try {
       await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/teams/${encodeURIComponent(teamId)}/progress`, {
         method: 'POST',

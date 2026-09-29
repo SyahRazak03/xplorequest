@@ -10,7 +10,8 @@
 
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { UserProfile, UserRole } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserProfile, UserRole, EventConfig } from '../types';
 
 const SESSION_KEY = 'xq_user_session_v1';
 const TOKEN_KEY = 'xq_id_token_v1';
@@ -106,3 +107,55 @@ export async function clearAuthToken(): Promise<void> {
     console.warn('clearAuthToken SecureStore error:', err);
   }
 }
+
+const EVENTS_KEY = 'xq_local_events_v1';
+
+export async function saveLocalEvents(events: EventConfig[]): Promise<void> {
+  try {
+    const data = JSON.stringify(events);
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(EVENTS_KEY, data);
+      }
+    } else {
+      await AsyncStorage.setItem(EVENTS_KEY, data);
+    }
+  } catch (err) {
+    console.warn('saveLocalEvents AsyncStorage error:', err);
+  }
+}
+
+export async function loadLocalEvents(): Promise<EventConfig[]> {
+  try {
+    let data: string | null = null;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        data = window.localStorage.getItem(EVENTS_KEY);
+      }
+    } else {
+      data = await AsyncStorage.getItem(EVENTS_KEY);
+    }
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (err) {
+    console.warn('loadLocalEvents AsyncStorage error:', err);
+  }
+  return [];
+}
+
+export async function clearLocalEvents(): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(EVENTS_KEY);
+      }
+    } else {
+      await AsyncStorage.removeItem(EVENTS_KEY);
+    }
+  } catch (err) {
+    console.warn('clearLocalEvents AsyncStorage error:', err);
+  }
+}
+

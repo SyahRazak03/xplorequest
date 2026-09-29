@@ -12,7 +12,9 @@ import {
   Alert,
   Clipboard,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +23,7 @@ import { useApp } from '../AppContext';
 import { Card, PrimaryButton, Badge, OfflineStatusChip, CustomModalDialog } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import { updatePaymentDetailsService, deleteEventService, fetchCrewPinService } from '../services/eventService';
+import { saveLocalEvents } from '../services/storageService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AdminEventDetail'>;
 
@@ -72,12 +75,61 @@ export default function AdminEventDetailScreen() {
     Alert.alert('Marshal ID Regenerated', `New Marshal ID: ${newId}`);
   };
 
-  // Feature 4C: Payment Details Form State
+  // Feature 4C: Payment Details & Event Assets Form State
   const [bankName, setBankName] = useState(activeEvent?.paymentDetails?.bankName || '');
   const [accountHolderName, setAccountHolderName] = useState(activeEvent?.paymentDetails?.accountHolderName || '');
   const [accountNumber, setAccountNumber] = useState(activeEvent?.paymentDetails?.accountNumber || '');
   const [paymentNote, setPaymentNote] = useState(activeEvent?.paymentDetails?.note || '');
+  const [bannerUri, setBannerUri] = useState<string | null>(activeEvent?.bannerImageUrl || null);
+  const [paymentQrUri, setPaymentQrUri] = useState<string | null>(activeEvent?.paymentQrImageUrl || null);
   const [isSavingPayment, setIsSavingPayment] = useState(false);
+
+  React.useEffect(() => {
+    if (activeEvent) {
+      if (activeEvent.paymentDetails) {
+        setBankName(activeEvent.paymentDetails.bankName || '');
+        setAccountHolderName(activeEvent.paymentDetails.accountHolderName || '');
+        setAccountNumber(activeEvent.paymentDetails.accountNumber || '');
+        setPaymentNote(activeEvent.paymentDetails.note || '');
+      }
+      setBannerUri(activeEvent.bannerImageUrl || null);
+      setPaymentQrUri(activeEvent.paymentQrImageUrl || null);
+    }
+  }, [activeEvent?.id]);
+
+  const handlePickImage = async (target: 'banner' | 'payment_qr') => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Kebenaran Diperlukan', 'Kebenaran akses ke galeri gambar diperlukan.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+          Alert.alert('Had Saiz Melebihi', 'Saiz gambar melebihi 5MB.');
+          return;
+        }
+        const mimeType = asset.mimeType || 'image/jpeg';
+        const formattedUri = asset.base64 ? `data:${mimeType};base64,${asset.base64}` : asset.uri;
+
+        if (target === 'banner') {
+          setBannerUri(formattedUri);
+        } else {
+          setPaymentQrUri(formattedUri);
+        }
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to pick image.');
+    }
+  };
 
   const handleSavePaymentDetails = async () => {
     if (!activeEvent) return;
@@ -89,23 +141,41 @@ export default function AdminEventDetailScreen() {
       note: paymentNote.trim(),
     };
 
+    const updatedEvent = {
+      ...activeEvent,
+      paymentDetails: newDetails,
+      bannerImageUrl: bannerUri || null,
+      paymentQrImageUrl: paymentQrUri || null,
+    };
+
     try {
-      // Call real backend endpoint PATCH /events/:eventId/payment-details
-      await updatePaymentDetailsService(activeEvent.id, newDetails);
+      // Call real backend endpoint PATCH /events/:eventId
+      const res = await updatePaymentDetailsService(
+        activeEvent.id,
+        newDetails,
+        bannerUri,
+        paymentQrUri,
+        user?.idToken
+      );
 
-      setActiveEvent({
-        ...activeEvent,
-        paymentDetails: newDetails,
+      const finalUpdated = res ? { ...updatedEvent, ...res } : updatedEvent;
+      setActiveEvent(finalUpdated);
+      setEvents((prev) => {
+        const next = prev.map((e) => (e.id === activeEvent.id ? finalUpdated : e));
+        saveLocalEvents(next);
+        return next;
       });
 
-      Alert.alert('Success', 'Organizer bank account details updated.');
+      Alert.alert('Success', 'Payment information and event images updated successfully.');
     } catch (err: any) {
-      // Fallback: update AppContext state locally if backend un-reachable
-      setActiveEvent({
-        ...activeEvent,
-        paymentDetails: newDetails,
+      // Fallback: update AppContext state & local storage
+      setActiveEvent(updatedEvent);
+      setEvents((prev) => {
+        const next = prev.map((e) => (e.id === activeEvent.id ? updatedEvent : e));
+        saveLocalEvents(next);
+        return next;
       });
-      Alert.alert('Updated', 'Payment details updated for this session.');
+      Alert.alert('Updated', 'Payment information and event images updated locally.');
     } finally {
       setIsSavingPayment(false);
     }
@@ -394,6 +464,65 @@ export default function AdminEventDetailScreen() {
                 numberOfLines={2}
                 maxLength={500}
               />
+            </View>
+
+            {/* Image Upload Pickers: Event Banner & Payment QR */}
+            <View style={{ flexDirection: 'row', marginTop: SPACING.xs, marginBottom: SPACING.md }}>
+              {/* Banner Image Picker */}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputLabel}>Event Banner Image</Text>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: SPACING.sm,
+                    backgroundColor: COLORS.admin.primaryLight,
+                    borderRadius: RADIUS.md,
+                    borderWidth: 1,
+                    borderColor: COLORS.admin.primary,
+                    borderStyle: 'dashed',
+                    marginTop: 4,
+                  }}
+                  onPress={() => handlePickImage('banner')}
+                >
+                  <Ionicons name="image-outline" size={18} color={COLORS.admin.primary} />
+                  <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: '700', color: COLORS.admin.primary }}>
+                    {bannerUri ? 'Change Banner' : 'Upload Banner'}
+                  </Text>
+                </TouchableOpacity>
+                {bannerUri && (
+                  <Image source={{ uri: bannerUri }} style={{ width: '100%', height: 60, borderRadius: RADIUS.sm, marginTop: 6, resizeMode: 'cover' }} />
+                )}
+              </View>
+
+              {/* Payment QR Image Picker */}
+              <View style={{ flex: 1, marginLeft: SPACING.md }}>
+                <Text style={styles.inputLabel}>Payment QR Image</Text>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: SPACING.sm,
+                    backgroundColor: COLORS.admin.primaryLight,
+                    borderRadius: RADIUS.md,
+                    borderWidth: 1,
+                    borderColor: COLORS.admin.primary,
+                    borderStyle: 'dashed',
+                    marginTop: 4,
+                  }}
+                  onPress={() => handlePickImage('payment_qr')}
+                >
+                  <Ionicons name="qr-code-outline" size={18} color={COLORS.admin.primary} />
+                  <Text style={{ marginLeft: 6, fontSize: 12, fontWeight: '700', color: COLORS.admin.primary }}>
+                    {paymentQrUri ? 'Change QR' : 'Upload QR'}
+                  </Text>
+                </TouchableOpacity>
+                {paymentQrUri && (
+                  <Image source={{ uri: paymentQrUri }} style={{ width: '100%', height: 60, borderRadius: RADIUS.sm, marginTop: 6, resizeMode: 'contain' }} />
+                )}
+              </View>
             </View>
 
             <TouchableOpacity

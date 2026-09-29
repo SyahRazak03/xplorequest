@@ -80,7 +80,7 @@ export type EventDocument = EventConfig &
     /** Payment bank name, account number, payee info */
     paymentBankDetails?: string;
     /** Structured organizer payment details */
-    paymentDetails?: PaymentDetails;
+    paymentDetails?: PaymentDetails | null;
     /** Storage URL for DuitNow/Bank QR image */
     paymentQrImageUrl?: string | null;
     /** Storage URL for top event banner image */

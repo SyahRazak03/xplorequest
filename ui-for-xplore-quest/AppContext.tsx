@@ -121,18 +121,35 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const currentRole = role || 'participant';
 
     import('./services/eventService').then(({ fetchLiveEvents }) => {
-      fetchLiveEvents(token, uid, currentRole).then((liveEvents) => {
-        if (!isMounted) return;
-        setEvents(liveEvents || []);
+      import('./services/storageService').then(({ saveLocalEvents, loadLocalEvents }) => {
+        fetchLiveEvents(token, uid, currentRole).then(async (liveEvents) => {
+          if (!isMounted) return;
+          const cachedLocal = await loadLocalEvents();
 
-        if (liveEvents && liveEvents.length > 0) {
-          const currentValid = liveEvents.some((e) => e.id === selectedEventId);
-          if (!currentValid || !selectedEventId) {
-            setSelectedEventId(liveEvents[0].id);
+          const eventMap = new Map<string, EventConfig>();
+          (cachedLocal || []).forEach((e) => {
+            // Keep local events created by current organizer or available locally
+            if (currentRole !== 'admin' || !uid || !e.createdBy || e.createdBy === uid) {
+              eventMap.set(e.id, e);
+            }
+          });
+          (liveEvents || []).forEach((e) => {
+            eventMap.set(e.id, e);
+          });
+
+          const finalEvents = Array.from(eventMap.values());
+          setEvents(finalEvents);
+          saveLocalEvents(finalEvents);
+
+          if (finalEvents.length > 0) {
+            setSelectedEventId((prev) => {
+              const currentValid = finalEvents.some((e) => e.id === prev);
+              return currentValid ? prev : finalEvents[0].id;
+            });
+          } else {
+            setSelectedEventId(null);
           }
-        } else {
-          setSelectedEventId(null);
-        }
+        });
       });
     });
     return () => {
@@ -205,10 +222,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // Derive theme from active role; fallback to 'participant' if not logged in/set
   const activeTheme = getThemeForRole(role || 'participant');
 
-  // Restore persisted hardware-encrypted session on app mount
+  // Restore persisted hardware-encrypted session and local events cache on app mount
   React.useEffect(() => {
     let isMounted = true;
-    import('./services/storageService').then(({ loadUserSession }) => {
+    import('./services/storageService').then(({ loadUserSession, loadLocalEvents }) => {
       loadUserSession().then((session) => {
         if (!isMounted) return;
         if (session && session.user) {
@@ -217,6 +234,13 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
           if (session.user.eventId) {
             setSelectedEventId(session.user.eventId);
           }
+        }
+      });
+      loadLocalEvents().then((cachedEvents) => {
+        if (!isMounted) return;
+        if (cachedEvents && cachedEvents.length > 0) {
+          setEvents((prev) => (prev.length === 0 ? cachedEvents : prev));
+          setSelectedEventId((prev) => prev || cachedEvents[0].id);
         }
       });
     });
@@ -238,8 +262,9 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     setUser(null);
     setEvents([]);
     setSelectedEventId(null);
-    import('./services/storageService').then(({ clearUserSession }) => {
+    import('./services/storageService').then(({ clearUserSession, clearLocalEvents }) => {
       clearUserSession();
+      clearLocalEvents();
     });
   };
 
@@ -250,10 +275,11 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const setActiveEvent = (newEvent: EventConfig) => {
     setEvents(prev => {
       const exists = prev.some(e => e.id === newEvent.id);
-      if (exists) {
-        return prev.map(e => e.id === newEvent.id ? newEvent : e);
-      }
-      return [...prev, newEvent];
+      const updated = exists ? prev.map(e => e.id === newEvent.id ? newEvent : e) : [newEvent, ...prev];
+      import('./services/storageService').then(({ saveLocalEvents }) => {
+        saveLocalEvents(updated);
+      });
+      return updated;
     });
     setSelectedEventId(newEvent.id);
   };

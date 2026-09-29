@@ -187,7 +187,7 @@ export async function createEventService(
     urlSlug,
     entryFee: input.entryFee ?? 0,
     paymentBankDetails: input.paymentBankDetails ?? '',
-    paymentDetails: (input.paymentDetails as any) || undefined,
+    paymentDetails: input.paymentDetails ?? null,
     bannerImageUrl: input.bannerImageUrl ?? null,
     paymentQrImageUrl: input.paymentQrImageUrl ?? null,
     createdBy: createdByUid,

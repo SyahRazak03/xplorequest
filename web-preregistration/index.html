@@ -145,10 +145,7 @@
     <!-- Header / Brand -->
     <header class="brand-header">
       <div class="logo-badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2" fill="#eff6ff"/>
-          <path d="M12 6L15 12L12 18L9 12L12 6Z" fill="#2563eb"/>
-        </svg>
+        <img src="/logo.png" alt="XploreQuest Logo" class="logo-img" />
         <span class="logo-text">XploreQuest</span>
       </div>
     </header>
@@ -171,7 +168,7 @@
       <!-- Event Banner & Details Card -->
       <section class="card event-banner-card">
         <div id="eventBannerContainer" class="banner-wrapper hidden">
-          <img id="eventBannerImg" src="" alt="" class="event-banner-img" />
+          <img id="eventBannerImg" src="" alt="Event Banner" class="event-banner-img" />
         </div>
         <div class="event-header-info">
           <span class="badge badge-pulse">Registration Open</span>
@@ -253,15 +250,16 @@
         <!-- Section 3: Payment & Receipt Upload -->
         <section class="card form-card">
           <h2 class="card-title">3. Payment & Receipt Upload</h2>
-          <p class="card-subtitle">Please complete the payment transfer and upload your transaction receipt proof.</p>
+          <p class="card-subtitle">Pay using bank account details or scan the DuitNow QR code below, then upload your payment transaction receipt.</p>
 
           <!-- Bank & Payment Details -->
           <div id="paymentDetailsBox" class="payment-info-box hidden">
-            <h3 class="info-heading">💳 Payment Account Information</h3>
+            <h3 class="info-heading">💳 Payment Account & QR Code Information</h3>
             <pre id="bankDetailsText" class="bank-details-text"></pre>
             <div id="paymentQrWrapper" class="qr-wrapper hidden">
-              <p class="qr-label">Payment QR Code (DuitNow):</p>
+              <p class="qr-label">📲 Scan DuitNow QR Code to Pay:</p>
               <img id="paymentQrImg" src="" alt="Payment QR Code" class="payment-qr-img" />
+              <p class="file-hint" style="margin-top:6px;">Scan this QR code with any banking or e-wallet app</p>
             </div>
           </div>
 

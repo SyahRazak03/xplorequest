@@ -133,9 +133,9 @@ export const CreateEventSchema = z.object({
     .optional()
     .default(''),
 
-  paymentQrImageUrl: z.string().url('Invalid payment QR image URL.').nullable().optional(),
+  paymentQrImageUrl: z.string().nullable().optional(),
 
-  bannerImageUrl: z.string().url('Invalid banner image URL.').nullable().optional(),
+  bannerImageUrl: z.string().nullable().optional(),
 
   paymentDetails: z.lazy(() => PaymentDetailsSchema).nullable().optional(),
 });

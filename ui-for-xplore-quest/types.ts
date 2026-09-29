@@ -30,6 +30,7 @@ export interface EventConfig {
   bannerImageUrl?: string | null;
   latitude?: number;
   longitude?: number;
+  createdBy?: string;
   geofenceBoundary?: Array<{ latitude: number; longitude: number }>;
 }
 

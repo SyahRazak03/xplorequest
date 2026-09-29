@@ -23,6 +23,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { useApp } from '../AppContext';
 import { createLiveEvent } from '../services/eventService';
+import { saveLocalEvents } from '../services/storageService';
 import { Card, PrimaryButton, SecondaryButton, Badge } from '../components';
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
 import type { EventConfig } from '../types';
@@ -302,6 +303,10 @@ export default function AdminCreateEventScreen() {
   const [urlSlug, setUrlSlug] = useState('');
   const [isCustomSlug, setIsCustomSlug] = useState(false);
   const [entryFee, setEntryFee] = useState('50');
+  const [bankName, setBankName] = useState('Maybank');
+  const [accountHolderName, setAccountHolderName] = useState('XploreQuest Resources');
+  const [accountNumber, setAccountNumber] = useState('564123456789');
+  const [paymentNote, setPaymentNote] = useState('Sila masukkan Nama Pasukan sebagai rujukan pemindahan.');
   const [paymentBankDetails, setPaymentBankDetails] = useState('Maybank 564123456789 (XploreQuest Resources)');
   const [bannerUri, setBannerUri] = useState<string | null>(null);
   const [paymentQrUri, setPaymentQrUri] = useState<string | null>(null);
@@ -330,6 +335,7 @@ export default function AdminCreateEventScreen() {
         mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -338,10 +344,13 @@ export default function AdminCreateEventScreen() {
           Alert.alert('Had Saiz Melebihi', 'Saiz gambar melebihi 5MB.');
           return;
         }
+        const mimeType = asset.mimeType || 'image/jpeg';
+        const formattedUri = asset.base64 ? `data:${mimeType};base64,${asset.base64}` : asset.uri;
+
         if (target === 'banner') {
-          setBannerUri(asset.uri);
+          setBannerUri(formattedUri);
         } else {
-          setPaymentQrUri(asset.uri);
+          setPaymentQrUri(formattedUri);
         }
       }
     } catch {
@@ -386,6 +395,22 @@ export default function AdminCreateEventScreen() {
 
     const finalSlug = effectiveSlug || `event-${Math.floor(Math.random() * 900 + 100)}`;
     const parsedFee = parseFloat(entryFee) || 0;
+    const organizerUid = user?.id;
+    if (!organizerUid) {
+      Alert.alert('Ralat Authentikasi', 'Sesi penganjur anda tidak sah atau telah tamat. Sila log masuk semula.');
+      return;
+    }
+
+    const structuredPaymentDetails = (bankName.trim() && accountNumber.trim()) ? {
+      bankName: bankName.trim(),
+      accountHolderName: accountHolderName.trim() || 'Organizer',
+      accountNumber: accountNumber.trim(),
+      note: paymentNote.trim() || undefined,
+    } : null;
+
+    const bankDetailsSummary = bankName.trim()
+      ? `${bankName.trim()} ${accountNumber.trim()} (${accountHolderName.trim()})`
+      : paymentBankDetails;
 
     const newEvent: EventConfig = {
       id: `EV-${Math.floor(Math.random() * 900 + 100)}`,
@@ -396,25 +421,36 @@ export default function AdminCreateEventScreen() {
       totalCheckpoints: 8,
       urlSlug: finalSlug,
       entryFee: parsedFee,
-      paymentBankDetails: paymentBankDetails,
-      bannerImageUrl: bannerUri,
-      paymentQrImageUrl: paymentQrUri,
+      paymentBankDetails: bankDetailsSummary,
+      paymentDetails: structuredPaymentDetails,
+      bannerImageUrl: bannerUri || null,
+      paymentQrImageUrl: paymentQrUri || null,
       latitude: eventCoords.latitude,
       longitude: eventCoords.longitude,
       joinCode: 'XT2026',
+      createdBy: organizerUid,
     };
 
     setActiveEvent(newEvent);
     if (setEvents) {
-      setEvents((prev) => [newEvent, ...prev.filter((e) => e.id !== newEvent.id)]);
+      setEvents((prev) => {
+        const next = [newEvent, ...prev.filter((e) => e.id !== newEvent.id)];
+        saveLocalEvents(next);
+        return next;
+      });
     }
 
     // Persist event to Firestore database via Cloud API (Admin SDK) so web form urlSlug works live!
     try {
-      const persistedEvent = await createLiveEvent(newEvent, user?.idToken, user?.id);
+      const persistedEvent = await createLiveEvent(newEvent, user?.idToken, organizerUid);
       if (setEvents && persistedEvent) {
-        setEvents((prev) => [persistedEvent, ...prev.filter((e) => e.id !== newEvent.id && e.id !== persistedEvent.id)]);
-        setActiveEvent(persistedEvent);
+        const finalPersisted = { ...persistedEvent, createdBy: persistedEvent.createdBy || organizerUid };
+        setEvents((prev) => {
+          const next = [finalPersisted, ...prev.filter((e) => e.id !== newEvent.id && e.id !== finalPersisted.id)];
+          saveLocalEvents(next);
+          return next;
+        });
+        setActiveEvent(finalPersisted);
       }
     } catch (err) {
       console.warn('Failed to persist live event:', err);
@@ -720,16 +756,50 @@ export default function AdminCreateEventScreen() {
                   />
                 </View>
 
-                {/* Bank Details Input */}
+                {/* Bank Details Inputs */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Payment Bank Account Details</Text>
+                  <Text style={styles.label}>Bank Name</Text>
                   <TextInput
-                    style={[styles.textInput, { height: 70, textAlignVertical: 'top' }]}
-                    placeholder="Bank Name, Account Number, Recipient Name"
+                    style={styles.textInput}
+                    placeholder="e.g. Maybank / CIMB / Bank Islam"
+                    value={bankName}
+                    onChangeText={setBankName}
+                    placeholderTextColor={COLORS.textMuted}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Account Holder Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. XploreQuest Resources"
+                    value={accountHolderName}
+                    onChangeText={setAccountHolderName}
+                    placeholderTextColor={COLORS.textMuted}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Account Number</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. 564123456789"
+                    keyboardType="number-pad"
+                    value={accountNumber}
+                    onChangeText={setAccountNumber}
+                    placeholderTextColor={COLORS.textMuted}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Payment Reference Note / Instructions</Text>
+                  <TextInput
+                    style={[styles.textInput, { height: 60, textAlignVertical: 'top' }]}
+                    placeholder="e.g. Sila masukkan Nama Pasukan sebagai rujukan pemindahan."
                     multiline
-                    numberOfLines={3}
-                    value={paymentBankDetails}
-                    onChangeText={setPaymentBankDetails}
+                    numberOfLines={2}
+                    value={paymentNote}
+                    onChangeText={setPaymentNote}
                     placeholderTextColor={COLORS.textMuted}
                   />
                 </View>

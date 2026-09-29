@@ -76,16 +76,18 @@ export async function getCheckpoints(
 export async function createCheckpoint(
   eventId: string,
   payload: CreateCheckpointPayload,
-  idToken: string
+  idToken?: string
 ): Promise<{ checkpoint: Checkpoint; warning?: string }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
   const resp = await fetch(
     `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
+      headers,
       body: JSON.stringify(payload),
     }
   );
@@ -115,16 +117,18 @@ export async function updateCheckpoint(
   eventId: string,
   checkpointId: string,
   payload: Partial<CreateCheckpointPayload>,
-  idToken: string
+  idToken?: string
 ): Promise<{ checkpoint: Checkpoint; warning?: string }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
   const resp = await fetch(
     `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints/${encodeURIComponent(checkpointId)}`,
     {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
+      headers,
       body: JSON.stringify(payload),
     }
   );
@@ -153,16 +157,17 @@ export async function updateCheckpoint(
 export async function deleteCheckpoint(
   eventId: string,
   checkpointId: string,
-  idToken: string,
+  idToken?: string,
   force: boolean = true
 ): Promise<boolean> {
+  const headers: Record<string, string> = {};
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
   const resp = await fetch(
     `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints/${encodeURIComponent(checkpointId)}?force=${force}`,
     {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-      },
+      headers,
     }
   );
 
@@ -185,16 +190,18 @@ export async function deleteCheckpoint(
 export async function saveBoundary(
   eventId: string,
   boundary: LatLng[],
-  idToken: string
+  idToken?: string
 ): Promise<BoundaryResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
   const resp = await fetch(
     `${API_BASE}/events/${encodeURIComponent(eventId)}/boundary`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
+      headers,
       body: JSON.stringify({ boundary }),
     }
   );

@@ -11,6 +11,7 @@ import {
   TextInput,
   ActivityIndicator,
   FlatList,
+  Alert,
 } from 'react-native';
 import MapView, {
   PROVIDER_GOOGLE,
@@ -521,8 +522,13 @@ export default function AdminGeofenceDesignerScreen() {
 
     try {
       setIsSaving(true);
-      const targetEventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
-      const token = user?.idToken || 'token-admin-casaria';
+      const targetEventId = activeEvent?.id || selectedEventId || user?.eventId || '';
+      if (!targetEventId) {
+        Alert.alert('Error', 'Please select an active event first.');
+        setIsSaving(false);
+        return;
+      }
+      const token = user?.idToken;
 
       // 1. Update AppContext state for checkpoints with any repositioned pin coordinates
       setCheckpoints((prevCheckpoints) =>

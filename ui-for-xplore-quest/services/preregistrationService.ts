@@ -89,10 +89,10 @@ export function subscribeToPreRegistrations(
   onError?: (err: Error) => void,
   token?: string
 ): () => void {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
 
   // 1. Initial REST API Fetch from Backend Cloud Functions
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/pre-registrations`, {
       headers: {
         Authorization: `Bearer ${adminToken}`,
@@ -176,11 +176,11 @@ export async function approvePreRegistration(
   preReg: PreRegistrationItem,
   token?: string
 ): Promise<Team> {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
   let createdTeam: Team | null = null;
 
   // 1. Call Cloud API Backend to approve pre-registration and create team
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     try {
       const resp = await fetch(
         `${API_BASE}/events/${encodeURIComponent(eventId)}/pre-registrations/${encodeURIComponent(preReg.id)}/approve`,
@@ -269,9 +269,9 @@ export async function rejectPreRegistration(
   reason?: string,
   token?: string
 ): Promise<void> {
-  const adminToken = token || 'token-admin-casaria';
+  const adminToken = token;
 
-  if (API_BASE) {
+  if (API_BASE && adminToken) {
     try {
       await fetch(
         `${API_BASE}/events/${encodeURIComponent(eventId)}/pre-registrations/${encodeURIComponent(preRegId)}/reject`,

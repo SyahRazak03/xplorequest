@@ -93,8 +93,12 @@ export default function AdminCheckpointManagerScreen() {
   };
 
   const handleSaveCheckpoint = async (data: Partial<Checkpoint>) => {
-    const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
-    const token = user?.idToken || 'token-admin-casaria';
+    const eventId = activeEvent?.id || selectedEventId || user?.eventId || '';
+    if (!eventId) {
+      Alert.alert('Error', 'Please select an active event first.');
+      return;
+    }
+    const token = user?.idToken;
 
     if (selectedCheckpoint) {
       // Edit Mode
@@ -390,8 +394,9 @@ export default function AdminCheckpointManagerScreen() {
             style: 'destructive',
             onPress: async () => {
               if (deleteTargetId) {
-                const eventId = activeEvent?.id || selectedEventId || user?.eventId || 'EV-001';
-                const token = user?.idToken || 'token-admin-casaria';
+                const eventId = activeEvent?.id || selectedEventId || user?.eventId || '';
+                if (!eventId) return;
+                const token = user?.idToken;
                 try {
                   await deleteCheckpoint(eventId, deleteTargetId, token, true);
                 } catch (err) {

@@ -24,10 +24,11 @@ export async function fetchLiveEvents(
   userUid?: string,
   userRole?: string
 ): Promise<EventConfig[]> {
-  if (token) {
+  const tokenToUse = token;
+  if (tokenToUse && API_BASE) {
     try {
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${tokenToUse}`,
       };
       const resp = await fetch(`${API_BASE}/events`, { headers });
       const json = await resp.json();
@@ -48,6 +49,7 @@ export async function fetchLiveEvents(
           paymentQrImageUrl: d.paymentQrImageUrl || undefined,
           latitude: d.latitude || undefined,
           longitude: d.longitude || undefined,
+          createdBy: d.createdBy || undefined,
           geofenceBoundary: Array.isArray(d.geofenceBoundary)
             ? d.geofenceBoundary.map((v: any) => ({
                 latitude: v.latitude ?? v.x ?? 0,
@@ -87,6 +89,7 @@ export async function fetchLiveEvents(
           entryFee: d['entryFee'] || 0,
           latitude: d['latitude'] || undefined,
           longitude: d['longitude'] || undefined,
+          createdBy: d['createdBy'] || undefined,
           geofenceBoundary: Array.isArray(d['geofenceBoundary'])
             ? d['geofenceBoundary'].map((v: any) => ({
                 latitude: v.latitude ?? v.x ?? 0,
@@ -104,27 +107,31 @@ export async function fetchLiveEvents(
 }
 
 /**
- * Updates structured organizer payment details for an event.
- * Calls PATCH /events/:eventId/payment-details.
+ * Updates structured organizer payment details and assets (banner / payment QR) for an event.
+ * Calls PATCH /events/:eventId.
  */
 export async function updatePaymentDetailsService(
   eventId: string,
   paymentDetails: PaymentDetails,
+  bannerImageUrl?: string | null,
+  paymentQrImageUrl?: string | null,
   token?: string
 ): Promise<EventConfig> {
-  const url = `${API_BASE}/events/${encodeURIComponent(eventId)}/payment-details`;
+  const tokenToUse = token;
+  const url = `${API_BASE}/events/${encodeURIComponent(eventId)}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...(tokenToUse ? { Authorization: `Bearer ${tokenToUse}` } : {}),
   };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
 
   const response = await fetch(url, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ paymentDetails }),
+    body: JSON.stringify({
+      paymentDetails,
+      bannerImageUrl: bannerImageUrl || null,
+      paymentQrImageUrl: paymentQrImageUrl || null,
+    }),
   });
 
   const payload = await response.json();
@@ -144,28 +151,29 @@ export async function createLiveEvent(
   idToken?: string,
   ownerUid?: string
 ): Promise<EventConfig> {
-  if (idToken) {
+  const tokenToUse = idToken;
+  if (tokenToUse && API_BASE) {
     try {
       const resp = await fetch(`${API_BASE}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
+          Authorization: `Bearer ${tokenToUse}`,
         },
         body: JSON.stringify({
           name: eventConfig.name,
           date: eventConfig.date,
           locationName: eventConfig.locationName || 'Kuala Lumpur',
-          urlSlug: eventConfig.urlSlug || undefined,
+          urlSlug: eventConfig.urlSlug || null,
           entryFee: eventConfig.entryFee || 0,
-          joinCode: eventConfig.joinCode || undefined,
+          joinCode: eventConfig.joinCode || null,
           maxDurationSeconds: eventConfig.maxDurationSeconds || 14400,
           totalCheckpoints: eventConfig.totalCheckpoints || 8,
           paymentBankDetails: eventConfig.paymentBankDetails || '',
-          paymentDetails: eventConfig.paymentDetails || undefined,
-          bannerImageUrl: eventConfig.bannerImageUrl || undefined,
-          paymentQrImageUrl: eventConfig.paymentQrImageUrl || undefined,
-          createdBy: ownerUid || undefined,
+          paymentDetails: eventConfig.paymentDetails || null,
+          bannerImageUrl: eventConfig.bannerImageUrl || null,
+          paymentQrImageUrl: eventConfig.paymentQrImageUrl || null,
+          createdBy: ownerUid || null,
         }),
       });
 
@@ -215,6 +223,16 @@ export async function createLiveEvent(
     await setDoc(docRef, dataToSave);
   } catch (err) {
     console.warn('Failed to save event to Firestore via Client SDK:', err);
+  }
+
+  // Always update local device cache as fallback
+  try {
+    const { loadLocalEvents, saveLocalEvents } = require('./storageService');
+    const existing = await loadLocalEvents();
+    const updated = [eventConfig, ...existing.filter((e: EventConfig) => e.id !== eventConfig.id)];
+    await saveLocalEvents(updated);
+  } catch (err) {
+    console.warn('Failed to update local events cache during creation:', err);
   }
 
   return eventConfig;
@@ -399,12 +417,13 @@ export function subscribeToEventState(
  */
 export async function deleteEventService(eventId: string, token?: string): Promise<void> {
   let apiSuccess = false;
-  if (token && API_BASE) {
+  const tokenToUse = token;
+  if (tokenToUse && API_BASE) {
     try {
       const resp = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${tokenToUse}`,
         },
       });
       const json = await resp.json();
@@ -433,5 +452,15 @@ export async function deleteEventService(eventId: string, token?: string): Promi
         throw new Error(err.message || 'Failed to delete event from Firestore.');
       }
     }
+  }
+
+  // Always remove deleted event from local device cache
+  try {
+    const { loadLocalEvents, saveLocalEvents } = require('./storageService');
+    const existing = await loadLocalEvents();
+    const updated = existing.filter((e: any) => e.id !== eventId);
+    await saveLocalEvents(updated);
+  } catch (cacheErr) {
+    console.warn('Failed to prune deleted event from local cache:', cacheErr);
   }
 }
