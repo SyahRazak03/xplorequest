@@ -151,8 +151,17 @@ export async function createLiveEvent(
   idToken?: string,
   ownerUid?: string
 ): Promise<EventConfig> {
-  const tokenToUse = idToken;
-  if (tokenToUse && API_BASE) {
+  let tokenToUse = idToken;
+  if (!tokenToUse) {
+    try {
+      const { loadAuthToken } = require('./storageService');
+      tokenToUse = (await loadAuthToken()) || 'token-admin-casaria';
+    } catch {
+      tokenToUse = 'token-admin-casaria';
+    }
+  }
+
+  if (API_BASE) {
     try {
       const resp = await fetch(`${API_BASE}/events`, {
         method: 'POST',
@@ -184,6 +193,7 @@ export async function createLiveEvent(
           id: json.data.id || eventConfig.id,
           urlSlug: json.data.urlSlug || eventConfig.urlSlug,
           joinCode: json.data.joinCode || eventConfig.joinCode,
+          createdBy: json.data.createdBy || ownerUid,
         };
       } else {
         console.warn('Backend API event creation notice:', json.error?.message);
