@@ -427,7 +427,15 @@ export function subscribeToEventState(
  */
 export async function deleteEventService(eventId: string, token?: string): Promise<void> {
   let apiSuccess = false;
-  const tokenToUse = token;
+  let tokenToUse = token;
+  if (!tokenToUse) {
+    try {
+      const { loadAuthToken } = require('./storageService');
+      tokenToUse = (await loadAuthToken()) || undefined;
+    } catch {
+      tokenToUse = undefined;
+    }
+  }
   if (tokenToUse && API_BASE) {
     try {
       const resp = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}`, {
