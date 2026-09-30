@@ -42,32 +42,73 @@ export async function getCheckpoints(
   eventId: string,
   idToken?: string
 ): Promise<Checkpoint[]> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (idToken) {
-    headers['Authorization'] = `Bearer ${idToken}`;
-  }
-
-  const resp = await fetch(
-    `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints`,
-    {
-      headers,
+  let tokenToUse = idToken;
+  if (!tokenToUse) {
+    try {
+      const { loadAuthToken } = require('./storageService');
+      tokenToUse = (await loadAuthToken()) || undefined;
+    } catch {
+      tokenToUse = undefined;
     }
-  );
-
-  const json = (await resp.json()) as {
-    success: boolean;
-    data?: Checkpoint[];
-    error?: { code: string; message: string };
-  };
-
-  if (!resp.ok || !json.success || !json.data) {
-    const msg = json.error?.message ?? 'Failed to load checkpoints.';
-    throw new Error(msg);
   }
 
-  return json.data;
+  if (API_BASE) {
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (tokenToUse) {
+        headers['Authorization'] = `Bearer ${tokenToUse}`;
+      }
+
+      const resp = await fetch(
+        `${API_BASE}/events/${encodeURIComponent(eventId)}/checkpoints`,
+        { headers }
+      );
+
+      const json = (await resp.json()) as {
+        success: boolean;
+        data?: Checkpoint[];
+        error?: { code: string; message: string };
+      };
+
+      if (resp.ok && json.success && json.data) {
+        return json.data;
+      }
+    } catch (err) {
+      console.warn('API getCheckpoints warning:', err);
+    }
+  }
+
+  try {
+    const { getFirebaseFirestore } = require('./firebaseService');
+    const { collection, getDocs } = require('firebase/firestore');
+    const db = getFirebaseFirestore();
+    const snap = await getDocs(collection(db, 'events', eventId, 'checkpoints'));
+    const list: Checkpoint[] = [];
+    snap.forEach((doc: any) => {
+      const d = doc.data();
+      list.push({
+        id: doc.id,
+        name: d.name || 'Checkpoint',
+        latitude: d.latitude || 0,
+        longitude: d.longitude || 0,
+        clueText: d.clueText || '',
+        taskDescription: d.taskDescription || '',
+        scorePoints: d.scorePoints || 10,
+        geofenceRadiusMeters: d.geofenceRadiusMeters || 50,
+        isStart: Boolean(d.isStart),
+        isFinish: Boolean(d.isFinish),
+        isAttendanceStation: Boolean(d.isAttendanceStation),
+        isHiddenInMap: Boolean(d.isHiddenInMap),
+        orderIndex: d.orderIndex || 0,
+      });
+    });
+    return list;
+  } catch (err) {
+    console.warn('Failed to load event checkpoints from Firestore:', err);
+    return [];
+  }
 }
 
 /**

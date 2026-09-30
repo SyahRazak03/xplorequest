@@ -318,6 +318,17 @@ export default function AdminCreateEventScreen() {
     return Math.floor(Math.random() * 9000 + 1000).toString();
   };
 
+  const generateRandomJoinCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let result = 'XQ';
+    for (let i = 0; i < 4; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const [eventJoinCode, setEventJoinCode] = useState(generateRandomJoinCode());
+
   useEffect(() => {
     setCrewCode(generateRandomCrewCode());
   }, []);
@@ -427,7 +438,7 @@ export default function AdminCreateEventScreen() {
       paymentQrImageUrl: paymentQrUri || null,
       latitude: eventCoords.latitude,
       longitude: eventCoords.longitude,
-      joinCode: 'XT2026',
+      joinCode: eventJoinCode.toUpperCase().trim() || generateRandomJoinCode(),
       createdBy: organizerUid,
     };
 
@@ -724,6 +735,43 @@ export default function AdminCreateEventScreen() {
 
               {/* Web Pre-Registration Configuration Card (Stage 17) */}
               <Card role="admin" title="Web Pre-Registration Configuration" borderAccent="top">
+                {/* Event Join Code Input & Generator */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Event Join Code (For Participants & Crew)</Text>
+                  <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <TextInput
+                      style={[styles.textInput, { flex: 1, fontWeight: '700', letterSpacing: 1.5 }]}
+                      placeholder="e.g. XQ8M92"
+                      value={eventJoinCode}
+                      onChangeText={(val) => setEventJoinCode(val.toUpperCase())}
+                      autoCapitalize="characters"
+                      maxLength={10}
+                      placeholderTextColor={COLORS.textMuted}
+                    />
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => setEventJoinCode(generateRandomJoinCode())}
+                      style={{
+                        backgroundColor: COLORS.admin.primaryLight,
+                        paddingHorizontal: 12,
+                        paddingVertical: 12,
+                        borderRadius: RADIUS.md,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        borderWidth: 1,
+                        borderColor: COLORS.admin.primary,
+                      }}
+                    >
+                      <Ionicons name="refresh" size={18} color={COLORS.admin.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: COLORS.admin.primary }}>Auto</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>
+                    🔑 Unique code used by participants to join team or crew to log in for this race event.
+                  </Text>
+                </View>
+
                 {/* URL Slug Input & Preview */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Web Form Address Link (URL Slug)</Text>

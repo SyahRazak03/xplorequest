@@ -60,24 +60,67 @@ export default function CrewSelectCheckpointScreen() {
 
   // Load checkpoints whenever selectedEventId changes
   useEffect(() => {
+    let isMounted = true;
     async function loadCheckpoints() {
+      if (!selectedEventId) return;
       try {
         const fetched = await getCheckpoints(selectedEventId);
-        if (fetched && fetched.length > 0) {
-          setCheckpointsList(fetched);
-          if (!fetched.some((cp) => cp.id === selectedCheckpointId)) {
+        if (isMounted) {
+          if (fetched && fetched.length > 0) {
+            setCheckpointsList(fetched);
             setSelectedCheckpointId(fetched[0].id);
+          } else {
+            // Filter appCheckpoints by selectedEventId or create default station
+            const filtered = (appCheckpoints || []).filter(
+              (cp) => (cp as any).eventId === selectedEventId || (cp as any).eventId === undefined
+            );
+            if (filtered.length > 0) {
+              setCheckpointsList(filtered);
+              setSelectedCheckpointId(filtered[0].id);
+            } else {
+              const defaultStation: Checkpoint = {
+                id: `CP-1-${selectedEventId}`,
+                name: 'Attendance & Verification Station',
+                latitude: 3.1492,
+                longitude: 101.6938,
+                isAttendanceStation: true,
+                isStart: true,
+                scorePoints: 0,
+              };
+              setCheckpointsList([defaultStation]);
+              setSelectedCheckpointId(defaultStation.id);
+            }
           }
-        } else {
-          setCheckpointsList(appCheckpoints);
         }
-      } catch {
-        if (appCheckpoints.length > 0) {
-          setCheckpointsList(appCheckpoints);
+      } catch (err) {
+        console.warn('Failed to load event checkpoints for crew:', err);
+        if (isMounted) {
+          const filtered = (appCheckpoints || []).filter(
+            (cp) => (cp as any).eventId === selectedEventId
+          );
+          if (filtered.length > 0) {
+            setCheckpointsList(filtered);
+            setSelectedCheckpointId(filtered[0].id);
+          } else {
+            const defaultStation: Checkpoint = {
+              id: `CP-1-${selectedEventId}`,
+              name: 'Attendance & Verification Station',
+              latitude: 3.1492,
+              longitude: 101.6938,
+              isAttendanceStation: true,
+              isStart: true,
+              scorePoints: 0,
+            };
+            setCheckpointsList([defaultStation]);
+            setSelectedCheckpointId(defaultStation.id);
+          }
         }
       }
     }
     loadCheckpoints();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedEventId]);
 
   const handleSelectEvent = (event: EventConfig) => {

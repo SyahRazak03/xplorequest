@@ -215,7 +215,7 @@ export async function createLiveEvent(
       locationName: eventConfig.locationName || '',
       urlSlug: eventConfig.urlSlug || '',
       entryFee: eventConfig.entryFee || 0,
-      joinCode: eventConfig.joinCode || 'XT2026',
+      joinCode: eventConfig.joinCode || ('XQ' + Math.random().toString(36).substring(2, 6).toUpperCase()),
       maxDurationSeconds: eventConfig.maxDurationSeconds || 14400,
       totalCheckpoints: eventConfig.totalCheckpoints || 8,
       paymentBankDetails: eventConfig.paymentBankDetails || '',
