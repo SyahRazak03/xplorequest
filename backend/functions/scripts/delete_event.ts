@@ -44,7 +44,7 @@ async function main(): Promise<void> {
 
   try {
     const resp = await fetch(`${API_BASE}/events`, {
-      headers: { Authorization: 'Bearer token-admin-casaria' },
+      headers: { Authorization: `Bearer ${process.env['ADMIN_TOKEN'] || 'admin-session-token'}` },
     });
     if (resp.ok) {
       const json = (await resp.json()) as any;
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
     try {
       const delResp = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}`, {
         method: 'DELETE',
-        headers: { Authorization: 'Bearer token-admin-casaria' },
+        headers: { Authorization: `Bearer ${process.env['ADMIN_TOKEN'] || 'admin-session-token'}` },
       });
       const delJson = (await delResp.json()) as any;
       if (delResp.ok && delJson && delJson.success) {

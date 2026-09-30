@@ -155,9 +155,9 @@ export async function createLiveEvent(
   if (!tokenToUse) {
     try {
       const { loadAuthToken } = require('./storageService');
-      tokenToUse = (await loadAuthToken()) || 'token-admin-casaria';
+      tokenToUse = (await loadAuthToken()) || undefined;
     } catch {
-      tokenToUse = 'token-admin-casaria';
+      tokenToUse = undefined;
     }
   }
 
