@@ -195,19 +195,12 @@ export async function findEventsByOwner(ownerUid: string): Promise<EventDocument
   const db = getFirestore();
   const snap = await db
     .collection(EVENTS_COLLECTION)
+    .where('createdBy', '==', ownerUid)
     .where('isArchived', '==', false)
     .orderBy('createdAt', 'desc')
     .get();
 
-  return snap.docs
-    .map(toEventDocument)
-    .filter(
-      (e) =>
-        !e.createdBy ||
-        e.createdBy === ownerUid ||
-        e.createdBy === 'admin-session-token' ||
-        e.createdBy === 'admin-casaria'
-    );
+  return snap.docs.map(toEventDocument);
 }
 
 /**
